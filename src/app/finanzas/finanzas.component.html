@@ -1,0 +1,231 @@
+<div class="page-container">
+
+  <div class="finance-cards">
+
+    <div class="finance-card ingreso-card">
+      <h4>Ingresos</h4>
+      <h2>{{ ingresos | currency:'MXN' }}</h2>
+    </div>
+
+    <div class="finance-card egreso-card">
+      <h4>Egresos</h4>
+      <h2>{{ egresos | currency:'MXN' }}</h2>
+    </div>
+
+    <div class="finance-card saldo-card">
+      <h4>Saldo Total</h4>
+      <h2 [ngClass]="saldo < 0 ? 'saldo-negativo' : 'saldo-positivo'">
+        {{ saldo | currency:'MXN' }}
+      </h2>
+    </div>
+
+  </div>
+
+
+
+  <div class="page-header">
+    <h2>Finanzas</h2>
+
+    <div class="contratos-header">
+      <button class="btn-primary" (click)="mostrarBuscador = !mostrarBuscador">
+        {{ mostrarBuscador ? 'Ocultar buscador' : 'Mostrar buscador' }}
+      </button>
+
+      <button class="btn-primary" (click)="openModal()">
+        + Nuevo movimiento
+      </button>
+    </div>
+  </div>
+
+  <!-- BUSCADOR -->
+  <div *ngIf="mostrarBuscador"
+    style="max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+    <input type="text" class="buscador-input" placeholder="Buscar concepto…" [(ngModel)]="filtroMovimiento"
+      (input)="filtrarMovimientos()"
+      style="width: 100%; padding: 10px 15px; border: 1px solid #ccc; border-radius: 8px;">
+  </div>
+
+  <!-- TABLA -->
+  <table class="gradus-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Tipo</th>
+        <th>Concepto</th>
+        <th>Monto</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let m of movimientosFiltrados">
+        <td>{{ m.fecha | date }}</td>
+        <td>
+          
+          <span [ngClass]="m.tipo_movimiento_id == 1 ? 'tag-ingreso' : 'tag-egreso'">
+            {{ m.tipo_movimiento_id == 1 ? 'INGRESO' : 'EGRESO' }}
+          </span>
+        </td>
+
+        <td>{{ m.concepto }}</td>
+        <td>{{ m.monto | currency:'MXN' }}</td>
+
+
+        <td class="actions">
+          <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
+          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+
+
+
+
+
+
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <h3>{{titulo}}</h3>
+
+    <!-- FILA 1 -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select [(ngModel)]="tipo_movimiento_id">
+          <option value="1">INGRESO</option>
+          <option value="2">EGRESO</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="fecha">
+      </div>
+    </div>
+
+
+
+    <!-- FILA 2 -->
+    <div class="form-row">
+
+      <div class="form-group">
+        <label>Categoría</label>
+        <select [(ngModel)]="categoria_id">
+          <option value="0">Seleccione</option>
+          <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Razón Social</label>
+        <input type="text" [(ngModel)]="razon_social" style="text-transform: uppercase;">
+      </div>
+
+    </div>
+
+
+
+    <!-- FILA 3 -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Folio</label>
+        <input type="text" [(ngModel)]="folio" style="text-transform: uppercase;">
+      </div>
+
+        <div class="form-group full-width">
+        <label>Concepto</label>
+        <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;">
+      </div>
+
+      <div class="form-group">
+        <label>Método de pago</label>
+        <select [(ngModel)]="metodo_pago_id">
+          <option *ngFor="let m of metodosPago" [value]="m.id">{{ m.nombre }}</option>
+        </select>
+      </div>
+
+    </div>
+
+    
+    <!-- FILA 4 -->
+    <div class="form-row">
+
+  <!-- COLUMNA IZQUIERDA -->
+  <div class="col-izquierda">
+
+    <!-- FILA 1: Monto + IVA -->
+    <div class="fila-flex">
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+               [(ngModel)]="monto" (ngModelChange)="calcularTotal()">
+      </div>
+
+      <div class="form-group">
+        <label>IVA</label>
+        <select [(ngModel)]="iva" (change)="calcularTotal()">
+          <option [value]="0">0%</option>
+          <option [value]="8">8%</option>
+          <option [value]="16">16%</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- FILA 2: Monto 2,3,4 -->
+    <div class="fila-flex">
+      <div class="form-group">
+        <label>Monto 2</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto2" (ngModelChange)="calcularTotal()">
+      </div>
+
+      <div class="form-group">
+        <label>Monto 3</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto3" (ngModelChange)="calcularTotal()">
+      </div>
+
+      <div class="form-group">
+        <label>Monto 4</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto4" (ngModelChange)="calcularTotal()">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COLUMNA DERECHA -->
+  <div class="col-derecha">
+
+    <div class="form-group">
+      <label>Total (Monto + IVA)</label>
+      <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+             [ngModel]="montoMasIva" readonly>
+    </div>
+
+    <div class="form-group total-grande">
+      <label>GRAN TOTAL</label>
+      <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+             [ngModel]="granTotal" readonly>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+    
+
+    <!-- BOTONES -->
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveMovimiento()">{{textoBoton}}</button>
+    </div>
+
+  </div>
+</div>

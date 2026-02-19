@@ -1,0 +1,227 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h2>Contratos</h2>
+    <div class="contratos-header">
+
+      <button class="btn-primary" (click)="mostrarBuscador = !mostrarBuscador">
+        {{ mostrarBuscador ? 'Ocultar buscador' : 'Mostrar buscador' }}
+      </button>
+      <button class="btn-primary" (click)="openModal()">
+        + Nuevo contrato
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="mostrarBuscador"
+    style="max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+    <!-- Botón para mostrar/ocultar -->
+
+    <!-- Input de búsqueda -->
+    <div>
+      <input type="text" placeholder="Buscar número de contrato…" [(ngModel)]="filtroContrato"
+        (input)="filtrarContratos()"
+        style="width: calc(100% - 30px); padding: 10px 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; text-align: left; box-sizing: border-box;" />
+    </div>
+  </div>
+
+  <table class="gradus-table">
+    <thead>
+      <tr>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;"># Contrato
+        </th>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">Monto</th>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">Descripción</th>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of contratosFiltrados">
+        <td>{{ c.numero_contrato }}</td>
+        <td>{{ c.importe_contratado_sin_iva | currency:'MXN' }}</td>
+        <td>{{ c.descripcion | slice:0:90 }}...</td>
+
+        <td class="actions">
+          <button class="btn-edit" (click)="editContrato(c)">✏️</button>
+          <button class="btn-delete" (click)="deleteContrato(c.id)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <h3>Nuevo Contrato</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Categoría</label>
+        <select [(ngModel)]="id_categoria">
+          <option value="0">Selecciona categoría</option>
+          <option *ngFor="let cat of categorias" [value]="cat.id_categoria_contrato">{{ cat.nombre_categoria_contrato }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Número de contrato</label>
+        <input type="text" [(ngModel)]="numero_contrato" style="text-transform: uppercase;">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group full-width">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="descripcion" style="text-transform: uppercase;"></textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Importe contratado sin IVA</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+          [(ngModel)]="importe_contratado_sin_iva">
+      </div>
+
+      <div class="form-group">
+        <label>Importe ejercido sin IVA</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_ejercido_sin_iva">
+      </div>
+    </div>
+
+
+
+    <div class="form-group">
+      <label>Contratante</label>
+      <select [(ngModel)]="id_contratante">
+        <option value="0">Seleccione contratante</option>
+        <option *ngFor="let contratante of contratante" [value]="contratante.id_contratante">{{ contratante.razon_social
+          }}</option>
+      </select>
+    </div>
+
+
+    <br>
+    <!--
+    <div class="form-row">
+
+
+      <div class="form-group">
+        <label>Estado</label>
+        <input type="text" [(ngModel)]="estado" readonly class="readonly">
+      </div>
+
+      <div class="form-group">
+        <label>Municipio</label>
+        <input type="text" [(ngModel)]="municipio" readonly class="readonly">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Código postal</label>
+        <input type="number" max="99999" [(ngModel)]="codigo_postal" readonly class="readonly">
+      </div>
+
+      <div class="form-group">
+        <label>Colonia</label>
+        <input type="text" [(ngModel)]="colonia" readonly class="readonly">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Calle</label>
+        <input type="text" [(ngModel)]="calle" style="text-transform: uppercase;" readonly class="readonly">
+      </div>
+
+      <div class="form-group">
+        <label>Número exterior</label>
+        <input type="text" [(ngModel)]="numero_exterior" readonly class="readonly">
+      </div>
+
+      <div class="form-group">
+        <label>Número interior</label>
+        <input type="text" [(ngModel)]="numero_interior" readonly class="readonly">
+      </div>
+    </div>
+  -->
+    <!-- EMPRESA PRINCIPAL (SIEMPRE) -->
+    <div class="form-group">
+      <label>Empresa Participante</label>
+      <select [(ngModel)]="empresaPrincipal">
+        <option value="">Selecciona empresa</option>
+        <option *ngFor="let e of empresasDisponibles" [value]="e.id_empresa_participante">
+          {{ e.razon_social }}
+        </option>
+      </select>
+    </div>
+
+    <div class="section-divider">
+      <!-- CHECKBOX -->
+      <div class="form-row full-width">
+        <div class="form-group">
+          <label>Participación Conjunta</label>
+          <label class="checkbox-left">
+            <input type="checkbox" [(ngModel)]="participacionConjunta" (change)="onParticipacionChange()">
+          </label>
+        </div>
+      </div>
+
+      <!-- SELECTS ADICIONALES -->
+      <div class="form-row full-width" *ngIf="participacionConjunta">
+
+        <div *ngFor="let empresa of empresasSeleccionadas; let i = index" class="form-group dynamic-empresa">
+          <label>Empresa Conjunta {{ i + 1 }}</label>
+
+          <div class="empresa-wrapper">
+            <select [(ngModel)]="empresasSeleccionadas[i].id_empresa">
+              <option value="">Selecciona empresa</option>
+              <option *ngFor="let e of empresasDisponibles" [value]="e.id_empresa_participante">
+                {{ e.razon_social }}
+              </option>
+            </select>
+
+            <!-- BOTON + SOLO EN EL ULTIMO -->
+            <button type="button" class="btn-add" *ngIf="i === empresasSeleccionadas.length - 1"
+              (click)="agregarEmpresa()">
+              +
+            </button>
+
+            <!-- BOTON - SOLO DESDE EL TERCER SELECT TOTAL -->
+            <button type="button" class="btn-remove" *ngIf="i >= 1" (click)="eliminarEmpresa(i)">
+              -
+            </button>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de inicio</label>
+        <input type="date" [(ngModel)]="fecha_de_inicio">
+      </div>
+    </div>
+
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de terminación</label>
+        <input type="date" [(ngModel)]="fecha_de_terminacion">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveContrato()">Guardar</button>
+    </div>
+  </div>
+</div>

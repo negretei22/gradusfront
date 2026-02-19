@@ -1,0 +1,241 @@
+<div class="page-container">
+
+    <div class="page-header">
+        <h2>Maquinaria</h2>
+        <div class="contratos-header">
+
+            <button class="btn-primary" (click)="mostrarBuscador = !mostrarBuscador">
+                {{ mostrarBuscador ? 'Ocultar buscador' : 'Mostrar buscador' }}
+            </button>
+            <button class="btn-primary" (click)="openModal()">
+                + Nueva maquinaria
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="mostrarBuscador"
+        style="max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+        <!-- Botón para mostrar/ocultar -->
+
+        <!-- Input de búsqueda -->
+        <div>
+            <input type="text" placeholder="Buscar número de serie…" [(ngModel)]="filtroMaquinaria"
+                (input)="filtrarMaquinaria()"
+                style="width: calc(100% - 30px); padding: 10px 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; text-align: left; box-sizing: border-box;" />
+        </div>
+    </div>
+
+    <table class="gradus-table">
+        <thead>
+            <tr>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    NO. DE SERIE
+                </th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    TIPO DE ADQUISICIÓN</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    MONTO</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    MARCA</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    DESCRIPCIÓN</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                </th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr *ngFor="let c of maquinariaFiltrada">
+                <td>{{ c.numero_serie }}</td>
+                <td>{{ c.tipo_adquisicion }}</td>
+                <td>{{ c.monto | currency:'MXN' }}</td>
+                <td>{{ c.b_marca }}</td>
+
+                <td>{{ c.descripcion | slice:0:90 }}...</td>
+
+                <td class="actions">
+                    <button class="btn-edit" (click)="editMaquinaria(c)">✏️</button>
+                    <button class="btn-delete" (click)="deleteMaquinaria(c.id)">🗑️</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+
+
+
+
+
+<div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-card">
+        <h3>Nueva Maquinaria</h3>
+
+        <!-- DATOS FIJOS -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo de adquisición</label>
+                <select [(ngModel)]="id_tipo_de_adquisicion" (change)="onTipoAdquisicionChange()">
+                    <option value="0">Seleccionar</option>
+                    <option value="1">Propio</option>
+                    <option value="2">Leasing</option>
+                    <option value="3">Arrendada</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Número de activo</label>
+                <input type="text" [(ngModel)]="numero_activo">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Número de serie</label>
+                <input type="text" [(ngModel)]="numero_serie" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label>Año</label>
+                <input type="number" [(ngModel)]="anio">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Descripción</label>
+                <textarea [(ngModel)]="descripcion" style="text-transform: uppercase;"></textarea>
+            </div>
+        </div>
+
+        <!-- MARCA -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Marca</label>
+                <select [(ngModel)]="id_marca" (change)="loadModelos()">
+                    <option value="0">Seleccionar marca</option>
+                    <option *ngFor="let m of marcas" [value]="m.id_marca">{{ m.marca }}</option>
+                </select>
+            </div>
+
+            <!-- MODELO DEPENDIENTE -->
+            <div class="form-group">
+                <label>Modelo</label>
+                <select [(ngModel)]="id_modelo">
+                    <option value="0">Seleccionar modelo</option>
+                    <option *ngFor="let mo of modelos" [value]="mo.id_modelo">{{ mo.modelo }}</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DOCUMENTOS (TEMP TEXTO) -->
+        <div class="form-group">
+            <label>Documentos</label>
+            <input type="text" [(ngModel)]="id_documentos" placeholder="Luego será drag & drop">
+        </div>
+
+        <!-- ====== CAMPOS CONDICIONALES ====== -->
+        <div class="section-adq" *ngIf="tituloAdquisicion">
+            <h3 class="title-adq">{{ tituloAdquisicion }}</h3>
+
+            <div class="section-body">
+                <!-- PROPIO -->
+                <div *ngIf="id_tipo_de_adquisicion == 1">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor de compra</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="valor_compra">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Importe con IVA</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="importe_con_iva">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Importe sin IVA</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="importe_sin_iva">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha de adquisición</label>
+                        <input type="date" [(ngModel)]="fecha_de_adquisicion">
+                    </div>
+                </div>
+
+                <!-- LEASING -->
+                <div *ngIf="id_tipo_de_adquisicion == 2">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor de compra</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="valor_compra">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Plazo (meses)</label>
+                            <input type="number" [(ngModel)]="plazo">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pago mensual</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="pago_mensual">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha de adquisición</label>
+                        <input type="date" [(ngModel)]="fecha_de_adquisicion">
+                    </div>
+                </div>
+
+                <!-- ARRENDADA -->
+                <div *ngIf="id_tipo_de_adquisicion == 3">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Arrendador</label>
+                            <select [(ngModel)]="id_arrendador">
+                                <option value="0">Seleccionar</option>
+                                <option *ngFor="let a of arrendadores" [value]="a.id_arrendador">{{ a.razon_social }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Monto renta mensual</label>
+                            <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
+                                [(ngModel)]="monto_renta_mensual">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Plazo (meses)</label>
+                            <input type="number" [(ngModel)]="plazo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
+            <button class="btn-primary" (click)="saveMaquinaria()">Guardar</button>
+        </div>
+
+    </div>
+</div>

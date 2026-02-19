@@ -1,1 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+:root {
+  --gradus-green: #007b5f;
+  --gradus-green-light: #1e6f5c;
+  --gradus-bg: #f5f7f6;
+  --gradus-border: #e0e0e0;
+}
+
+.swal2-container{
+    z-index: 999999 !important;
+}
