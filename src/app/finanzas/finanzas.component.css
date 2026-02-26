@@ -226,9 +226,14 @@
 }
 
 
-.form-row {
-  display: flex;
-  gap: 20px;
+.form-row{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 10px;
+}
+
+.form-row .form-group{
+  width: 100%;
 }
 
 .col-izquierda {
@@ -250,8 +255,24 @@
   gap: 10px;
 }
 
+
+.tag-inversion {
+  background: #7c9ec3;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+
+
+.form-group.rfc {
+  flex: 0.5; /* RFC más chico */
+}
+
+
 .form-group {
-  display: flex;
+  
   flex-direction: column;
   flex: 1;
 }
@@ -436,6 +457,10 @@ select {
   border-left: 6px solid #0d6efd;
 }
 
+.inversiones-card {
+  border-left: 6px solid #d0790f;
+}
+
 .finance-card h4 {
   margin: 0;
   font-size: 14px;
@@ -448,13 +473,14 @@ select {
   font-weight: bold;
 }
 
-.saldo-positivo {
-  color: #198754;
+.inversiones {
+  color: #7c9ec3;
 }
 
 .saldo-negativo {
   color: #dc3545;
 }
+
 
 
 

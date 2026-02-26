@@ -3,17 +3,22 @@
   <div class="finance-cards">
 
     <div class="finance-card ingreso-card">
-      <h4>Ingresos</h4>
+      <h4>INGRESOS</h4>
       <h2>{{ ingresos | currency:'MXN' }}</h2>
     </div>
 
     <div class="finance-card egreso-card">
-      <h4>Egresos</h4>
+      <h4>EGRESOS</h4>
       <h2>{{ egresos | currency:'MXN' }}</h2>
     </div>
 
+    <div class="finance-card inversiones-card">
+      <h4>INVERSIONES</h4>
+      <h2>{{ inversiones | currency:'MXN' }}</h2>
+    </div>
+
     <div class="finance-card saldo-card">
-      <h4>Saldo Total</h4>
+      <h4>TOTAL</h4>
       <h2 [ngClass]="saldo < 0 ? 'saldo-negativo' : 'saldo-positivo'">
         {{ saldo | currency:'MXN' }}
       </h2>
@@ -34,24 +39,41 @@
       <button class="btn-primary" (click)="openModal()">
         + Nuevo movimiento
       </button>
+
+      <button class="btn-primary" (click)="exportarExcel()">
+        📥 Exportar Excel
+      </button>
     </div>
   </div>
 
   <!-- BUSCADOR -->
   <div *ngIf="mostrarBuscador"
-    style="max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    style="max-width: 900px; margin: 20px auto; padding: 20px; background:#f9f9f9; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); display:flex; gap:10px; align-items:center;">
 
+    <!-- Año -->
+    <select [(ngModel)]="filtroAnio" style="padding:8px; border-radius:6px;">
+      <option value="">Año</option>
+      <option value="2026">2026</option>
+    </select>
+
+    <!-- Mes -->
+    <select [(ngModel)]="filtroMes" (change)="cargarMovimientos()" style="padding:8px; border-radius:6px;">
+      <option value="0">TODOS</option>
+      <option *ngFor="let m of meses" [value]="m.value">{{ m.text }}</option>
+    </select>
+
+    <!-- Buscador -->
     <input type="text" class="buscador-input" placeholder="Buscar concepto…" [(ngModel)]="filtroMovimiento"
-      (input)="filtrarMovimientos()"
-      style="width: 100%; padding: 10px 15px; border: 1px solid #ccc; border-radius: 8px;">
+      (input)="filtrarMovimientos()" style="flex:1; padding:10px 15px; border:1px solid #ccc; border-radius:8px;">
   </div>
 
   <!-- TABLA -->
   <table class="gradus-table">
     <thead>
       <tr>
-        <th>Fecha</th>
+        <th>Fecha de Factura</th>
         <th>Tipo</th>
+        <th>Folio Fiscal</th>
         <th>Concepto</th>
         <th>Monto</th>
         <th>Acciones</th>
@@ -60,16 +82,25 @@
 
     <tbody>
       <tr *ngFor="let m of movimientosFiltrados">
-        <td>{{ m.fecha | date }}</td>
+        <td>{{ (m.fecha_factura | date:'yyyy') === '1899' ? 'SIN FECHA' : (m.fecha_factura | date:'dd/MM/yyyy') }}</td>
         <td>
-          
-          <span [ngClass]="m.tipo_movimiento_id == 1 ? 'tag-ingreso' : 'tag-egreso'">
-            {{ m.tipo_movimiento_id == 1 ? 'INGRESO' : 'EGRESO' }}
+
+          <span [ngClass]="
+  m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
+  m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+  'tag-inversion'
+">
+            {{
+            m.tipo_movimiento_id == 1 ? 'INGRESO' :
+            m.tipo_movimiento_id == 2 ? 'EGRESO' :
+            'INVERSION'
+            }}
           </span>
         </td>
 
+        <td>{{ m.folio_fiscal }}</td>
         <td>{{ m.concepto }}</td>
-        <td>{{ m.monto | currency:'MXN' }}</td>
+        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
 
 
         <td class="actions">
@@ -96,15 +127,35 @@
     <div class="form-row">
       <div class="form-group">
         <label>Tipo</label>
-        <select [(ngModel)]="tipo_movimiento_id">
-          <option value="1">INGRESO</option>
-          <option value="2">EGRESO</option>
+        <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id)">
+          <option [ngValue]="0">SELECCIONE...</option>
+          <option [ngValue]="1">INGRESO</option>
+          <option [ngValue]="2">EGRESO</option>
+          <option [ngValue]="3">INVERSIÓN</option>
+
         </select>
       </div>
 
       <div class="form-group">
-        <label>Fecha</label>
-        <input type="date" [(ngModel)]="fecha">
+        <label>Categoría</label>
+        <select [(ngModel)]="categoria_id">
+          <option value="0">SELECCIONE...</option>
+          <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+
+
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de pago</label>
+        <input type="date" [(ngModel)]="fecha_pago">
+      </div>
+
+      <div class="form-group">
+        <label>Fecha de Factura</label>
+        <input type="date" [(ngModel)]="fecha_factura">
       </div>
     </div>
 
@@ -114,17 +165,16 @@
     <div class="form-row">
 
       <div class="form-group">
-        <label>Categoría</label>
-        <select [(ngModel)]="categoria_id">
-          <option value="0">Seleccione</option>
-          <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
-        </select>
+        <label>Folio Fiscal</label>
+        <input type="text" [(ngModel)]="folio_fiscal" style="text-transform: uppercase;">
       </div>
 
       <div class="form-group">
-        <label>Razón Social</label>
-        <input type="text" [(ngModel)]="razon_social" style="text-transform: uppercase;">
+        <label>RFC</label>
+        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;">
       </div>
+
+
 
     </div>
 
@@ -133,15 +183,19 @@
     <!-- FILA 3 -->
     <div class="form-row">
       <div class="form-group">
-        <label>Folio</label>
-        <input type="text" [(ngModel)]="folio" style="text-transform: uppercase;">
+        <label>Razón Social</label>
+        <input type="text" [(ngModel)]="razon_social" style="text-transform: uppercase;">
       </div>
 
-        <div class="form-group full-width">
+      <div class="form-group">
         <label>Concepto</label>
         <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;">
       </div>
 
+
+
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label>Método de pago</label>
         <select [(ngModel)]="metodo_pago_id">
@@ -151,19 +205,18 @@
 
     </div>
 
-    
     <!-- FILA 4 -->
     <div class="form-row">
 
-  <!-- COLUMNA IZQUIERDA -->
-  <div class="col-izquierda">
 
-    <!-- FILA 1: Monto + IVA -->
-    <div class="fila-flex">
+
+
+      <!-- FILA 1: Monto + IVA -->
+
       <div class="form-group">
-        <label>Monto</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
-               [(ngModel)]="monto" (ngModelChange)="calcularTotal()">
+        <label>Importe sin iva</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_sin_iva"
+          (ngModelChange)="calcularTotal()" placeholder="0.00">
       </div>
 
       <div class="form-group">
@@ -174,52 +227,57 @@
           <option [value]="16">16%</option>
         </select>
       </div>
-    </div>
-
-    <!-- FILA 2: Monto 2,3,4 -->
-    <div class="fila-flex">
-      <div class="form-group">
-        <label>Monto 2</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto2" (ngModelChange)="calcularTotal()">
-      </div>
 
       <div class="form-group">
-        <label>Monto 3</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto3" (ngModelChange)="calcularTotal()">
+        <label>IVA Acreditable</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_acreditable"
+          (ngModelChange)="calcularTotal()" placeholder="0.00">
       </div>
+
+
+
+    </div>
+
+
+    <div class="form-row">
 
       <div class="form-group">
-        <label>Monto 4</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto4" (ngModelChange)="calcularTotal()">
+        <label>IVA Traslado</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_traslado"
+          (ngModelChange)="calcularTotal()" placeholder="0.00">
       </div>
+      <div class="form-group">
+        <label>ISR Retenido</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="isr_retenido"
+          (ngModelChange)="calcularTotal()" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>IVA Retenido</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_retenido"
+          (ngModelChange)="calcularTotal()" placeholder="0.00">
+      </div>
+
     </div>
 
-  </div>
+    <!-- COLUMNA DERECHA -->
 
-  <!-- COLUMNA DERECHA -->
-  <div class="col-derecha">
 
-    <div class="form-group">
-      <label>Total (Monto + IVA)</label>
-      <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
-             [ngModel]="montoMasIva" readonly>
+    <div class="col-derecha">
+
+
+      <div class="form-group total-grande">
+        <label>GRAN TOTAL</label>
+        <input type="text" mask="separator.2" placeholder="0.00" thousandSeparator="," prefix="$ "
+          [ngModel]="granTotal">
+      </div>
+
     </div>
 
-    <div class="form-group total-grande">
-      <label>GRAN TOTAL</label>
-      <input type="text" mask="separator.2" thousandSeparator="," prefix="$ "
-             [ngModel]="granTotal" readonly>
-    </div>
-
-  </div>
-
-</div>
 
 
 
 
 
-    
 
     <!-- BOTONES -->
     <div class="modal-actions">

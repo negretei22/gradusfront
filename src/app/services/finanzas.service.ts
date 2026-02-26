@@ -11,16 +11,24 @@ export class FinanzasService {
 
   constructor(private http: HttpClient) { }
 
-  getMovimientos() {
-    return this.http.get(`${this.api}/finanzas`);
-  }
+  getMovimientos(anio?: number, mes?: number) {
+  let params: any = {};
+  if (anio) params.anio = anio;
+  if (mes) params.mes = mes;
 
+  return this.http.get<any[]>(`${this.api}/finanzas/`,{params});
+
+  }
   getCatalogo(catalogo: any): Observable<any[]> {
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);
   }
 
-  getSaldo() {
-    return this.http.get(`${this.api}/finanzas/saldo`);
+  getCategorias(id_categoria : any): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/finanzas/categorias/${id_categoria}`);
+  }
+
+  getSaldo(anio: number, mes: number) {
+    return this.http.get(`${this.api}/finanzas/saldo/${anio}/${mes}`);
   }
 
   saveMovimiento(data : any) {
