@@ -171,7 +171,8 @@
 
       <div class="form-group">
         <label>RFC</label>
-        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;">
+        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;"  (blur)="forzarConsulta()" (change)="forzarConsulta()"
+        (keyup.enter)="forzarConsulta()">
       </div>
 
 
@@ -184,7 +185,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Razón Social</label>
-        <input type="text" [(ngModel)]="razon_social" style="text-transform: uppercase;">
+        <input type="text" [(ngModel)]="razon_social"  [readonly]="bloquearRazon" style="text-transform: uppercase;">
       </div>
 
       <div class="form-group">
@@ -216,12 +217,12 @@
       <div class="form-group">
         <label>Importe sin iva</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_sin_iva"
-          (ngModelChange)="calcularTotal()" placeholder="0.00">
+          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
       </div>
 
       <div class="form-group">
         <label>IVA</label>
-        <select [(ngModel)]="iva" (change)="calcularTotal()">
+        <select [(ngModel)]="iva" (change)="calcularTotal()" (blur)="calcularTotal()">
           <option [value]="0">0%</option>
           <option [value]="8">8%</option>
           <option [value]="16">16%</option>
@@ -231,7 +232,7 @@
       <div class="form-group">
         <label>IVA Acreditable</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_acreditable"
-          (ngModelChange)="calcularTotal()" placeholder="0.00">
+          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
       </div>
 
 
@@ -244,17 +245,17 @@
       <div class="form-group">
         <label>IVA Traslado</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_traslado"
-          (ngModelChange)="calcularTotal()" placeholder="0.00">
+          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
       </div>
       <div class="form-group">
         <label>ISR Retenido</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="isr_retenido"
-          (ngModelChange)="calcularTotal()" placeholder="0.00">
+          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
       </div>
       <div class="form-group">
         <label>IVA Retenido</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_retenido"
-          (ngModelChange)="calcularTotal()" placeholder="0.00">
+          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
       </div>
 
     </div>

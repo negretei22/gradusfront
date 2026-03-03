@@ -23,6 +23,11 @@ export class FinanzasService {
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);
   }
 
+  getRazonSocial(rfc : any): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/finanzas/razon_social/${rfc}`);
+    
+  }
+
   getCategorias(id_categoria : any): Observable<any[]> {
     return this.http.get<any[]>(`${this.api}/finanzas/categorias/${id_categoria}`);
   }

@@ -31,6 +31,7 @@ export class FinanzasComponent {
   filtroMovimiento: string = ''
   movimientosFiltrados: any[] = []
   showModal = false
+  bloquearRazon = false
   tipo_movimiento_id: number = 0
   fecha_pago: string = '0000-00-00'
   fecha_factura: string = '0000-00-00'
@@ -42,8 +43,8 @@ export class FinanzasComponent {
   isr_retenido: number | null = null;
   iva_retenido: number | null = null;
   granTotal: number | null = null;
-  filtroAnio: number = 2026 ;
-  filtroMes: number = 2 ;
+  filtroAnio: number = 2026;
+  filtroMes: number = 2;
   categoria_id: any = '';
   categorias: any[] = []
   cuenta_id: any[] = []
@@ -88,13 +89,14 @@ export class FinanzasComponent {
 
 
   cargarMovimientos() {
-    this.getSaldo(this.filtroAnio,this.filtroMes)
+    this.getSaldo(this.filtroAnio, this.filtroMes)
     this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes).subscribe(res => {
       this.movimientos = res as any[];
       this.movimientosFiltrados = [...this.movimientos];
     });
   }
   calcularTotal() {
+    //console.log("entro")
     const m = Number(this.importe_sin_iva) || 0;
     const ivaNum = Number(this.iva) || 0;
     const m2 = Number(this.iva_acreditable) || 0;
@@ -104,7 +106,7 @@ export class FinanzasComponent {
 
     const ivaCalc = m * ivaNum / 100;
 
-    console.log(this.tipo_movimiento_id, typeof this.tipo_movimiento_id);
+    //console.log(this.tipo_movimiento_id, typeof this.tipo_movimiento_id);
 
     if (this.tipo_movimiento_id == 1) {
 
@@ -151,7 +153,7 @@ export class FinanzasComponent {
 
     setTimeout(() => {
       this.cargarMovimientos();
-      this.getSaldo(this.filtroAnio,this.filtroMes);
+      this.getSaldo(this.filtroAnio, this.filtroMes);
     });
   }
 
@@ -171,7 +173,7 @@ export class FinanzasComponent {
 
   editMovimiento(movimiento: any) {
 
-   
+
 
     this.editing = true
     this.id = movimiento.id
@@ -216,7 +218,7 @@ export class FinanzasComponent {
 
 
   async getSaldo(anio: number, mes: number) {
-    await this.finanzasService.getSaldo(anio,mes).subscribe((res: any) => {
+    await this.finanzasService.getSaldo(anio, mes).subscribe((res: any) => {
       this.ingresos = res.ingresos;
       this.egresos = res.egresos;
       this.inversiones = res.inversiones;
@@ -400,6 +402,45 @@ export class FinanzasComponent {
     this.resetForm()
   }
 
+
+  forzarConsulta() {
+    this.traeRazonSocial();
+  }
+
+  async traeRazonSocial() {
+
+
+
+    if (this.rfc && this.rfc.length >= 12) {
+
+      await this.finanzasService.getRazonSocial(this.rfc).subscribe(res => {
+        if (res.length > 0) {
+
+          this.bloquearRazon = true
+
+          this.razon_social = res[0].razon_social;
+        } else {
+          this.bloquearRazon = false
+          this.razon_social = ''
+        }
+      });
+    } else {
+      this.razon_social = ''
+    }
+
+  }
+
+  getPrimerDiaMes(): string {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+    const yyyy = primerDia.getFullYear();
+    const mm = String(primerDia.getMonth() + 1).padStart(2, '0');
+    const dd = '01';
+
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   async saveMovimiento() {
 
 
@@ -407,7 +448,9 @@ export class FinanzasComponent {
       id: this.id,
       tipo_movimiento_id: this.tipo_movimiento_id,
       fecha_pago: this.fecha_pago ? this.fecha_pago : '0000-00-00',
-      fecha_factura: this.fecha_factura ? this.fecha_factura : '0000-00-00',
+      fecha_factura: this.fecha_factura
+        ? this.fecha_factura
+        : this.getPrimerDiaMes(),
       concepto: this.concepto.toUpperCase(),
       rfc: this.rfc.toUpperCase(),
       razon_social: this.razon_social.toUpperCase(),
@@ -423,7 +466,8 @@ export class FinanzasComponent {
       folio_fiscal: this.folio_fiscal.toUpperCase(),
     };
 
-  
+
+
 
     try {
       const res = this.editing
@@ -433,11 +477,8 @@ export class FinanzasComponent {
 
       this.showModal = false;
       this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.')
-      this.getSaldo(this.filtroAnio,this.filtroMes);
-      this.finanzasService.getMovimientos().subscribe(res => {
-        this.movimientos = res as any[];
-        this.movimientosFiltrados = [...this.movimientos];
-      });
+      this.getSaldo(this.filtroAnio, this.filtroMes);
+      this.cargarMovimientos()
 
 
 
