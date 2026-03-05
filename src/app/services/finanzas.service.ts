@@ -41,6 +41,9 @@ export class FinanzasService {
   }
 
   updateMovimiento(id: any,data : any){
+
+
+  
       return firstValueFrom(this.http.post(`${this.api}/finanzas/update/${id}`, data));
   }
   

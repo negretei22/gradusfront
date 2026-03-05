@@ -6,6 +6,7 @@ import { FinanzasService } from '../services/finanzas.service';
 import { AlertsService } from '../core/alerts.service';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
+import JSZip from "jszip";
 
 
 @Component({
@@ -58,6 +59,17 @@ export class FinanzasComponent {
   saldo = 0;
   iva: number = 16; // default
   total: number = 0;
+  archivo: File | null = null;
+  archivoNombre: string = '';
+  archivoActual: string = '';
+  isDragging = false;
+
+
+  mostrarArchivo = false;
+
+  toggleArchivo() {
+    this.mostrarArchivo = !this.mostrarArchivo;
+  }
 
 
   meses = [
@@ -74,6 +86,53 @@ export class FinanzasComponent {
     { value: 11, text: 'NOVIEMBRE' },
     { value: 12, text: 'DICIEMBRE' }
   ];
+
+
+  esPDF(nombre: string) {
+    return nombre?.toLowerCase().endsWith('.pdf');
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent) {
+
+    event.preventDefault();
+    this.isDragging = false;
+
+    if (event.dataTransfer?.files.length) {
+
+      const file = event.dataTransfer.files[0];
+
+      this.archivo = file;
+      this.archivoNombre = file.name;
+
+    }
+
+  }
+
+  esImagen(nombre: string) {
+    return nombre?.match(/\.(jpg|jpeg|png|gif)$/i);
+  }
+
+  verArchivo(nombre: string) {
+    window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.archivo = file;
+      console.log("Archivo seleccionado:", this.archivo);
+    }
+  }
 
 
   openModal() {
@@ -196,6 +255,11 @@ export class FinanzasComponent {
     this.isr_retenido = movimiento.isr_retenido;
     this.metodo_pago_id = movimiento.metodo_pago_id;
 
+    if (movimiento.archivo) {
+      this.archivoActual = movimiento.archivo;
+      this.archivoNombre = movimiento.archivo;
+      this.mostrarArchivo = true;
+    }
 
     this.showModal = true; // abre modal
 
@@ -232,7 +296,7 @@ export class FinanzasComponent {
     });
   }
 
-  exportarExcel() {
+  async exportarExcel() {
 
     const headers = [
       "No.", "TIPO DE MOVIMIENTO", "FECHA DE PAGO", "FECHA DE FACTURA",
@@ -274,6 +338,12 @@ export class FinanzasComponent {
     // FILTROS
     const ingresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 1);
     const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2);
+    const egresosSinNomina = egresos.filter((m: any) =>
+      !m.concepto?.toUpperCase().includes('NÓMINA')
+    );
+    const nomina = egresos.filter((m: any) =>
+      m.concepto?.toUpperCase().includes('NÓMINA')
+    );
     const inversiones = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 3);
 
     // SUMAS
@@ -334,7 +404,9 @@ export class FinanzasComponent {
     };
 
     addSection("INGRESOS", ingresos);
-    addSection("EGRESOS", egresos);
+    addSection("EGRESOS", egresosSinNomina);
+    addSection("NÓMINA", nomina);
+
     addSection("INVERSIONES", inversiones);
 
     // ===== TOTALES GENERALES =====
@@ -390,9 +462,34 @@ export class FinanzasComponent {
       }
     }
 
+
+    const zip = new JSZip();
+
+    // 1️⃣ agregar el excel que ya generas
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, 'finanzas.xlsx');
+    zip.file("finanzas.xlsx", excelBuffer);
+
+    // 2️⃣ descargar adjuntos
+    for (const m of this.movimientosFiltrados) {
+
+      if (m.archivo) {
+
+        const url = `http://localhost:3000/uploads/movimientos/${m.archivo}`;
+
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        zip.file(`comprobantes/${m.archivo}`, blob);
+
+      }
+
+    }
+
+    // 3️⃣ generar zip
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+
+    saveAs(zipBlob, "finanzas.zip");
+
   }
 
 
@@ -443,50 +540,53 @@ export class FinanzasComponent {
 
   async saveMovimiento() {
 
+    const formData = new FormData();
 
-    const movimiento = {
-      id: this.id,
-      tipo_movimiento_id: this.tipo_movimiento_id,
-      fecha_pago: this.fecha_pago ? this.fecha_pago : '0000-00-00',
-      fecha_factura: this.fecha_factura
-        ? this.fecha_factura
-        : this.getPrimerDiaMes(),
-      concepto: this.concepto.toUpperCase(),
-      rfc: this.rfc.toUpperCase(),
-      razon_social: this.razon_social.toUpperCase(),
-      importe_sin_iva: this.importe_sin_iva,
-      iva: this.iva,
-      iva_acreditable: this.iva_acreditable,
-      iva_traslado: this.iva_traslado,
-      isr_retenido: this.isr_retenido,
-      iva_retenido: this.iva_retenido,
-      gran_total: this.granTotal,
-      categoria_id: this.categoria_id,
-      metodo_pago_id: this.metodo_pago_id,
-      folio_fiscal: this.folio_fiscal.toUpperCase(),
-    };
+    formData.append('id', String(this.id) ?? '');
+    formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
+    formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
+    formData.append('fecha_factura', this.fecha_factura ? this.fecha_factura : this.getPrimerDiaMes());
+    formData.append('concepto', this.concepto.toUpperCase());
+    formData.append('rfc', this.rfc.toUpperCase());
+    formData.append('razon_social', this.razon_social.toUpperCase());
+    formData.append('importe_sin_iva', String(this.importe_sin_iva));
+    formData.append('iva', String(this.iva));
+    formData.append('iva_acreditable', String(this.iva_acreditable));
+    formData.append('iva_traslado', String(this.iva_traslado));
+    formData.append('isr_retenido', String(this.isr_retenido));
+    formData.append('iva_retenido', String(this.iva_retenido));
+    formData.append('gran_total', String(this.granTotal));
+    formData.append('categoria_id', this.categoria_id);
+    formData.append('metodo_pago_id', this.metodo_pago_id);
+    formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
+    if (this.archivo) {
 
+      formData.append('archivo', this.archivo);
+    }
 
-
+    // console.log("Data",formData)
     try {
+
       const res = this.editing
-        ? await this.finanzasService.updateMovimiento(this.id, movimiento)
-        : await this.finanzasService.saveMovimiento(movimiento);
+        ? await this.finanzasService.updateMovimiento(this.id, formData)
+        : await this.finanzasService.saveMovimiento(formData);
+
       console.log(res);
 
       this.showModal = false;
-      this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.')
+
+      this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
+
       this.getSaldo(this.filtroAnio, this.filtroMes);
-      this.cargarMovimientos()
 
-
+      this.cargarMovimientos();
 
     } catch (err: any) {
 
+      console.log(err);
 
     }
-
 
   }
 

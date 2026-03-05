@@ -491,3 +491,35 @@ select {
   border-radius: 8px;
   box-sizing: border-box;
 }
+
+
+
+.drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 25px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.drop-zone:hover{
+  border-color:#3f51b5;
+  background:#f5f7ff;
+}
+
+.drop-zone.dragging {
+  border-color: #2563eb;
+  background: #eef5ff;
+  transform: scale(1.02);
+}
+
+.dropzone.dragging::after{
+  content:"Suelta el archivo aquí";
+  font-weight:bold;
+}
+
+.drop-zone.dragging{
+  border-color:#28a745;
+  background:#f0fff4;
+}

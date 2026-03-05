@@ -104,6 +104,12 @@
 
 
         <td class="actions">
+          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+
+            <span *ngIf="esPDF(m.archivo)">📄</span>
+            <span *ngIf="esImagen(m.archivo)">🖼️</span>
+
+          </button>
           <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
           <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
         </td>
@@ -171,8 +177,8 @@
 
       <div class="form-group">
         <label>RFC</label>
-        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;"  (blur)="forzarConsulta()" (change)="forzarConsulta()"
-        (keyup.enter)="forzarConsulta()">
+        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;" (blur)="forzarConsulta()"
+          (change)="forzarConsulta()" (keyup.enter)="forzarConsulta()">
       </div>
 
 
@@ -185,15 +191,13 @@
     <div class="form-row">
       <div class="form-group">
         <label>Razón Social</label>
-        <input type="text" [(ngModel)]="razon_social"  [readonly]="bloquearRazon" style="text-transform: uppercase;">
+        <input type="text" [(ngModel)]="razon_social" [readonly]="bloquearRazon" style="text-transform: uppercase;">
       </div>
 
       <div class="form-group">
         <label>Concepto</label>
         <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;">
       </div>
-
-
 
     </div>
     <div class="form-row">
@@ -205,6 +209,40 @@
       </div>
 
     </div>
+    <br>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Archivo (PDF o Imagen)</label>
+
+        <div class="drop-zone" (dragover)="onDragOver($event)"  [class.dragging]="isDragging" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
+          (click)="fileInput.click()">
+
+          <p *ngIf="!archivoNombre">Arrastra el archivo aquí o haz click</p>
+          <div *ngIf="archivoNombre">
+
+            <span *ngIf="archivoNombre.endsWith('.pdf')">📄</span>
+            <span
+              *ngIf="archivoNombre.endsWith('.jpg') || archivoNombre.endsWith('.jpeg') || archivoNombre.endsWith('.png')">🖼️</span>
+
+            {{ archivoNombre }}
+
+          </div>
+
+          <a
+  *ngIf="archivoActual"
+  [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual"
+  target="_blank"
+  (click)="$event.stopPropagation()"
+>
+  Ver archivo
+</a>
+
+          <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+
+      </div>
+    </div>
+    <br>
 
     <!-- FILA 4 -->
     <div class="form-row">
