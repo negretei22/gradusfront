@@ -15,7 +15,7 @@ export class FinanzasService {
   let params: any = {};
   if (anio) params.anio = anio;
   if (mes) params.mes = mes;
-
+  console.log(`${this.api}/finanzas/`)
   return this.http.get<any[]>(`${this.api}/finanzas/`,{params});
 
   }

@@ -527,7 +527,7 @@ export class FinanzasComponent {
 
   }
 
-  getPrimerDiaMes(): string {
+  async getPrimerDiaMes() {
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
@@ -535,7 +535,7 @@ export class FinanzasComponent {
     const mm = String(primerDia.getMonth() + 1).padStart(2, '0');
     const dd = '01';
 
-    return `${yyyy}-${mm}-${dd}`;
+    return await `${yyyy}-${mm}-${dd}`;
   }
 
   async saveMovimiento() {
@@ -545,7 +545,11 @@ export class FinanzasComponent {
     formData.append('id', String(this.id) ?? '');
     formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
     formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
-    formData.append('fecha_factura', this.fecha_factura ? this.fecha_factura : this.getPrimerDiaMes());
+    const fecha = this.fecha_factura
+      ? this.fecha_factura
+      : await this.getPrimerDiaMes();
+
+    formData.append('fecha_factura', fecha);
     formData.append('concepto', this.concepto.toUpperCase());
     formData.append('rfc', this.rfc.toUpperCase());
     formData.append('razon_social', this.razon_social.toUpperCase());

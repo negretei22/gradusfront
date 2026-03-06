@@ -106,8 +106,13 @@
         <td class="actions">
           <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
 
-            <span *ngIf="esPDF(m.archivo)">📄</span>
-            <span *ngIf="esImagen(m.archivo)">🖼️</span>
+            <span *ngIf="esPDF(m.archivo)">
+              <i class="fa-solid fa-file-pdf"></i>
+            </span>
+
+            <span *ngIf="esImagen(m.archivo)">
+              <i class="fa-solid fa-file-image"></i>
+            </span>
 
           </button>
           <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
@@ -214,8 +219,8 @@
       <div class="form-group">
         <label>Archivo (PDF o Imagen)</label>
 
-        <div class="drop-zone" (dragover)="onDragOver($event)"  [class.dragging]="isDragging" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
-          (click)="fileInput.click()">
+        <div class="drop-zone" (dragover)="onDragOver($event)" [class.dragging]="isDragging"
+          (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
 
           <p *ngIf="!archivoNombre">Arrastra el archivo aquí o haz click</p>
           <div *ngIf="archivoNombre">
@@ -228,14 +233,10 @@
 
           </div>
 
-          <a
-  *ngIf="archivoActual"
-  [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual"
-  target="_blank"
-  (click)="$event.stopPropagation()"
->
-  Ver archivo
-</a>
+          <a *ngIf="archivoActual" [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual" target="_blank"
+            (click)="$event.stopPropagation()">
+            Ver archivo
+          </a>
 
           <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
         </div>
