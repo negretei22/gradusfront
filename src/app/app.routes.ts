@@ -4,6 +4,7 @@ import { ContratosComponent } from './contratos/contratos.component';
 import { LicitacionesComponent } from './licitaciones/licitaciones.component';
 import { MaquinariaComponent } from './maquinaria/maquinaria.component';
 import { FinanzasComponent } from './finanzas/finanzas.component';
+import { MonitorProcedimientosComponent } from './monitor-procedimientos/monitor-procedimientos.component';
 
 
 export const routes: Route[] = [
@@ -12,4 +13,5 @@ export const routes: Route[] = [
   { path: 'licitaciones', component: LicitacionesComponent },
   { path: 'maquinaria', component: MaquinariaComponent },
   { path: 'finanzas', component: FinanzasComponent },
+  { path: 'monitor-procedimientos', component: MonitorProcedimientosComponent },
 ];

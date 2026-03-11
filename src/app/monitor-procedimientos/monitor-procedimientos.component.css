@@ -1,0 +1,156 @@
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: Arial;
+    margin: 0;
+    background: #f5f6fa;
+}
+
+.header {
+    padding: 15px 30px;
+    font-size: 22px;
+    font-weight: bold;
+    border-bottom: 1px solid #e4e7ef;
+    background: white;
+}
+
+.lista {
+    padding: 10px 20px;
+    border-bottom: 1px solid #e4e7ef;
+    background: white;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.procItem {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    background: #eef1f6;
+    cursor: pointer;
+}
+
+.procActivo {
+    background: #3498db;
+    color: white;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.panel {
+    width: 900px;
+}
+
+.timeline {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+}
+
+#map {
+    height: 100%;
+}
+
+
+.proc {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.estado {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.desc {
+    font-size: 13px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+
+
+.step {
+    text-align: center;
+    width: 25%;
+}
+
+.circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    margin: auto;
+    line-height: 34px;
+    font-weight: bold;
+    border: 2px solid #d0d7e2;
+    background: white;
+}
+
+.done {
+    background: #2ecc71;
+    color: white;
+    border: none;
+}
+
+.next {
+    background: #3498db;
+    color: white;
+    border: none;
+}
+
+.future {
+    background: #ecf0f3;
+    color: #555;
+}
+
+.label {
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.date {
+    font-size: 11px;
+    color: #666;
+}
+
+.counter {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f1f3f8;
+    border-radius: 6px;
+}
+
+.counter span {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2980b9;
+}
+
+
+.filtros{
+display:flex;
+gap:10px;
+margin:15px 0;
+flex-wrap:wrap;
+}
+
+.filtroItem{
+padding:6px 12px;
+background:#eee;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+}
+
+.filtroItem.activo{
+background:#1976d2;
+color:white;
+}

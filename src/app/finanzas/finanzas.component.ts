@@ -63,9 +63,40 @@ export class FinanzasComponent {
   archivoNombre: string = '';
   archivoActual: string = '';
   isDragging = false;
+  tab = 'ingreso';
 
 
   mostrarArchivo = false;
+
+
+  movimientosFiltradosTabs() {
+
+    if (this.tab === 'ingreso') {
+      return this.movimientosFiltrados.filter(m =>
+        m.tipo_movimiento_id == 1
+      );
+    }
+
+    if (this.tab === 'nomina') {
+      return this.movimientosFiltrados.filter(m =>
+        m.tipo_movimiento_id == 2 && m.categoria_id == 2
+      );
+    }
+
+    if (this.tab === 'egreso') {
+      return this.movimientosFiltrados.filter(m =>
+        m.tipo_movimiento_id == 2 && m.categoria_id != 2
+      );
+    }
+
+    if (this.tab === 'inversion') {
+      return this.movimientosFiltrados.filter(m =>
+        m.tipo_movimiento_id != 1 && m.tipo_movimiento_id != 2
+      );
+    }
+
+    return [];
+  }
 
   toggleArchivo() {
     this.mostrarArchivo = !this.mostrarArchivo;
@@ -337,7 +368,10 @@ export class FinanzasComponent {
 
     // FILTROS
     const ingresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 1);
-    const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2);
+    //const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2); // CON NOMINAS 
+    const egresos = this.movimientosFiltrados.filter(
+      (m: any) => m.tipo_movimiento_id == 2 && m.categoria_id != 2
+    );
     const egresosSinNomina = egresos.filter((m: any) =>
       !m.concepto?.toUpperCase().includes('NÓMINA')
     );

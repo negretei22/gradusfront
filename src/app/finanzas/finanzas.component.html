@@ -68,54 +68,73 @@
   </div>
 
   <!-- TABLA -->
-  <table class="gradus-table">
-    <thead>
-      <tr>
-        <th>Fecha de Factura</th>
-        <th>Tipo</th>
-        <th>Folio Fiscal</th>
-        <th>Concepto</th>
-        <th>Monto</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
+ <div class="tabs">
 
-    <tbody>
-      <tr *ngFor="let m of movimientosFiltrados">
-        <td>{{ (m.fecha_factura | date:'yyyy') === '1899' ? 'SIN FECHA' : (m.fecha_factura | date:'dd/MM/yyyy') }}</td>
-        <td>
+  <button (click)="tab='ingreso'" [class.active]="tab=='ingreso'">INGRESOS</button>
+  <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
+  <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
+  <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
 
-          <span [ngClass]="
-  m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
-  m.tipo_movimiento_id == 2 ? 'tag-egreso' :
-  'tag-inversion'
-">
-            {{
-            m.tipo_movimiento_id == 1 ? 'INGRESO' :
-            m.tipo_movimiento_id == 2 ? 'EGRESO' :
-            'INVERSION'
-            }}
-          </span>
-        </td>
-
-        <td>{{ m.folio_fiscal }}</td>
-        <td>{{ m.concepto }}</td>
-        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+</div>
 
 
-        <td class="actions">
-          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+<table class="gradus-table">
+  <thead>
+    <tr>
+      <th>Fecha de Factura</th>
+      <th>Tipo</th>
+      <th>Folio Fiscal</th>
+      <th>Concepto</th>
+      <th>Monto</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
 
-            <span *ngIf="esPDF(m.archivo)">📄</span>
-            <span *ngIf="esImagen(m.archivo)">🖼️</span>
+  <tbody>
 
-          </button>
-          <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
-          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <tr *ngFor="let m of movimientosFiltradosTabs()">
+      <td>
+        {{ (m.fecha_factura | date:'yyyy') === '1899'
+        ? 'SIN FECHA'
+        : (m.fecha_factura | date:'dd/MM/yyyy') }}
+      </td>
+
+      <td>
+        <span [ngClass]="
+        m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
+        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
+        m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+        'tag-inversion'
+        ">
+        {{
+        m.tipo_movimiento_id == 1 ? 'INGRESO' :
+        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+        m.tipo_movimiento_id == 2 ? 'EGRESO' :
+        'INVERSION'
+        }}
+        </span>
+      </td>
+
+      <td>{{ m.folio_fiscal }}</td>
+      <td>{{ m.concepto }}</td>
+      <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+
+      <td class="actions">
+
+        <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+          <span *ngIf="esPDF(m.archivo)">📄</span>
+          <span *ngIf="esImagen(m.archivo)">🖼️</span>
+        </button>
+
+        <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
+        <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
 
 </div>
 

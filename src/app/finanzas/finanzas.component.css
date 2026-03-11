@@ -426,6 +426,14 @@ select {
 }
 
 
+.tag-nomina {
+  background: #ca88c9;
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
 .finance-cards {
   display: flex;
   gap: 20px;
@@ -522,4 +530,37 @@ select {
 .drop-zone.dragging{
   border-color:#28a745;
   background:#f0fff4;
+}
+
+
+.tabs{
+  display:flex;
+  margin-left:10px;
+}
+
+.tabs button{
+  padding:10px 18px;
+  border:1px solid #ddd;
+  border-bottom:none;
+  background:#f5f5f5;
+  cursor:pointer;
+  border-top-left-radius:6px;
+  border-top-right-radius:6px;
+  margin-right:4px;
+  font-weight:500;
+}
+
+.tabs button:hover{
+  background:#eee;
+}
+
+.tabs button.active{
+  background: var(--gradus-green);
+  color:white;
+  border-color:var(--gradus-green);
+}
+
+.gradus-table{
+  border:1px solid #ddd;
+  border-top:none;
 }

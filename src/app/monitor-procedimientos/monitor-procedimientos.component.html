@@ -1,0 +1,83 @@
+<div class="header">
+    Monitor de Procedimientos
+</div>
+
+<div class="filtros">
+
+    <div class="filtroItem"
+        (click)="filtrar('TODOS')"
+        [ngClass]="{'activo': estadoSeleccionado === 'TODOS'}">
+        TODOS
+    </div>
+
+    <div class="filtroItem"
+        *ngFor="let e of estados"
+        (click)="filtrar(e)"
+        [ngClass]="{'activo': estadoSeleccionado === e}">
+        {{e}}
+    </div>
+
+</div>
+
+
+<div class="lista">
+    <div class="procItem"
+        *ngFor="let p of procedimientosFiltrados; let i=index"
+        (click)="ir(i)"
+        [ngClass]="{'procActivo': i===index}">
+        {{p.proc}} - {{p.estado}}
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="panel">
+
+        <div class="proc">{{procedimientoActual?.proc}}</div>
+
+        <div class="estado">
+            {{procedimientoActual?.estado}}
+        </div>
+
+        <div class="desc">
+            {{procedimientoActual?.desc}}
+        </div>
+
+        <div class="timeline">
+
+            <div class="step">
+                <div class="circle" [ngClass]="claseCirculo(0)">1</div>
+                <div class="label">VISITA</div>
+                <div class="date">{{formatoFecha(procedimientoActual?.visita)}}</div>
+            </div>
+
+            <div class="step">
+                <div class="circle" [ngClass]="claseCirculo(1)">2</div>
+                <div class="label">ACLARACIONES</div>
+                <div class="date">{{formatoFecha(procedimientoActual?.aclar)}}</div>
+            </div>
+
+            <div class="step">
+                <div class="circle" [ngClass]="claseCirculo(2)">3</div>
+                <div class="label">APERTURA</div>
+                <div class="date">{{formatoFecha(procedimientoActual?.apertura)}}</div>
+            </div>
+
+            <div class="step">
+                <div class="circle future">4</div>
+                <div class="label">FALLO</div>
+                <div class="date">{{formatoFecha(procedimientoActual?.fallo)}}</div>
+            </div>
+
+        </div>
+
+        <div class="counter">
+            Próximo evento:
+            <b>{{proximoEvento?.nombre}}</b>
+            <br>
+            Faltan <span>{{proximoEvento?.dias}}</span> días
+        </div>
+
+    </div>
+
+</div>
