@@ -53,6 +53,9 @@ body {
     display: flex;
     justify-content: space-between;
     margin-top: 40px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #map {
@@ -71,7 +74,7 @@ body {
 }
 
 .desc {
-    font-size: 13px;
+    font-size: 15px;
     margin-bottom: 20px;
     line-height: 1.4;
 }
@@ -84,11 +87,11 @@ body {
 }
 
 .circle {
-    width: 34px;
-    height: 34px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     margin: auto;
-    line-height: 34px;
+    line-height: 100px;
     font-weight: bold;
     border: 2px solid #d0d7e2;
     background: white;
@@ -112,12 +115,12 @@ body {
 }
 
 .label {
-    font-size: 12px;
+    font-size: 20px;
     margin-top: 6px;
 }
 
 .date {
-    font-size: 11px;
+    font-size: 14px;
     color: #666;
 }
 
@@ -129,7 +132,7 @@ body {
 }
 
 .counter span {
-    font-size: 22px;
+    font-size: 30px;
     font-weight: bold;
     color: #2980b9;
 }
@@ -154,3 +157,41 @@ font-size:14px;
 background:#1976d2;
 color:white;
 }
+
+.desc {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.desc.abierto {
+    max-height: 300px;
+}
+
+.proc:hover {
+    cursor: pointer;
+}
+
+
+.proximos{
+    margin-top:40px;
+}
+
+.tituloProximos{
+    font-weight:bold;
+    font-size:20px;
+    margin-bottom:10px;
+}
+
+.proxItem{
+    display:flex;
+    justify-content:space-between;
+    padding:8px;
+    border-bottom:1px solid #ddd;
+}
+
+.proxDias{
+    font-weight:bold;
+    color:#c0392b;
+}
+

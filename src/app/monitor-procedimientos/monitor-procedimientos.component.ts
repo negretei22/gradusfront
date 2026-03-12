@@ -27,10 +27,17 @@ export class MonitorProcedimientosComponent implements OnInit {
   procedimientosFiltrados: any[] = [];
   estados: string[] = [];
   estadoSeleccionado = 'TODOS';
+  intervalo: any;
+  descVisible = false;
 
 
 
   constructor(private procedimientoService: ProcedimientosService) { }
+
+  toggleDesc() {
+    this.descVisible = !this.descVisible;
+  }
+
 
   ngOnInit() {
 
@@ -39,10 +46,10 @@ export class MonitorProcedimientosComponent implements OnInit {
       this.procedimientos = data;
 
       this.procedimientosFiltrados = this.procedimientos;
+      console.log(this.procedimientosFiltrados)
       this.estados = [...new Set(this.procedimientos.map(p => p.estado))];
       this.mostrar();
-
-      setInterval(() => this.rotar(), 3000);
+      this.intervalo = setInterval(() => this.rotar(), 5000);
 
     });
 
@@ -52,20 +59,29 @@ export class MonitorProcedimientosComponent implements OnInit {
   filtrar(estado: string) {
 
     this.estadoSeleccionado = estado;
+    if (!this.intervalo) {
+      this.intervalo = setInterval(() => this.rotar(), 5000);
+    }
+    
 
     if (estado === 'TODOS') {
       this.procedimientosFiltrados = this.procedimientos;
+
     } else {
       this.procedimientosFiltrados = this.procedimientos.filter(p => p.estado === estado);
     }
+
+    this.index = 0;
+    this.mostrar();
 
   }
 
   ir(i: number) {
 
     this.index = i;
-
     this.mostrar();
+    clearInterval(this.intervalo);
+    this.intervalo = null;
 
   }
 
@@ -73,7 +89,7 @@ export class MonitorProcedimientosComponent implements OnInit {
 
     this.index++;
 
-    if (this.index >= this.procedimientos.length)
+    if (this.index >= this.procedimientosFiltrados.length)
       this.index = 0;
 
     this.mostrar();
@@ -82,14 +98,14 @@ export class MonitorProcedimientosComponent implements OnInit {
 
   mostrar() {
 
-    this.procedimientoActual = this.procedimientos[this.index];
+    this.procedimientoActual = this.procedimientosFiltrados[this.index];
     this.calcularProximo();
 
   }
 
   formatoFecha(f: any) {
 
-    if (!f) return "SIN FALLO";
+    if (!f) return "SIN FECHA";
 
     let fecha = new Date(f);
 
@@ -104,7 +120,7 @@ export class MonitorProcedimientosComponent implements OnInit {
     let hora = fecha.toLocaleTimeString("es-MX",
       { hour: "numeric", minute: "2-digit" });
 
-    return fechaTxt + " a las " + hora;
+    return fechaTxt + "<br>" + hora;
 
   }
 
