@@ -23,28 +23,22 @@
 
     <div class="filtros">
 
-        <div class="filtroItem"
-             (click)="filtrar('TODOS')"
-             [ngClass]="{'activo': estadoSeleccionado === 'TODOS'}">
+        <div class="filtroItem" (click)="filtrar('TODOS')" [ngClass]="{'activo': estadoSeleccionado === 'TODOS'}">
             TODOS
         </div>
 
-        <div class="filtroItem"
-             *ngFor="let e of estados"
-             (click)="filtrar(e)"
-             [ngClass]="{'activo': estadoSeleccionado === e}">
+        <div class="filtroItem" *ngFor="let e of estados" (click)="filtrar(e)"
+            [ngClass]="{'activo': estadoSeleccionado === e}">
             {{e}}
         </div>
 
     </div>
 
 
-    <div class="lista">
-        <div class="procItem"
-             *ngFor="let p of procedimientosFiltrados; let i=index"
-             (click)="ir(i)"
-             [ngClass]="{'procActivo': i===index}">
-            {{p.proc}} - {{p.estado}}
+    <div class="lista" *ngIf="estadoSeleccionado !== 'TODOS'">
+        <div class="procItem" *ngFor="let p of procedimientosFiltrados; let i=index" (click)="ir(i)"
+            [ngClass]="{'procActivo': i===index}">
+            {{p.proc}}
         </div>
     </div>
 
@@ -71,32 +65,28 @@
                 <div class="step">
                     <div class="circle" [ngClass]="claseCirculo(0)">1</div>
                     <div class="label">VISITA</div>
-                    <div class="date"
-                        [innerHTML]="formatoFecha(procedimientoActual?.visita)">
+                    <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.visita)">
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="circle" [ngClass]="claseCirculo(1)">2</div>
                     <div class="label">ACLARACIONES</div>
-                    <div class="date"
-                        [innerHTML]="formatoFecha(procedimientoActual?.aclar)">
+                    <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.aclar)">
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="circle" [ngClass]="claseCirculo(2)">3</div>
                     <div class="label">APERTURA</div>
-                    <div class="date"
-                        [innerHTML]="formatoFecha(procedimientoActual?.apertura)">
+                    <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.apertura)">
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="circle future">4</div>
                     <div class="label">FALLO</div>
-                    <div class="date"
-                        [innerHTML]="formatoFecha(procedimientoActual?.fallo)">
+                    <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.fallo)">
                     </div>
                 </div>
 
@@ -123,10 +113,7 @@
 
 <div *ngIf="modoVista === 'fechas'" class="monitorFechas">
 
-    <div *ngFor="let e of eventosProximos"
-     class="evento"
-     (click)="abrirProcedimiento(e.uuid)"
-     [ngClass]="{
+    <div *ngFor="let e of eventosProximos" class="evento" (click)="abrirProcedimiento(e.uuid)" [ngClass]="{
         'rojo': e.dias <= 1,
         'alerta': e.dias >= 2 && e.dias <= 5,
         'verde': e.dias > 5
@@ -148,9 +135,9 @@
             {{e.dias}} días
         </div>
 
-        <div class="fecha"  [innerHTML]="formatoFecha(e?.fecha)">
-            
-            
+        <div class="fecha" [innerHTML]="formatoFecha(e?.fecha)">
+
+
         </div>
 
     </div>
