@@ -29,6 +29,8 @@ export class MonitorProcedimientosComponent implements OnInit {
   estadoSeleccionado = 'TODOS';
   intervalo: any;
   descVisible = false;
+  modoVista: 'normal' | 'fechas' = 'normal';
+  eventosProximos: any[] = [];
 
 
 
@@ -39,12 +41,93 @@ export class MonitorProcedimientosComponent implements OnInit {
   }
 
 
+  cambiarVista(v: 'normal' | 'fechas') {
+
+    this.modoVista = v;
+
+    if (v === 'fechas') {
+      clearInterval(this.intervalo);
+      this.intervalo = null;
+      this.calcularEventosProximos();
+    }
+
+    if (v === 'normal') {
+      if (!this.intervalo) {
+        this.intervalo = setInterval(() => this.rotar(), 5000);
+      }
+    }
+
+  }
+
+  calcularEventosProximos() {
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const limite = new Date();
+  limite.setDate(hoy.getDate() + 10);
+
+  let lista: any[] = [];
+
+  this.procedimientos.forEach(p => {
+
+    const eventos = [
+      { nombre: 'VISITA', fecha: p.visita },
+      { nombre: 'ACLARACIONES', fecha: p.aclar },
+      { nombre: 'APERTURA', fecha: p.apertura },
+      { nombre: 'FALLO', fecha: p.fallo }
+    ];
+
+    eventos.forEach(e => {
+
+      if (!e.fecha || e.fecha === '0000-00-00') return;
+
+      let fechaEvento = new Date(e.fecha);
+      if (isNaN(fechaEvento.getTime())) return;
+
+      // copia SOLO para comparar
+      let fechaComparar = new Date(fechaEvento);
+      fechaComparar.setHours(0,0,0,0);
+
+      if (fechaComparar >= hoy && fechaComparar <= limite) {
+
+        const diff = fechaComparar.getTime() - hoy.getTime();
+        const dias = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        console.log(p)
+        lista.push({
+          proc: p.proc,
+          estado: p.estado,
+          evento: e.nombre,
+          fecha: fechaEvento, // ← conserva la hora real
+          dias: dias,
+          uuid: p.uid
+        });
+
+      }
+
+    });
+
+  });
+
+  lista.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+
+  this.eventosProximos = lista;
+
+}
+
+
+abrirProcedimiento(uuid: string){
+
+  const url = `https://comprasmx.buengobierno.gob.mx/sitiopublico/#/sitiopublico/detalle/${uuid}/procedimiento`;
+
+  window.open(url, '_blank');
+
+}
   ngOnInit() {
 
 
     this.procedimientoService.getProcedimientos().subscribe((data: any) => {
       this.procedimientos = data;
-
       this.procedimientosFiltrados = this.procedimientos;
       console.log(this.procedimientosFiltrados)
       this.estados = [...new Set(this.procedimientos.map(p => p.estado))];
@@ -62,7 +145,7 @@ export class MonitorProcedimientosComponent implements OnInit {
     if (!this.intervalo) {
       this.intervalo = setInterval(() => this.rotar(), 5000);
     }
-    
+
 
     if (estado === 'TODOS') {
       this.procedimientosFiltrados = this.procedimientos;
@@ -105,9 +188,11 @@ export class MonitorProcedimientosComponent implements OnInit {
 
   formatoFecha(f: any) {
 
-    if (!f) return "SIN FECHA";
+    if (!f || f === '0000-00-00') return "SIN FECHA";
 
     let fecha = new Date(f);
+
+    if (isNaN(fecha.getTime())) return "SIN FECHA";
 
     let opciones: any = {
       day: "numeric",
@@ -117,8 +202,18 @@ export class MonitorProcedimientosComponent implements OnInit {
 
     let fechaTxt = fecha.toLocaleDateString("es-MX", opciones);
 
-    let hora = fecha.toLocaleTimeString("es-MX",
-      { hour: "numeric", minute: "2-digit" });
+    // revisar si la hora realmente existe
+    let horas = fecha.getHours();
+    let minutos = fecha.getMinutes();
+
+    if (horas === 0 && minutos === 0) {
+      return fechaTxt;
+    }
+
+    let hora = fecha.toLocaleTimeString("es-MX", {
+      hour: "numeric",
+      minute: "2-digit"
+    });
 
     return fechaTxt + "<br>" + hora;
 

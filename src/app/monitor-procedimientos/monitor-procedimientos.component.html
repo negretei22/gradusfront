@@ -2,81 +2,157 @@
     Monitor de Procedimientos
 </div>
 
-<div class="filtros">
+<div class="vistas">
 
-    <div class="filtroItem" (click)="filtrar('TODOS')" [ngClass]="{'activo': estadoSeleccionado === 'TODOS'}">
-        TODOS
+    <button (click)="cambiarVista('normal')">
+        Monitor Procedimientos
+    </button>
+
+    <button (click)="cambiarVista('fechas')">
+        Monitor de Fechas
+    </button>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- VISTA NORMAL -->
+<!-- ========================= -->
+
+<div *ngIf="modoVista === 'normal'">
+
+    <div class="filtros">
+
+        <div class="filtroItem"
+             (click)="filtrar('TODOS')"
+             [ngClass]="{'activo': estadoSeleccionado === 'TODOS'}">
+            TODOS
+        </div>
+
+        <div class="filtroItem"
+             *ngFor="let e of estados"
+             (click)="filtrar(e)"
+             [ngClass]="{'activo': estadoSeleccionado === e}">
+            {{e}}
+        </div>
+
     </div>
 
-    <div class="filtroItem" *ngFor="let e of estados" (click)="filtrar(e)"
-        [ngClass]="{'activo': estadoSeleccionado === e}">
-        {{e}}
+
+    <div class="lista">
+        <div class="procItem"
+             *ngFor="let p of procedimientosFiltrados; let i=index"
+             (click)="ir(i)"
+             [ngClass]="{'procActivo': i===index}">
+            {{p.proc}} - {{p.estado}}
+        </div>
+    </div>
+
+
+    <div class="container">
+
+        <div class="panel">
+
+            <div class="proc" (click)="toggleDesc()">
+                {{procedimientoActual?.proc}}
+            </div>
+
+            <div class="estado">
+                {{procedimientoActual?.estado}}
+            </div>
+
+            <div class="desc" (click)="abrirProcedimiento(procedimientoActual.uid)" [class.abierto]="descVisible">
+                {{procedimientoActual?.desc}}
+            </div>
+
+
+            <div class="timeline">
+
+                <div class="step">
+                    <div class="circle" [ngClass]="claseCirculo(0)">1</div>
+                    <div class="label">VISITA</div>
+                    <div class="date"
+                        [innerHTML]="formatoFecha(procedimientoActual?.visita)">
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="circle" [ngClass]="claseCirculo(1)">2</div>
+                    <div class="label">ACLARACIONES</div>
+                    <div class="date"
+                        [innerHTML]="formatoFecha(procedimientoActual?.aclar)">
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="circle" [ngClass]="claseCirculo(2)">3</div>
+                    <div class="label">APERTURA</div>
+                    <div class="date"
+                        [innerHTML]="formatoFecha(procedimientoActual?.apertura)">
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="circle future">4</div>
+                    <div class="label">FALLO</div>
+                    <div class="date"
+                        [innerHTML]="formatoFecha(procedimientoActual?.fallo)">
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="counter">
+                Próximo evento:
+                <b>{{proximoEvento?.nombre}}</b>
+                <br>
+                Faltan <span>{{proximoEvento?.dias}}</span> días
+            </div>
+
+        </div>
+
     </div>
 
 </div>
 
 
-<div class="lista">
-    <div class="procItem" *ngFor="let p of procedimientosFiltrados; let i=index" (click)="ir(i)"
-        [ngClass]="{'procActivo': i===index}">
-        {{p.proc}} - {{p.estado}}
-    </div>
-</div>
+<!-- ========================= -->
+<!-- VISTA MONITOR DE FECHAS -->
+<!-- ========================= -->
 
-<div class="container">
+<div *ngIf="modoVista === 'fechas'" class="monitorFechas">
 
-    <div class="panel">
+    <div *ngFor="let e of eventosProximos"
+     class="evento"
+     (click)="abrirProcedimiento(e.uuid)"
+     [ngClass]="{
+        'rojo': e.dias <= 1,
+        'alerta': e.dias >= 2 && e.dias <= 5,
+        'verde': e.dias > 5
+     }">
 
-        <div class="proc" (click)="toggleDesc()">
-            {{procedimientoActual?.proc}}
+        <div class="proc">
+            {{e.proc}}
         </div>
 
-        <div class="estado">
-            {{procedimientoActual?.estado}}
+        <div class="estado2">
+            {{e.estado}}
         </div>
 
-        <div class="desc" [class.abierto]="descVisible">
-            {{procedimientoActual?.desc}}
+        <div class="eventoNombre">
+            {{e.evento}}
         </div>
 
-        <div class="timeline">
-
-            <div class="step">
-                <div class="circle" [ngClass]="claseCirculo(0)">1</div>
-                <div class="label">VISITA</div>
-                <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.visita)"></div>
-            </div>
-
-            <div class="step">
-                <div class="circle" [ngClass]="claseCirculo(1)">2</div>
-                <div class="label">ACLARACIONES</div>
-                <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.aclar)"></div>
-            </div>
-
-            <div class="step">
-                <div class="circle" [ngClass]="claseCirculo(2)">3</div>
-                <div class="label">APERTURA</div>
-                <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.apertura)"></div>
-            </div>
-
-            <div class="step">
-                <div class="circle future">4</div>
-                <div class="label">FALLO</div>
-                <div class="date" [innerHTML]="formatoFecha(procedimientoActual?.fallo)"></div>
-            </div>
-
+        <div class="dias">
+            {{e.dias}} días
         </div>
 
-        <div class="counter">
-            Próximo evento:
-            <b>{{proximoEvento?.nombre}}</b>
-            <br>
-            Faltan <span>{{proximoEvento?.dias}}</span> días
+        <div class="fecha"  [innerHTML]="formatoFecha(e?.fecha)">
+            
+            
         </div>
 
     </div>
-
-
-    
 
 </div>
