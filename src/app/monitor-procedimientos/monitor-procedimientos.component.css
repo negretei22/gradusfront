@@ -145,24 +145,24 @@ body {
 }
 
 
-.filtros{
-display:flex;
-gap:10px;
-margin:15px 0;
-flex-wrap:wrap;
+.filtros {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
 }
 
-.filtroItem{
-padding:6px 12px;
-background:#eee;
-border-radius:6px;
-cursor:pointer;
-font-size:14px;
+.filtroItem {
+    padding: 6px 12px;
+    background: #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
 }
 
-.filtroItem.activo{
-background:#1976d2;
-color:white;
+.filtroItem.activo {
+    background: #1976d2;
+    color: white;
 }
 
 .desc {
@@ -180,87 +180,184 @@ color:white;
 }
 
 
-.proximos{
-    margin-top:40px;
+.proximos {
+    margin-top: 40px;
 }
 
-.tituloProximos{
-    font-weight:bold;
-    font-size:20px;
-    margin-bottom:10px;
+.tituloProximos {
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 10px;
 }
 
-.proxItem{
-    display:flex;
-    justify-content:space-between;
-    padding:8px;
-    border-bottom:1px solid #ddd;
+.proxItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
 }
 
-.proxDias{
-    font-weight:bold;
-    color:#c0392b;
-}
-
-
-.monitorFechas{
-    padding:20px;
-}
-
-.evento{
-    border:1px solid #ccc;
-    padding:15px;
-    margin-bottom:10px;
-    border-radius:8px;
-}
-
-.alerta{
-    background:#fff3cd;
-}
-
-.rojo{
-    background:#d4a8a8;
-    color:white;
-}
-
-.alerta{
-    background:#d9bf69;
-}
-
-.verde{
-    background:#859f67;
-    color:white;
+.proxDias {
+    font-weight: bold;
+    color: #c0392b;
 }
 
 
-.vistas{
-    display:flex;
-    gap:12px;
-    justify-content:center;
-    margin:20px 0;
+.monitorFechas {
+    padding: 20px;
 }
 
-.vistas button{
-    padding:10px 22px;
-    border:none;
-    border-radius:8px;
-    font-size:14px;
-    font-weight:600;
-    cursor:pointer;
-    background:#f3f4f6;
-    color:#333;
-    transition:all .25s ease;
-    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+.evento {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
 }
 
-.vistas button:hover{
-    background:#2563eb;
-    color:white;
-    transform:translateY(-2px);
-    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+.alerta {
+    background: #fff3cd;
 }
 
-.vistas button:active{
-    transform:translateY(0);
+.rojo {
+    background: #d4a8a8;
+    color: white;
 }
 
+.alerta {
+    background: #d9bf69;
+}
+
+.verde {
+    background: #859f67;
+    color: white;
+}
+
+
+.vistas {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.vistas button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #f3f4f6;
+    color: #333;
+    transition: all .25s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.vistas button:hover {
+    background: #2563eb;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.vistas button:active {
+    transform: translateY(0);
+}
+
+
+.calendario {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.cardDia {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fechaDia {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.eventoItem {
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.eventoItem {
+  font-size: 13px;
+  padding: 6px;
+  border-radius: 5px;
+  margin-bottom: 4px;
+}
+
+/* 🔴 ya pasó */
+.eventoItem.pasado {
+  background-color: #ffe5e5;
+  color: #a94442;
+}
+
+/* 🟡 hoy */
+.eventoItem.hoy {
+  background-color: #fff4cc;
+  color: #8a6d3b;
+}
+
+/* 🟢 futuro */
+.eventoItem.futuro {
+  background-color: #e6f4ea;
+  color: #2e7d32;
+}
+
+
+.cardDia {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.fechaDia {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* bloque por evento */
+.eventoBloque {
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+/* colores */
+.eventoBloque.rojo {
+  background: #ffe5e5;
+  color: #a94442;
+}
+
+.eventoBloque.amarillo {
+  background: #fff4cc;
+  color: #8a6d3b;
+}
+
+.eventoBloque.verde {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+
+.tipo {
+  font-weight: bold;
+}
+
+.proc {
+  font-size: 13px;
+}
+
+.hora {
+  font-size: 12px;
+}

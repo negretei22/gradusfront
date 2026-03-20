@@ -7,6 +7,7 @@ import { AlertsService } from '../core/alerts.service';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 import JSZip from "jszip";
+import { firstValueFrom } from 'rxjs';
 
 
 @Component({
@@ -154,7 +155,7 @@ export class FinanzasComponent {
   }
 
   verArchivo(nombre: string) {
-    window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
+    window.open(`http://anvotv.ddns.net:3000/uploads/movimientos/${nombre}`, '_blank');
   }
 
   onFileSelected(event: any) {
@@ -261,42 +262,45 @@ export class FinanzasComponent {
   }
 
 
-  editMovimiento(movimiento: any) {
+  async editMovimiento(id: number) {
 
+    console.log("hola");
 
+    const data: any = await firstValueFrom(
+      this.finanzasService.getMovimientoById(id)
+    );
 
-    this.editing = true
-    this.id = movimiento.id
-    this.titulo = 'Editar Movimiento Financiero'
-    this.textoBoton = 'Actualizar'
-    this.getMetodosPago()
-    this.tipo_movimiento_id = +movimiento.tipo_movimiento_id;
-    this.getCategorias(this.tipo_movimiento_id)
-    this.categoria_id = movimiento.categoria_id;
-    this.fecha_pago = movimiento.fecha_pago.split('T')[0];;
-    this.fecha_factura = movimiento.fecha_factura.split('T')[0];;
-    this.folio_fiscal = movimiento.folio_fiscal;
-    this.rfc = movimiento.rfc;
-    this.razon_social = movimiento.razon_social;
-    this.concepto = movimiento.concepto;
-    this.descripcion = movimiento.descripcion;
-    this.importe_sin_iva = movimiento.importe_sin_iva;
-    this.iva_acreditable = movimiento.iva_acreditable;
-    this.iva_traslado = movimiento.iva_traslado;
-    this.isr_retenido = movimiento.isr_retenido;
-    this.metodo_pago_id = movimiento.metodo_pago_id;
+    this.editing = true;
+    this.id = data.id;
+    this.titulo = 'Editar Movimiento Financiero';
+    this.textoBoton = 'Actualizar';
 
-    if (movimiento.archivo) {
-      this.archivoActual = movimiento.archivo;
-      this.archivoNombre = movimiento.archivo;
+    this.getMetodosPago();
+    this.tipo_movimiento_id = +data.tipo_movimiento_id;
+    this.getCategorias(this.tipo_movimiento_id);
+
+    this.categoria_id = data.categoria_id;
+    this.fecha_pago = data.fecha_pago.split('T')[0];
+    this.fecha_factura = data.fecha_factura.split('T')[0];
+    this.folio_fiscal = data.folio_fiscal;
+    this.rfc = data.rfc;
+    this.razon_social = data.razon_social;
+    this.concepto = data.concepto;
+    this.descripcion = data.descripcion;
+    this.iva = data.iva;
+    this.importe_sin_iva = data.importe_sin_iva;
+    this.iva_acreditable = data.iva_acreditable;
+    this.iva_traslado = data.iva_traslado;
+    this.isr_retenido = data.isr_retenido;
+    this.metodo_pago_id = data.metodo_pago_id;
+
+    if (data.archivo) {
+      this.archivoActual = data.archivo;
+      this.archivoNombre = data.archivo;
       this.mostrarArchivo = true;
     }
 
-    this.showModal = true; // abre modal
-
-
-
-
+    this.showModal = true;
   }
 
 
@@ -322,6 +326,7 @@ export class FinanzasComponent {
   }
 
   async getMetodosPago() {
+    
     await this.finanzasService.getCatalogo('metodos_pago').subscribe(res => {
       this.metodosPago = res;
     });
@@ -369,15 +374,25 @@ export class FinanzasComponent {
     // FILTROS
     const ingresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 1);
     //const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2); // CON NOMINAS 
+    //console.log(this.movimientosFiltrados)
     const egresos = this.movimientosFiltrados.filter(
-      (m: any) => m.tipo_movimiento_id == 2 && m.categoria_id != 2
+      
+      (m: any) => m.tipo_movimiento_id == 2 
     );
+    console.log(egresos)
+
+    
     const egresosSinNomina = egresos.filter((m: any) =>
-      !m.concepto?.toUpperCase().includes('NÓMINA')
+      m.categoria_id !== 2
     );
+
+    console.log(egresosSinNomina);
+
     const nomina = egresos.filter((m: any) =>
-      m.concepto?.toUpperCase().includes('NÓMINA')
+      m.categoria_id == 2
     );
+
+    console.log(nomina)
     const inversiones = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 3);
 
     // SUMAS
@@ -396,7 +411,7 @@ export class FinanzasComponent {
     };
 
     const totalIngresos = sum(ingresos, 'importe_sin_iva');
-    const totalGastos = sum(egresos, 'importe_sin_iva');
+    const totalGastos = sum(egresosSinNomina, 'importe_sin_iva');
 
     const gastosConIVA = egresos
       .filter((m: any) => Number(m.iva_acreditable) > 0)

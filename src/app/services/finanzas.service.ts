@@ -15,11 +15,12 @@ export class FinanzasService {
   let params: any = {};
   if (anio) params.anio = anio;
   if (mes) params.mes = mes;
-  console.log(`${this.api}/finanzas/`)
+  
   return this.http.get<any[]>(`${this.api}/finanzas/`,{params});
 
   }
   getCatalogo(catalogo: any): Observable<any[]> {
+    
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);
   }
 
@@ -39,6 +40,7 @@ export class FinanzasService {
   saveMovimiento(data : any) {
       return firstValueFrom(this.http.post(`${this.api}/finanzas/save`, data));
   }
+
 
   updateMovimiento(id: any,data : any){
 

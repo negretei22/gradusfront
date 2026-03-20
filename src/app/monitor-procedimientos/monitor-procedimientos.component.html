@@ -12,6 +12,10 @@
         Monitor de Fechas
     </button>
 
+    <button (click)="cambiarVista('calendario')">
+        Calendario
+    </button>
+
 </div>
 
 
@@ -95,9 +99,9 @@
 
             <div class="counter">
                 Próximo evento:
-                <b>{{proximoEvento?.nombre}}</b>
+                <b>{{proximoNombre}}</b>
                 <br>
-                Faltan <span>{{proximoEvento?.dias}}</span> días
+                <span>{{ formatoTiempo() }}</span>
             </div>
 
         </div>
@@ -131,12 +135,52 @@
             {{e.evento}}
         </div>
 
-        <div class="dias">
-            {{e.dias}} días
-        </div>
+
 
         <div class="fecha" [innerHTML]="formatoFecha(e?.fecha)">
 
+
+        </div>
+
+        <div class="dias">
+            Tiempo Restante: {{ formatoTiempoRestante(e.fecha) }}
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- VISTA CALENDARIO -->
+<!-- ========================= -->
+
+<div *ngIf="modoVista === 'calendario'" class="calendario">
+
+    <div *ngFor="let dia of calendario" class="cardDia">
+
+        <!-- FECHA -->
+        <div class="fechaDia">
+            {{ formatoSoloFecha(dia.fecha) }}
+        </div>
+
+        <!-- EVENTOS -->
+        <div *ngFor="let e of dia.eventos" class="eventoBloque" [ngClass]="claseEvento(e.fecha)">
+
+
+            <div class="proc">
+                {{ e.proc }}
+            </div>
+            
+            <div class="tipo">
+                {{ e.estado }}
+            </div>
+
+            <div class="tipo">
+                {{ e.evento }}
+            </div>
+            <div class="hora">
+                {{ formatoTiempoRestante(e.fecha) }}
+            </div>
 
         </div>
 

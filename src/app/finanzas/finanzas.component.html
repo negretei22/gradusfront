@@ -126,7 +126,7 @@
           <span *ngIf="esImagen(m.archivo)">🖼️</span>
         </button>
 
-        <button class="btn-edit" (click)="editMovimiento(m)">✏️</button>
+        <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
         <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
 
       </td>
