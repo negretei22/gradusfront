@@ -624,25 +624,25 @@ export class FinanzasComponent {
     // 2️⃣ descargar adjuntos
     for (const m of movimientosOrdenados) {
 
-      if (m.archivo) {
+      if (!m.archivo) continue;
 
-        const url = `http://localhost:3000/uploads/movimientos/${m.archivo}`;
+      const url = `http://localhost:3000/uploads/movimientos/${m.archivo}`;
 
-        const response = await fetch(url);
-        const blob = await response.blob();
-        let nombreArchivo = m.archivo;
-        console.log(m.tipo_movimiento_id, typeof m.tipo_movimiento_id);
-        if (Number(m.tipo_movimiento_id) === 2) {
+      const response = await fetch(url);
+      const blob = await response.blob();
 
-          nombreArchivo =
-            `${m.orden.toString().padStart(2, '0')}. ${m.archivo}`;
-          console.log(nombreArchivo)
-        }
+      // 🔧 FIX de encoding roto (NÃ³mina → Nómina)
+      const fixEncoding = (str: string) =>
+        decodeURIComponent(escape(str));
 
-        zip.file(`comprobantes/${nombreArchivo}`, blob);
+      let nombreArchivo = fixEncoding(m.archivo);
 
+      if (Number(m.tipo_movimiento_id) === 2) {
+        nombreArchivo =
+          `${String(m.orden).padStart(2, '0')}. ${nombreArchivo}`;
       }
 
+      zip.file(`comprobantes/${nombreArchivo}`, blob);
     }
 
     // 3️⃣ generar zip
