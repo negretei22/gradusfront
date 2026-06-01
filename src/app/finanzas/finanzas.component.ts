@@ -85,17 +85,7 @@ export class FinanzasComponent {
     event.currentIndex
   );
 
-  const inicio = Math.min(
-    event.previousIndex,
-    event.currentIndex
-  );
-
-  const fin = Math.max(
-    event.previousIndex,
-    event.currentIndex
-  );
-
-  for (let i = inicio; i <= fin; i++) {
+  for (let i = 0; i < this.movimientos.length; i++) {
 
     const m = this.movimientos[i];
 
@@ -347,6 +337,7 @@ export class FinanzasComponent {
     this.iva_acreditable = data.iva_acreditable;
     console.log(data.iva_traslado);
     this.iva_traslado = Number(data.iva_traslado);
+    this.granTotal = data.gran_total;
 
 
     this.isr_retenido = data.isr_retenido;
@@ -592,8 +583,16 @@ export class FinanzasComponent {
 
         const response = await fetch(url);
         const blob = await response.blob();
+      let nombreArchivo = m.archivo;
+        console.log(m.tipo_movimiento_id, typeof m.tipo_movimiento_id);
+        if (Number(m.tipo_movimiento_id) === 2) {
 
-        zip.file(`comprobantes/${m.archivo}`, blob);
+            nombreArchivo =
+                `${m.orden.toString().padStart(2, '0')}. ${m.archivo}`;
+                console.log(nombreArchivo)
+        }
+
+        zip.file(`comprobantes/${nombreArchivo}`, blob);
 
       }
 
