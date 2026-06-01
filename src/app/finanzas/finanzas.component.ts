@@ -619,7 +619,10 @@ export class FinanzasComponent {
 
     // 1️⃣ agregar el excel que ya generas
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    zip.file("finanzas.xlsx", excelBuffer);
+    const mesSeleccionado = this.mesesVisibles.find(m => m.value === this.filtroMes);
+    const nombreArchivo = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.xlsx`;
+
+    zip.file(nombreArchivo, excelBuffer);
 
     // 2️⃣ descargar adjuntos
     for (const m of movimientosOrdenados) {
@@ -647,8 +650,8 @@ export class FinanzasComponent {
 
     // 3️⃣ generar zip
     const zipBlob = await zip.generateAsync({ type: "blob" });
-
-    saveAs(zipBlob, "finanzas.zip");
+    const nombreZip = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.zip`;
+    saveAs(zipBlob, nombreZip);
 
   }
 
