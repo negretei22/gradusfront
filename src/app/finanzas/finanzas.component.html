@@ -1,5 +1,14 @@
 <div class="page-container">
 
+  <div class="meses-cards">
+  <div *ngFor="let mes of mesesVisibles"
+       class="mes-card"
+       [class.activo]="mes.value === filtroMes"
+       (click)="seleccionarMes(mes.value)">
+    {{ mes.text }}
+  </div>
+</div>
+
   <div class="finance-cards">
 
     <div class="finance-card ingreso-card">
@@ -68,125 +77,135 @@
   </div>
 
   <!-- TABLA -->
- <div class="tabs">
+  <div class="tabs">
 
-  <button (click)="tab='ingreso'" [class.active]="tab=='ingreso'">INGRESOS</button>
-  <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
-  <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
-  <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
-  <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
+    <button (click)="tab='ingreso'" [class.active]="tab=='ingreso'">INGRESOS</button>
+    <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
+    <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
+    <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
+    <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
 
-</div>
-
-
-<table class="gradus-table">
-  <thead>
-    <tr>
-      <th *ngIf="tab == 'todos'"></th>
-      <th>Fecha de Factura</th>
-      <th>Tipo</th>
-      <th>Folio Fiscal</th>
-      <th>Concepto</th>
-      <th>Monto</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
+  </div>
 
 
-  <tbody  *ngIf="tab == 'todos'"
-  cdkDropList
-  (cdkDropListDropped)="drop($event)" >
+  <table class="gradus-table">
+    <thead>
+      <tr>
+        <th *ngIf="tab == 'todos'"></th>
+        <th>Fecha de Factura</th>
+        <th>Tipo</th>
+        <th>Folio Fiscal</th>
+        <th>Concepto</th>
+        <th>Monto</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
 
-    <tr *ngFor="let m of movimientos" cdkDrag>
-      <td cdkDragHandle class="drag-handle"> ☰ </td>
-      <td>
-        {{ (m.fecha_factura | date:'yyyy') === '1899'
-        ? 'SIN FECHA'
-        : (m.fecha_factura | date:'dd/MM/yyyy') }}
-      </td>
 
-      <td>
-        <span [ngClass]="
+    <tbody *ngIf="tab == 'todos'" cdkDropList (cdkDropListDropped)="drop($event)">
+
+      <tr *ngFor="let m of movimientos" cdkDrag>
+        <td cdkDragHandle class="drag-handle"> ☰ </td>
+        <td>
+          {{ (m.fecha_factura | date:'yyyy') === '1899'
+          ? 'SIN FECHA'
+          : (m.fecha_factura | date:'dd/MM/yyyy') }}
+        </td>
+
+        <td>
+          <span [ngClass]="
         m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
         m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
         m.tipo_movimiento_id == 2 ? 'tag-egreso' :
         'tag-inversion'
         ">
-        {{
-        m.tipo_movimiento_id == 1 ? 'INGRESO' :
-        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
-        m.tipo_movimiento_id == 2 ? 'EGRESO' :
-        'INVERSION'
-        }}
-        </span>
-      </td>
+            {{
+            m.tipo_movimiento_id == 1 ? 'INGRESO' :
+            m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+            m.tipo_movimiento_id == 2 ? 'EGRESO' :
+            'INVERSION'
+            }}
+          </span>
+        </td>
 
-      <td>{{ m.folio_fiscal }}</td>
-      <td>{{ m.concepto }}</td>
-      <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+        <td>{{ m.folio_fiscal }}</td>
+        <td>{{ m.concepto }}</td>
+        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
 
-      <td class="actions">
+        <td class="actions">
 
-        <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
-          <span *ngIf="esPDF(m.archivo)">📄</span>
-          <span *ngIf="esImagen(m.archivo)">🖼️</span>
-        </button>
+          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+            <span *ngIf="esPDF(m.archivo)">📄</span>
+            <span *ngIf="esImagen(m.archivo)">🖼️</span>
+          </button>
 
-        <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-        <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+          <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
 
-      </td>
+        </td>
 
-    </tr>
+      </tr>
 
-  </tbody>
+      <tr *ngIf="movimientos.length === 0">
+        <td colspan="7" style="text-align:center;padding:30px;">
+          Sin resultados
+        </td>
+      </tr>
+
+    </tbody>
 
 
-  <tbody  *ngIf="tab != 'todos'" >
+    <tbody *ngIf="tab != 'todos'">
 
-    <tr *ngFor="let m of movimientosFiltradosTabs()">
-      <td>
-        {{ (m.fecha_factura | date:'yyyy') === '1899'
-        ? 'SIN FECHA'
-        : (m.fecha_factura | date:'dd/MM/yyyy') }}
-      </td>
+      <tr *ngFor="let m of movimientosFiltradosTabs()">
+        <td>
+          {{ (m.fecha_factura | date:'yyyy') === '1899'
+          ? 'SIN FECHA'
+          : (m.fecha_factura | date:'dd/MM/yyyy') }}
+        </td>
 
-      <td>
-        <span [ngClass]="
+        <td>
+          <span [ngClass]="
         m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
         m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
         m.tipo_movimiento_id == 2 ? 'tag-egreso' :
         'tag-inversion'
         ">
-        {{
-        m.tipo_movimiento_id == 1 ? 'INGRESO' :
-        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
-        m.tipo_movimiento_id == 2 ? 'EGRESO' :
-        'INVERSION'
-        }}
-        </span>
-      </td>
+            {{
+            m.tipo_movimiento_id == 1 ? 'INGRESO' :
+            m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+            m.tipo_movimiento_id == 2 ? 'EGRESO' :
+            'INVERSION'
+            }}
+          </span>
+        </td>
 
-      <td>{{ m.folio_fiscal }}</td>
-      <td>{{ m.concepto }}</td>
-      <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+        <td>{{ m.folio_fiscal }}</td>
+        <td>{{ m.concepto }}</td>
+        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
 
-      <td class="actions">
+        <td class="actions">
 
-        <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
-          <span *ngIf="esPDF(m.archivo)">📄</span>
-          <span *ngIf="esImagen(m.archivo)">🖼️</span>
-        </button>
+          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+            <span *ngIf="esPDF(m.archivo)">📄</span>
+            <span *ngIf="esImagen(m.archivo)">🖼️</span>
+          </button>
 
-        <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-        <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+          <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
 
-      </td>
+        </td>
 
-    </tr>
+      </tr>
 
-  </tbody>
-</table>
+      <tr *ngIf="movimientosFiltradosTabs().length === 0">
+        <td colspan="20" style="text-align:center;padding:20px;">
+          Sin resultados
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
 
 </div>
 
@@ -285,8 +304,8 @@
       <div class="form-group">
         <label>Archivo (PDF o Imagen)</label>
 
-        <div class="drop-zone" (dragover)="onDragOver($event)"  [class.dragging]="isDragging" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
-          (click)="fileInput.click()">
+        <div class="drop-zone" (dragover)="onDragOver($event)" [class.dragging]="isDragging"
+          (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
 
           <p *ngIf="!archivoNombre">Arrastra el archivo aquí o haz click</p>
           <div *ngIf="archivoNombre">
@@ -299,14 +318,10 @@
 
           </div>
 
-          <a
-  *ngIf="archivoActual"
-  [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual"
-  target="_blank"
-  (click)="$event.stopPropagation()"
->
-  Ver archivo
-</a>
+          <a *ngIf="archivoActual" [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual" target="_blank"
+            (click)="$event.stopPropagation()">
+            Ver archivo
+          </a>
 
           <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
         </div>

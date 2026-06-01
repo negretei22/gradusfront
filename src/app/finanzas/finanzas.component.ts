@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 import JSZip from "jszip";
 import { firstValueFrom } from 'rxjs';
+import Swal from 'sweetalert2';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import {
   CdkDragDrop,
@@ -51,7 +52,7 @@ export class FinanzasComponent {
   iva_retenido: number | null = null;
   granTotal: number | null = null;
   filtroAnio: number = 2026;
-  filtroMes: number = 2;
+  filtroMes: number = new Date().getMonth() + 1;
   categoria_id: any = '';
   categorias: any[] = []
   cuenta_id: any[] = []
@@ -71,6 +72,9 @@ export class FinanzasComponent {
   isDragging = false;
   tab = 'ingreso';
   cargandoFormulario = false;
+  mesesVisibles: any[] = [];
+
+
 
 
   mostrarArchivo = false;
@@ -79,27 +83,34 @@ export class FinanzasComponent {
 
   async drop(event: CdkDragDrop<any[]>) {
 
-  moveItemInArray(
-    this.movimientos,
-    event.previousIndex,
-    event.currentIndex
-  );
-
-  for (let i = 0; i < this.movimientos.length; i++) {
-
-    const m = this.movimientos[i];
-
-    m.orden = i + 1;
-
-    await this.finanzasService.updateOrden(
-      m.id,
-      m.orden
+    moveItemInArray(
+      this.movimientos,
+      event.previousIndex,
+      event.currentIndex
     );
+
+    for (let i = 0; i < this.movimientos.length; i++) {
+
+      const m = this.movimientos[i];
+
+      m.orden = i + 1;
+
+      await this.finanzasService.updateOrden(
+        m.id,
+        m.orden
+      );
+
+    }
 
   }
 
-}
 
+
+
+  seleccionarMes(mes: number) {
+    this.filtroMes = mes;
+    this.cargarMovimientos();
+  }
 
   movimientosFiltradosTabs() {
 
@@ -211,12 +222,17 @@ export class FinanzasComponent {
 
 
   cargarMovimientos() {
-    this.getSaldo(this.filtroAnio, this.filtroMes)
-    this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes).subscribe(res => {
-      this.movimientos = res as any[];
-      this.movimientosFiltrados = [...this.movimientos];
-    });
+    console.log('filtroMes:', this.filtroMes);
+    console.log('tipo:', typeof this.filtroMes);
+
+    this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes)
+      .subscribe(res => {
+        this.movimientos = res as any[];
+        this.movimientosFiltrados = [...this.movimientos];
+      });
   }
+
+
   calcularTotal() {
     //console.log("entro")
 
@@ -292,14 +308,15 @@ export class FinanzasComponent {
 
 
   ngOnInit() {
-
+    console.log(this.filtroMes);
     this.getSaldo(this.filtroAnio, this.filtroMes)
+    const mesActual = new Date().getMonth() + 1;
+    this.mesesVisibles = this.meses.filter(
+      m => m.value <= mesActual
+    );
 
 
-    this.finanzasService.getMovimientos().subscribe(res => {
-      this.movimientos = res as any[];
-      this.movimientosFiltrados = [...this.movimientos];
-    });
+
 
   }
 
@@ -358,6 +375,36 @@ export class FinanzasComponent {
 
 
   deleteMovimiento(id: number) {
+
+    Swal.fire({
+      title: '¿Eliminar movimiento?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc3545'
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+
+        this.finanzasService.deleteMovimiento(id).subscribe(() => {
+
+          Swal.fire({
+            title: 'Eliminado',
+            text: 'El movimiento fue eliminado correctamente.',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+
+          this.cargarMovimientos();
+
+        });
+
+      }
+
+    });
 
   }
 
@@ -425,7 +472,7 @@ export class FinanzasComponent {
     };
 
     const movimientosOrdenados = [...this.movimientosFiltrados]
-  .sort((a: any, b: any) => a.orden - b.orden);
+      .sort((a: any, b: any) => a.orden - b.orden);
 
     // FILTROS
     const ingresos = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 1);
@@ -583,13 +630,13 @@ export class FinanzasComponent {
 
         const response = await fetch(url);
         const blob = await response.blob();
-      let nombreArchivo = m.archivo;
+        let nombreArchivo = m.archivo;
         console.log(m.tipo_movimiento_id, typeof m.tipo_movimiento_id);
         if (Number(m.tipo_movimiento_id) === 2) {
 
-            nombreArchivo =
-                `${m.orden.toString().padStart(2, '0')}. ${m.archivo}`;
-                console.log(nombreArchivo)
+          nombreArchivo =
+            `${m.orden.toString().padStart(2, '0')}. ${m.archivo}`;
+          console.log(nombreArchivo)
         }
 
         zip.file(`comprobantes/${nombreArchivo}`, blob);

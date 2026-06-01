@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { firstValueFrom, Observable } from 'rxjs';
 
 @Injectable({
@@ -36,6 +37,10 @@ export class FinanzasService {
 
   getSaldo(anio: number, mes: number) {
     return this.http.get(`${this.api}/finanzas/saldo/${anio}/${mes}`);
+  }
+
+  deleteMovimiento(id: number) {
+    return this.http.delete(`${this.api}/finanzas/${id}`);
   }
 
   saveMovimiento(data: any) {
