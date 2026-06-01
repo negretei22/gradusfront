@@ -532,6 +532,44 @@ select {
   background:#f0fff4;
 }
 
+.drag-handle {
+  cursor: move;
+  cursor: grab;
+  user-select: none;
+  width: 30px;
+  text-align: center;
+  color: #888;
+  font-size: 18px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.cdk-drag-preview {
+  background: #1e293b;
+  color: white;
+  border-radius: 6px;
+  opacity: 0.9;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+tr.cdk-drag-dragging td {
+  background: #bfdbfe !important;
+}
+.cdk-drag-dragging {
+  background: #dbeafe !important;
+}
+
+tr.cdk-drag-preview td {
+  background: #1e293b;
+  color: white;
+}
+
+
 
 .tabs{
   display:flex;

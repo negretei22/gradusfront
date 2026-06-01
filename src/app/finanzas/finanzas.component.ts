@@ -8,11 +8,16 @@ import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 import JSZip from "jszip";
 import { firstValueFrom } from 'rxjs';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  moveItemInArray
+} from '@angular/cdk/drag-drop';
 
 
 @Component({
   selector: 'app-finanzas',
-  imports: [CommonModule, FormsModule, NgxMaskDirective],
+  imports: [CommonModule, FormsModule, NgxMaskDirective, DragDropModule],
   templateUrl: './finanzas.component.html',
   styleUrl: './finanzas.component.css'
 })
@@ -41,7 +46,7 @@ export class FinanzasComponent {
   descripcion: string = ''
   importe_sin_iva: number | null = null;
   iva_acreditable: number | null = null;
-  iva_traslado: number | null = null;
+  iva_traslado: number = 0;
   isr_retenido: number | null = null;
   iva_retenido: number | null = null;
   granTotal: number | null = null;
@@ -65,9 +70,45 @@ export class FinanzasComponent {
   archivoActual: string = '';
   isDragging = false;
   tab = 'ingreso';
+  cargandoFormulario = false;
 
 
   mostrarArchivo = false;
+
+
+
+  async drop(event: CdkDragDrop<any[]>) {
+
+  moveItemInArray(
+    this.movimientos,
+    event.previousIndex,
+    event.currentIndex
+  );
+
+  const inicio = Math.min(
+    event.previousIndex,
+    event.currentIndex
+  );
+
+  const fin = Math.max(
+    event.previousIndex,
+    event.currentIndex
+  );
+
+  for (let i = inicio; i <= fin; i++) {
+
+    const m = this.movimientos[i];
+
+    m.orden = i + 1;
+
+    await this.finanzasService.updateOrden(
+      m.id,
+      m.orden
+    );
+
+  }
+
+}
 
 
   movimientosFiltradosTabs() {
@@ -188,6 +229,10 @@ export class FinanzasComponent {
   }
   calcularTotal() {
     //console.log("entro")
+
+    if (this.cargandoFormulario) return;
+
+
     const m = Number(this.importe_sin_iva) || 0;
     const ivaNum = Number(this.iva) || 0;
     const m2 = Number(this.iva_acreditable) || 0;
@@ -197,18 +242,25 @@ export class FinanzasComponent {
 
     const ivaCalc = m * ivaNum / 100;
 
-    //console.log(this.tipo_movimiento_id, typeof this.tipo_movimiento_id);
+    console.log("Monto:" + m)
+    console.log("IVA Num:" + ivaNum)
+    console.log("TipoMovimiento:" + this.tipo_movimiento_id)
+    console.log("IvaTraslado:" + this.iva_traslado)
+    console.log("IvaCalculado: " + ivaCalc)
 
     if (this.tipo_movimiento_id == 1) {
-
+      console.log("hola")
       this.iva_traslado = ivaCalc;
     } else {
-
+      console.log("adios")
       this.iva_acreditable = ivaCalc;
     }
 
+
     this.granTotal = m + m2 + m3 - m4 - m5;
   }
+
+
   filtrarMovimientos() {
 
   }
@@ -229,7 +281,7 @@ export class FinanzasComponent {
     this.importe_sin_iva = null
     this.iva = 16;
     this.iva_acreditable = null
-    this.iva_traslado = null
+    this.iva_traslado = 0
     this.isr_retenido = null
     this.iva_retenido = null
 
@@ -264,11 +316,14 @@ export class FinanzasComponent {
 
   async editMovimiento(id: number) {
 
-    console.log("hola");
+    //  console.log("hola");
 
+    this.cargandoFormulario = true;
     const data: any = await firstValueFrom(
       this.finanzasService.getMovimientoById(id)
     );
+
+
 
     this.editing = true;
     this.id = data.id;
@@ -290,7 +345,10 @@ export class FinanzasComponent {
     this.iva = data.iva;
     this.importe_sin_iva = data.importe_sin_iva;
     this.iva_acreditable = data.iva_acreditable;
-    this.iva_traslado = data.iva_traslado;
+    console.log(data.iva_traslado);
+    this.iva_traslado = Number(data.iva_traslado);
+
+
     this.isr_retenido = data.isr_retenido;
     this.metodo_pago_id = data.metodo_pago_id;
 
@@ -299,6 +357,10 @@ export class FinanzasComponent {
       this.archivoNombre = data.archivo;
       this.mostrarArchivo = true;
     }
+
+    setTimeout(() => {
+      this.cargandoFormulario = false;
+    });
 
     this.showModal = true;
   }
@@ -326,7 +388,7 @@ export class FinanzasComponent {
   }
 
   async getMetodosPago() {
-    
+
     await this.finanzasService.getCatalogo('metodos_pago').subscribe(res => {
       this.metodosPago = res;
     });
@@ -371,17 +433,20 @@ export class FinanzasComponent {
       ];
     };
 
+    const movimientosOrdenados = [...this.movimientosFiltrados]
+  .sort((a: any, b: any) => a.orden - b.orden);
+
     // FILTROS
-    const ingresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 1);
+    const ingresos = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 1);
     //const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2); // CON NOMINAS 
     //console.log(this.movimientosFiltrados)
-    const egresos = this.movimientosFiltrados.filter(
-      
-      (m: any) => m.tipo_movimiento_id == 2 
+    const egresos = movimientosOrdenados.filter(
+
+      (m: any) => m.tipo_movimiento_id == 2
     );
     console.log(egresos)
 
-    
+
     const egresosSinNomina = egresos.filter((m: any) =>
       m.categoria_id !== 2
     );
@@ -393,7 +458,7 @@ export class FinanzasComponent {
     );
 
     console.log(nomina)
-    const inversiones = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 3);
+    const inversiones = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 3);
 
     // SUMAS
     const sum = (arr: any[], field: string) =>
@@ -519,7 +584,7 @@ export class FinanzasComponent {
     zip.file("finanzas.xlsx", excelBuffer);
 
     // 2️⃣ descargar adjuntos
-    for (const m of this.movimientosFiltrados) {
+    for (const m of movimientosOrdenados) {
 
       if (m.archivo) {
 
@@ -640,6 +705,7 @@ export class FinanzasComponent {
       console.log(err);
 
     }
+    this.resetForm()
 
   }
 

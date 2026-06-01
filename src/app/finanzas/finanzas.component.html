@@ -74,6 +74,7 @@
   <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
   <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
   <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
+  <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
 
 </div>
 
@@ -81,6 +82,7 @@
 <table class="gradus-table">
   <thead>
     <tr>
+      <th></th>
       <th>Fecha de Factura</th>
       <th>Tipo</th>
       <th>Folio Fiscal</th>
@@ -90,7 +92,57 @@
     </tr>
   </thead>
 
-  <tbody>
+
+  <tbody  *ngIf="tab == 'todos'"
+  cdkDropList
+  (cdkDropListDropped)="drop($event)" >
+
+    <tr *ngFor="let m of movimientos" cdkDrag>
+      <td cdkDragHandle class="drag-handle"> ☰ </td>
+      <td>
+        {{ (m.fecha_factura | date:'yyyy') === '1899'
+        ? 'SIN FECHA'
+        : (m.fecha_factura | date:'dd/MM/yyyy') }}
+      </td>
+
+      <td>
+        <span [ngClass]="
+        m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
+        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
+        m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+        'tag-inversion'
+        ">
+        {{
+        m.tipo_movimiento_id == 1 ? 'INGRESO' :
+        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+        m.tipo_movimiento_id == 2 ? 'EGRESO' :
+        'INVERSION'
+        }}
+        </span>
+      </td>
+
+      <td>{{ m.folio_fiscal }}</td>
+      <td>{{ m.concepto }}</td>
+      <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+
+      <td class="actions">
+
+        <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
+          <span *ngIf="esPDF(m.archivo)">📄</span>
+          <span *ngIf="esImagen(m.archivo)">🖼️</span>
+        </button>
+
+        <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+        <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+
+
+  <tbody  *ngIf="tab != 'todos'" >
 
     <tr *ngFor="let m of movimientosFiltradosTabs()">
       <td>

@@ -348,7 +348,17 @@ export class MonitorProcedimientosComponent implements OnInit {
 
     let diff = Math.floor((evento - ahora) / 1000);
 
-    if (diff <= 0) return 'FINALIZADO';
+    if (diff <= 0) {
+      const f = new Date(fecha);
+
+      const yyyy = f.getFullYear();
+      const mm = String(f.getMonth() + 1).padStart(2, '0');
+      const dd = String(f.getDate()).padStart(2, '0');
+      const hh = String(f.getHours()).padStart(2, '0');
+      const min = String(f.getMinutes()).padStart(2, '0');
+
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
 
     const dias = Math.floor(diff / 86400);
     const horas = Math.floor((diff % 86400) / 3600);

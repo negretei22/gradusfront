@@ -12,24 +12,25 @@ export class FinanzasService {
   constructor(private http: HttpClient) { }
 
   getMovimientos(anio?: number, mes?: number) {
-  let params: any = {};
-  if (anio) params.anio = anio;
-  if (mes) params.mes = mes;
-  
-  return this.http.get<any[]>(`${this.api}/finanzas/`,{params});
+    let params: any = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    return this.http.get<any[]>(`${this.api}/finanzas/`, { params });
 
   }
+
   getCatalogo(catalogo: any): Observable<any[]> {
-    
+
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);
   }
 
-  getRazonSocial(rfc : any): Observable<any[]> {
+  getRazonSocial(rfc: any): Observable<any[]> {
     return this.http.get<any[]>(`${this.api}/finanzas/razon_social/${rfc}`);
-    
+
   }
 
-  getCategorias(id_categoria : any): Observable<any[]> {
+  getCategorias(id_categoria: any): Observable<any[]> {
     return this.http.get<any[]>(`${this.api}/finanzas/categorias/${id_categoria}`);
   }
 
@@ -37,25 +38,38 @@ export class FinanzasService {
     return this.http.get(`${this.api}/finanzas/saldo/${anio}/${mes}`);
   }
 
-  saveMovimiento(data : any) {
-      return firstValueFrom(this.http.post(`${this.api}/finanzas/save`, data));
+  saveMovimiento(data: any) {
+    return firstValueFrom(this.http.post(`${this.api}/finanzas/save`, data));
+  }
+
+  updateOrden(id: number, orden: number) {
+
+    return firstValueFrom(
+      this.http.post(
+        `${this.api}/finanzas/update_orden`,
+        { id, orden }
+      )
+    );
+
   }
 
 
-  updateMovimiento(id: any,data : any){
 
 
-  
-      return firstValueFrom(this.http.post(`${this.api}/finanzas/update/${id}`, data));
+  updateMovimiento(id: any, data: any) {
+
+
+
+    return firstValueFrom(this.http.post(`${this.api}/finanzas/update/${id}`, data));
   }
-  
-  
-  getMovimientoById(id : number ){
+
+
+  getMovimientoById(id: number) {
 
     return this.http.get<any>(`${this.api}/finanzas/movimiento/${id}`);
 
   }
 
-  
+
 
 }
