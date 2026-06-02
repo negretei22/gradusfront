@@ -440,7 +440,7 @@ export class FinanzasComponent {
       "No.", "TIPO DE MOVIMIENTO", "FECHA DE PAGO", "FECHA DE FACTURA",
       "FOLIO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
       "CONCEPTO", "IMPORTE SIN IVA (BASE ISR)", "IVA Acreditable (Pagado)",
-      "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido", "MÉTODO DE PAGO", "TOTAL"
+      "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido","TOTAL","MÉTODO DE PAGO"
     ];
 
     const formatRow = (m: any, index: number) => {
@@ -468,8 +468,8 @@ export class FinanzasComponent {
         ivaTras,
         isr,
         ivaRet,
-        m.metodo_pago,
-        total
+        total,
+        m.metodo_pago
       ];
     };
 
@@ -549,8 +549,8 @@ export class FinanzasComponent {
         t.ivaTras,
         t.isr,
         t.ivaRet,
-        "",
-        t.total
+        t.total,
+        ""
       ]);
 
       sheetData.push([]);
@@ -594,7 +594,7 @@ export class FinanzasComponent {
     const ref = worksheet['!ref'];
     if (ref) {
       const range = XLSX.utils.decode_range(ref);
-      const moneyCols = [8, 9, 10, 11, 12, 14];
+      const moneyCols = [8, 9, 10, 11, 12, 13];
 
       for (let R = range.s.r; R <= range.e.r; R++) {
         moneyCols.forEach(C => {
