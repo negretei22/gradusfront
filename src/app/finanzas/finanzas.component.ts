@@ -110,6 +110,7 @@ export class FinanzasComponent {
   seleccionarMes(mes: number) {
     this.filtroMes = mes;
     this.cargarMovimientos();
+    this.getSaldo(this.filtroAnio,mes)
   }
 
   movimientosFiltradosTabs() {
@@ -310,6 +311,7 @@ export class FinanzasComponent {
   ngOnInit() {
     console.log(this.filtroMes);
     this.getSaldo(this.filtroAnio, this.filtroMes)
+    
     const mesActual = new Date().getMonth() + 1;
     this.mesesVisibles = this.meses.filter(
       m => m.value <= mesActual
