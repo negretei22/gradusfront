@@ -34,6 +34,7 @@ export class FinanzasComponent {
   razon_social: string = ''
   rfc: string = ''
   folio_fiscal: string = ''
+  folio_complemento_fiscal: string = ''
   editing: boolean = false
   mostrarBuscador: boolean = false // controla visibilidad
   filtroMovimiento: string = ''
@@ -74,6 +75,28 @@ export class FinanzasComponent {
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
 
+  tiposArchivo = [
+    { key: 'prefactura', label: 'PreFactura' },
+    { key: 'factura', label: 'Factura' },
+    { key: 'nota_pago', label: 'Nota de Pago' },
+    { key: 'pago', label: 'Pago' },
+    { key: 'otra', label: 'Otra' },
+  ];
+
+
+  archivos: { [key: string]: File | null } = {
+    prefactura: null, factura: null, nota_pago: null, pago: null, otra: null
+  };
+  archivosNombre: { [key: string]: string } = {
+    prefactura: '', factura: '', nota_pago: '', pago: '', otra: ''
+  };
+  archivosActuales: { [key: string]: string } = {
+    prefactura: '', factura: '', nota_pago: '', pago: '', otra: ''
+  };
+  dragging: { [key: string]: boolean } = {
+    prefactura: false, factura: false, nota_pago: false, pago: false, otra: false
+  };
+
 
 
 
@@ -110,7 +133,7 @@ export class FinanzasComponent {
   seleccionarMes(mes: number) {
     this.filtroMes = mes;
     this.cargarMovimientos();
-    this.getSaldo(this.filtroAnio,mes)
+    this.getSaldo(this.filtroAnio, mes)
   }
 
   movimientosFiltradosTabs() {
@@ -167,46 +190,56 @@ export class FinanzasComponent {
     return nombre?.toLowerCase().endsWith('.pdf');
   }
 
-  onDragOver(event: DragEvent) {
+  onDragOver(event: DragEvent, key: string) {
     event.preventDefault();
-    this.isDragging = true;
+    this.dragging[key] = true;
   }
 
-  onDragLeave(event: DragEvent) {
+  onDragLeave(event: DragEvent, key: string) {
     event.preventDefault();
-    this.isDragging = false;
+    this.dragging[key] = false;
   }
 
-  onDrop(event: DragEvent) {
-
+  onDrop(event: DragEvent, key: string) {
     event.preventDefault();
-    this.isDragging = false;
+    this.dragging[key] = false;
 
     if (event.dataTransfer?.files.length) {
-
       const file = event.dataTransfer.files[0];
-
-      this.archivo = file;
-      this.archivoNombre = file.name;
-
+      this.archivos[key] = file;
+      this.archivosNombre[key] = file.name;
     }
-
   }
-
   esImagen(nombre: string) {
     return nombre?.match(/\.(jpg|jpeg|png|gif)$/i);
   }
 
   verArchivo(nombre: string) {
-    window.open(`http://anvotv.ddns.net:3000/uploads/movimientos/${nombre}`, '_blank');
+    window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
   }
 
-  onFileSelected(event: any) {
+  onFileSelected(event: any, key: string) {
     const file = event.target.files[0];
     if (file) {
-      this.archivo = file;
-      console.log("Archivo seleccionado:", this.archivo);
+      this.archivos[key] = file;
+      this.archivosNombre[key] = file.name;
     }
+  }
+
+  contarArchivos(m: any): number {
+    return this.tiposArchivo.filter(t => !!m[`archivo_${t.key}`]).length;
+  }
+
+  archivosDeMovimiento(m: any) {
+    return this.tiposArchivo
+      .filter(t => !!m[`archivo_${t.key}`])
+      .map(t => ({ label: t.label, archivo: m[`archivo_${t.key}`] }));
+  }
+
+  mostrarMenuArchivos: number | null = null;
+
+  toggleMenuArchivos(id: number) {
+    this.mostrarMenuArchivos = this.mostrarMenuArchivos === id ? null : id;
   }
 
 
@@ -214,6 +247,34 @@ export class FinanzasComponent {
     this.showModal = true
     //this.getCategorias()
     this.getMetodosPago()
+    this.inicializarFechas();
+  }
+
+  inicializarFechas() {
+
+    const hoy = new Date();
+
+    const anio = hoy.getFullYear();
+    const dia = hoy.getDate();
+
+    // filtroMes debe ir de 1 a 12
+    const ultimoDiaMes = new Date(anio, this.filtroMes, 0).getDate();
+
+    // Si hoy es 31 y el mes seleccionado tiene 30, usa 30
+    const diaFinal = Math.min(dia, ultimoDiaMes);
+
+    const fecha = new Date(anio, this.filtroMes - 1, diaFinal);
+
+    this.fecha_pago = this.formatearFecha(fecha);
+    this.fecha_factura = this.formatearFecha(fecha);
+  }
+
+  formatearFecha(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+
+    return `${y}-${m}-${d}`;
   }
 
   cargaCategorias(id_categoria: number) {
@@ -274,12 +335,19 @@ export class FinanzasComponent {
 
   resetForm() {
 
+
+    this.tiposArchivo.forEach(t => {
+      this.archivos[t.key] = null;
+      this.archivosNombre[t.key] = '';
+      this.archivosActuales[t.key] = '';
+    });
     //this.tipo_movimiento_id = 1;
     this.categoria_id = '';
     this.fecha_pago = '';
     this.fecha_factura = '';
 
     this.folio_fiscal = '';
+    this.folio_complemento_fiscal = '';
     this.rfc = '';
     this.razon_social = '';
     this.concepto = '';
@@ -311,7 +379,7 @@ export class FinanzasComponent {
   ngOnInit() {
     console.log(this.filtroMes);
     this.getSaldo(this.filtroAnio, this.filtroMes)
-    
+
     const mesActual = new Date().getMonth() + 1;
     this.mesesVisibles = this.meses.filter(
       m => m.value <= mesActual
@@ -343,10 +411,11 @@ export class FinanzasComponent {
     this.tipo_movimiento_id = +data.tipo_movimiento_id;
     this.getCategorias(this.tipo_movimiento_id);
 
-    this.categoria_id = data.categoria_id;
+    this.categoria_id = +data.categoria_id;
     this.fecha_pago = data.fecha_pago.split('T')[0];
     this.fecha_factura = data.fecha_factura.split('T')[0];
     this.folio_fiscal = data.folio_fiscal;
+    this.folio_complemento_fiscal = data.folio_complemento_fiscal;
     this.rfc = data.rfc;
     this.razon_social = data.razon_social;
     this.concepto = data.concepto;
@@ -362,11 +431,12 @@ export class FinanzasComponent {
     this.isr_retenido = data.isr_retenido;
     this.metodo_pago_id = data.metodo_pago_id;
 
-    if (data.archivo) {
-      this.archivoActual = data.archivo;
-      this.archivoNombre = data.archivo;
-      this.mostrarArchivo = true;
-    }
+    this.tiposArchivo.forEach(t => {
+      const campo = `archivo_${t.key}`;
+      if (data[campo]) {
+        this.archivosActuales[t.key] = data[campo];
+      }
+    });
 
     setTimeout(() => {
       this.cargandoFormulario = false;
@@ -438,9 +508,9 @@ export class FinanzasComponent {
 
     const headers = [
       "No.", "TIPO DE MOVIMIENTO", "FECHA DE PAGO", "FECHA DE FACTURA",
-      "FOLIO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
+      "FOLIO FISCAL","FOLIO COMPLEMENTO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
       "CONCEPTO", "IMPORTE SIN IVA (BASE ISR)", "IVA Acreditable (Pagado)",
-      "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido","TOTAL","MÉTODO DE PAGO"
+      "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido", "TOTAL", "MÉTODO DE PAGO"
     ];
 
     const formatRow = (m: any, index: number) => {
@@ -460,6 +530,7 @@ export class FinanzasComponent {
         m.fecha_pago?.split('T')[0],
         (!m.fecha_factura || m.fecha_factura.startsWith('1899')) ? '' : m.fecha_factura.split('T')[0],
         m.folio_fiscal,
+        m.folio_complemento_fiscal,
         m.rfc,
         m.razon_social,
         m.concepto,
@@ -542,7 +613,7 @@ export class FinanzasComponent {
       // ---- TOTALES DEL BLOQUE ----
       const t = calcTotales(data);
       sheetData.push([
-        ...emptyRow().slice(0, 7),
+        ...emptyRow().slice(0, 8),
         "TOTALES",
         t.importe,
         t.ivaAcred,
@@ -565,26 +636,26 @@ export class FinanzasComponent {
 
     // ===== TOTALES GENERALES =====
     sheetData.push(emptyRow());
-    sheetData.push(["", "", "", "", "", "", "", "TOTALES GENERALES"]);
+    sheetData.push(["", "", "", "", "", "", "","", "TOTALES GENERALES"]);
 
-    sheetData.push([...emptyRow().slice(0, 8), "INGRESOS (+)", totalIngresos]);
-    sheetData.push([...emptyRow().slice(0, 8), "GASTOS (-)", totalGastos]);
-
-    sheetData.push(emptyRow());
-    sheetData.push([...emptyRow().slice(0, 8), "GASTOS QUE GENERARON IVA", gastosConIVA]);
+    sheetData.push([...emptyRow().slice(0, 9), "INGRESOS (+)", totalIngresos]);
+    sheetData.push([...emptyRow().slice(0, 9), "GASTOS (-)", totalGastos]);
 
     sheetData.push(emptyRow());
-    sheetData.push(["", "", "", "", "", "", "", "IVA"]);
-
-    sheetData.push([...emptyRow().slice(0, 8), "IVA TRASLADADO", ivaTrasladado]);
-    sheetData.push([...emptyRow().slice(0, 8), "IVA ACREDITABLE (-)", ivaAcreditable]);
-    sheetData.push([...emptyRow().slice(0, 8), "IVA POR PAGAR", ivaPorPagar]);
+    sheetData.push([...emptyRow().slice(0, 9), "GASTOS QUE GENERARON IVA", gastosConIVA]);
 
     sheetData.push(emptyRow());
-    sheetData.push(["", "", "", "", "", "", "", "RETENCIONES"]);
+    sheetData.push(["", "", "", "", "", "","", "", "IVA"]);
 
-    sheetData.push([...emptyRow().slice(0, 8), "ISR RETENIDO", isrRetenido]);
-    sheetData.push([...emptyRow().slice(0, 8), "IVA RETENIDO", ivaRetenido]);
+    sheetData.push([...emptyRow().slice(0, 9), "IVA TRASLADADO", ivaTrasladado]);
+    sheetData.push([...emptyRow().slice(0, 9), "IVA ACREDITABLE (-)", ivaAcreditable]);
+    sheetData.push([...emptyRow().slice(0, 9), "IVA POR PAGAR", ivaPorPagar]);
+
+    sheetData.push(emptyRow());
+    sheetData.push(["", "", "", "", "", "", "", "", "RETENCIONES"]);
+
+    sheetData.push([...emptyRow().slice(0, 9), "ISR RETENIDO", isrRetenido]);
+    sheetData.push([...emptyRow().slice(0, 9), "IVA RETENIDO", ivaRetenido]);
 
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
     const workbook = XLSX.utils.book_new();
@@ -594,7 +665,7 @@ export class FinanzasComponent {
     const ref = worksheet['!ref'];
     if (ref) {
       const range = XLSX.utils.decode_range(ref);
-      const moneyCols = [8, 9, 10, 11, 12, 13];
+      const moneyCols = [9, 10, 11, 12, 13, 14];
 
       for (let R = range.s.r; R <= range.e.r; R++) {
         moneyCols.forEach(C => {
@@ -729,10 +800,12 @@ export class FinanzasComponent {
     formData.append('metodo_pago_id', this.metodo_pago_id);
     formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
-    if (this.archivo) {
-
-      formData.append('archivo', this.archivo);
-    }
+    this.tiposArchivo.forEach(t => {
+      const file = this.archivos[t.key];
+      if (file) {
+        formData.append(`archivo_${t.key}`, file);
+      }
+    });
 
     // console.log("Data",formData)
     try {

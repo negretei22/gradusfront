@@ -1,13 +1,11 @@
 <div class="page-container">
 
   <div class="meses-cards">
-  <div *ngFor="let mes of mesesVisibles"
-       class="mes-card"
-       [class.activo]="mes.value === filtroMes"
-       (click)="seleccionarMes(mes.value)">
-    {{ mes.text }}
+    <div *ngFor="let mes of mesesVisibles" class="mes-card" [class.activo]="mes.value === filtroMes"
+      (click)="seleccionarMes(mes.value)">
+      {{ mes.text }}
+    </div>
   </div>
-</div>
 
   <div class="finance-cards">
 
@@ -134,10 +132,20 @@
 
         <td class="actions">
 
-          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
-            <span *ngIf="esPDF(m.archivo)">📄</span>
-            <span *ngIf="esImagen(m.archivo)">🖼️</span>
-          </button>
+          <div class="archivos-indicador">
+            <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
+              {{ contarArchivos(m) }}
+            </button>
+
+            <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
+              <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
+                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
+                <span *ngIf="esPDF(a.archivo)">📄</span>
+                <span *ngIf="esImagen(a.archivo)">🖼️</span>
+                {{ a.label }}
+              </div>
+            </div>
+          </div>
 
           <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
           <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
@@ -186,13 +194,23 @@
 
         <td class="actions">
 
-          <button *ngIf="m.archivo" class="btn-file" (click)="verArchivo(m.archivo)">
-            <span *ngIf="esPDF(m.archivo)">📄</span>
-            <span *ngIf="esImagen(m.archivo)">🖼️</span>
-          </button>
+          <div class="archivos-indicador">
+            <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
+              {{ contarArchivos(m) }}
+            </button>
 
-          <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+            <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
+              <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
+                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
+                <span *ngIf="esPDF(a.archivo)">📄</span>
+                <span *ngIf="esImagen(a.archivo)">🖼️</span>
+                {{ a.label }}
+              </div>
+            </div>
+          </div>
+
+          <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+          <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
 
         </td>
 
@@ -265,6 +283,13 @@
         <input type="text" [(ngModel)]="folio_fiscal" style="text-transform: uppercase;">
       </div>
 
+      <div class="form-row" *ngIf="+categoria_id === 1">
+        <div class="form-group">
+          <label>Folio Complemento Fiscal</label>
+          <input type="text" [(ngModel)]="folio_complemento_fiscal" style="text-transform: uppercase;">
+        </div>
+      </div>
+
       <div class="form-group">
         <label>RFC</label>
         <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;" (blur)="forzarConsulta()"
@@ -301,31 +326,33 @@
     </div>
     <br>
     <div class="form-row">
-      <div class="form-group">
-        <label>Archivo (PDF o Imagen)</label>
+      <div class="form-group" style="flex: 1;">
+        <label>Archivos</label>
 
-        <div class="drop-zone" (dragover)="onDragOver($event)" [class.dragging]="isDragging"
-          (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
+        <div class="archivos-horizontal">
+          <div class="drop-zone-mini" *ngFor="let t of tiposArchivo" (dragover)="onDragOver($event, t.key)"
+            [class.dragging]="dragging[t.key]" (dragleave)="onDragLeave($event, t.key)" (drop)="onDrop($event, t.key)"
+            (click)="fi.click()">
 
-          <p *ngIf="!archivoNombre">Arrastra el archivo aquí o haz click</p>
-          <div *ngIf="archivoNombre">
+            <strong class="drop-zone-label">{{ t.label }}</strong>
 
-            <span *ngIf="archivoNombre.endsWith('.pdf')">📄</span>
-            <span
-              *ngIf="archivoNombre.endsWith('.jpg') || archivoNombre.endsWith('.jpeg') || archivoNombre.endsWith('.png')">🖼️</span>
+            <p *ngIf="!archivosNombre[t.key] && !archivosActuales[t.key]">📎 Subir</p>
 
-            {{ archivoNombre }}
+            <div *ngIf="archivosNombre[t.key]">
+              <span *ngIf="esPDF(archivosNombre[t.key])">📄</span>
+              <span *ngIf="esImagen(archivosNombre[t.key])">🖼️</span>
+              <small>{{ archivosNombre[t.key] }}</small>
+            </div>
 
+            <a *ngIf="archivosActuales[t.key] && !archivosNombre[t.key]"
+              [href]="'http://localhost:3000/uploads/movimientos/' + archivosActuales[t.key]" target="_blank"
+              (click)="$event.stopPropagation()">
+              Ver
+            </a>
+
+            <input #fi type="file" hidden (change)="onFileSelected($event, t.key)" accept=".pdf,.jpg,.jpeg,.png">
           </div>
-
-          <a *ngIf="archivoActual" [href]="'http://localhost:3000/uploads/movimientos/' + archivoActual" target="_blank"
-            (click)="$event.stopPropagation()">
-            Ver archivo
-          </a>
-
-          <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
         </div>
-
       </div>
     </div>
     <br>

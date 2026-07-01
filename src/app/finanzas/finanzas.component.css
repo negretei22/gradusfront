@@ -579,6 +579,90 @@ select {
   color: white;
 }
 
+.archivos-horizontal {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.drop-zone-mini {
+  flex: 1;
+  min-width: 110px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: border-color .2s, background .2s;
+}
+
+.drop-zone-mini.dragging {
+  border-color: #4CAF50;
+  background: #f0fff0;
+}
+
+.drop-zone-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: #555;
+}
+
+.archivos-indicador {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-archivos {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none !important;
+  background-color: var(--gradus-green) !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.badge-archivos:hover {
+  background-color: #16a34a !important;
+}
+
+.menu-archivos {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  min-width: 170px;
+  padding: 6px;
+}
+
+.menu-archivo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.menu-archivo-item:hover {
+  background: #f3f4f6;
+}
+
 .cdk-drag-placeholder {
   opacity: 0.3;
 }
