@@ -67,7 +67,7 @@
   background: none;
   cursor: pointer;
   font-size: 16px;
-  margin-right: 8px;
+  /* margin-right: 8px;  <-- eliminar esta línea */
 }
 
 .btn-edit {
@@ -630,23 +630,108 @@ select {
   transition: background 0.15s, transform 0.1s;
 }
 
+
+
 .badge-archivos:hover {
   background-color: #16a34a !important;
 }
 
+.archivos-indicador {
+  position: relative;
+  display: inline-block;
+}
+
 .menu-archivos {
   position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-  min-width: 170px;
+  bottom: 100%;       /* lo abre hacia arriba en vez de hacia abajo */
+  right: 0;
+  margin-bottom: 8px;
+
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border: 1px solid #eef0f2;
   padding: 6px;
+  min-width: 180px;
+  z-index: 50;          /* para que no quede tapado por otras filas */
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  animation: fadeInUp 0.15s ease-out;
 }
+
+.menu-archivo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.menu-archivo-item:hover {
+  background: #f4f6f8;
+}
+
+/* Flechita apuntando hacia el badge */
+.menu-archivos::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Si tu tabla o su wrapper tiene overflow para scroll horizontal,
+   eso corta cualquier absolute que se salga de esa celda */
+.tabla-movimientos-wrapper,
+table,
+tbody,
+tr {
+  overflow: visible !important;
+}
+
+td.actions {
+  display: flex;
+  align-items: center;
+  gap: -2px;
+  overflow: visible !important;
+  position: relative;
+  white-space: nowrap;
+}
+
+
+.drop-zone-mini.con-archivo {
+  background-color: #dcfce7 !important;
+  border-color: #16a34a !important;
+}
+
+.drop-zone-mini.con-archivo:hover {
+  background-color: #16a34a !important;
+  color: #fff;
+}
+
+
 
 .menu-archivo-item {
   display: flex;

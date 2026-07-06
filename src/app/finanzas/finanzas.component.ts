@@ -14,6 +14,7 @@ import {
   CdkDragDrop,
   moveItemInArray
 } from '@angular/cdk/drag-drop';
+import { HostListener } from '@angular/core';
 
 
 @Component({
@@ -22,7 +23,26 @@ import {
   templateUrl: './finanzas.component.html',
   styleUrl: './finanzas.component.css'
 })
+
+
 export class FinanzasComponent {
+
+
+  @HostListener('document:keydown.escape')
+  onEscapePress() {
+    this.mostrarMenuArchivos = null;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.mostrarMenuArchivos === null) return;
+
+    const target = event.target as HTMLElement;
+    // Si el click NO fue dentro de un .archivos-indicador, cierra el menú
+    if (!target.closest('.archivos-indicador')) {
+      this.mostrarMenuArchivos = null;
+    }
+  }
 
   constructor(private finanzasService: FinanzasService, private alert: AlertsService) { }
 
@@ -74,6 +94,7 @@ export class FinanzasComponent {
   tab = 'ingreso';
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
+
 
   tiposArchivo = [
     { key: 'prefactura', label: 'PreFactura' },
@@ -132,6 +153,7 @@ export class FinanzasComponent {
 
   seleccionarMes(mes: number) {
     this.filtroMes = mes;
+    this.inicializarFechas();
     this.cargarMovimientos();
     this.getSaldo(this.filtroAnio, mes)
   }
@@ -251,19 +273,21 @@ export class FinanzasComponent {
   }
 
   inicializarFechas() {
-
     const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+    const mesActual = hoy.getMonth() + 1; // 1-12
 
-    const anio = hoy.getFullYear();
-    const dia = hoy.getDate();
+    let fecha: Date;
 
-    // filtroMes debe ir de 1 a 12
-    const ultimoDiaMes = new Date(anio, this.filtroMes, 0).getDate();
-
-    // Si hoy es 31 y el mes seleccionado tiene 30, usa 30
-    const diaFinal = Math.min(dia, ultimoDiaMes);
-
-    const fecha = new Date(anio, this.filtroMes - 1, diaFinal);
+    if (this.filtroMes === mesActual) {
+      // Mes actual: usar el día de hoy, capado al último día del mes
+      const ultimoDiaMes = new Date(anioActual, this.filtroMes, 0).getDate();
+      const diaFinal = Math.min(hoy.getDate(), ultimoDiaMes);
+      fecha = new Date(anioActual, this.filtroMes - 1, diaFinal);
+    } else {
+      // Meses anteriores (enero al mes previo a hoy): siempre día 1
+      fecha = new Date(anioActual, this.filtroMes - 1, 1);
+    }
 
     this.fecha_pago = this.formatearFecha(fecha);
     this.fecha_factura = this.formatearFecha(fecha);
@@ -335,7 +359,7 @@ export class FinanzasComponent {
 
   resetForm() {
 
-
+    this.inicializarFechas()
     this.tiposArchivo.forEach(t => {
       this.archivos[t.key] = null;
       this.archivosNombre[t.key] = '';
@@ -343,8 +367,9 @@ export class FinanzasComponent {
     });
     //this.tipo_movimiento_id = 1;
     this.categoria_id = '';
-    this.fecha_pago = '';
-    this.fecha_factura = '';
+    this.editing = false;
+    this.titulo = 'Nuevo Movimento Financiero';
+    this.textoBoton = 'Guardar';
 
     this.folio_fiscal = '';
     this.folio_complemento_fiscal = '';
@@ -508,7 +533,7 @@ export class FinanzasComponent {
 
     const headers = [
       "No.", "TIPO DE MOVIMIENTO", "FECHA DE PAGO", "FECHA DE FACTURA",
-      "FOLIO FISCAL","FOLIO COMPLEMENTO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
+      "FOLIO FISCAL", "FOLIO COMPLEMENTO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
       "CONCEPTO", "IMPORTE SIN IVA (BASE ISR)", "IVA Acreditable (Pagado)",
       "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido", "TOTAL", "MÉTODO DE PAGO"
     ];
@@ -636,7 +661,7 @@ export class FinanzasComponent {
 
     // ===== TOTALES GENERALES =====
     sheetData.push(emptyRow());
-    sheetData.push(["", "", "", "", "", "", "","", "TOTALES GENERALES"]);
+    sheetData.push(["", "", "", "", "", "", "", "", "TOTALES GENERALES"]);
 
     sheetData.push([...emptyRow().slice(0, 9), "INGRESOS (+)", totalIngresos]);
     sheetData.push([...emptyRow().slice(0, 9), "GASTOS (-)", totalGastos]);
@@ -645,7 +670,7 @@ export class FinanzasComponent {
     sheetData.push([...emptyRow().slice(0, 9), "GASTOS QUE GENERARON IVA", gastosConIVA]);
 
     sheetData.push(emptyRow());
-    sheetData.push(["", "", "", "", "", "","", "", "IVA"]);
+    sheetData.push(["", "", "", "", "", "", "", "", "IVA"]);
 
     sheetData.push([...emptyRow().slice(0, 9), "IVA TRASLADADO", ivaTrasladado]);
     sheetData.push([...emptyRow().slice(0, 9), "IVA ACREDITABLE (-)", ivaAcreditable]);

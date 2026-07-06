@@ -149,7 +149,6 @@
 
           <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
           <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-
         </td>
 
       </tr>
@@ -331,8 +330,8 @@
 
         <div class="archivos-horizontal">
           <div class="drop-zone-mini" *ngFor="let t of tiposArchivo" (dragover)="onDragOver($event, t.key)"
-            [class.dragging]="dragging[t.key]" (dragleave)="onDragLeave($event, t.key)" (drop)="onDrop($event, t.key)"
-            (click)="fi.click()">
+            [class.dragging]="dragging[t.key]" [class.con-archivo]="archivosNombre[t.key] || archivosActuales[t.key]"
+            (dragleave)="onDragLeave($event, t.key)" (drop)="onDrop($event, t.key)" (click)="fi.click()">
 
             <strong class="drop-zone-label">{{ t.label }}</strong>
 
