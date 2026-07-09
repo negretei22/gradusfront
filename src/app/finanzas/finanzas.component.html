@@ -90,7 +90,7 @@
     <thead>
       <tr>
         <th *ngIf="tab == 'todos'"></th>
-        <th>Fecha de Factura</th>
+        <th width="100px">Fecha de Factura</th>
         <th>Tipo</th>
         <th>Folio Fiscal</th>
         <th>Concepto</th>
@@ -102,7 +102,7 @@
 
     <tbody *ngIf="tab == 'todos'" cdkDropList (cdkDropListDropped)="drop($event)">
 
-      <tr *ngFor="let m of movimientos" cdkDrag>
+      <tr *ngFor="let m of movimientos" cdkDrag style="font-size: 11px;">
         <td cdkDragHandle class="drag-handle"> ☰ </td>
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
@@ -125,14 +125,17 @@
             }}
           </span>
         </td>
-
-        <td>{{ m.folio_fiscal }}</td>
+       <td>{{ m.folio_fiscal }}</td>
         <td>{{ m.concepto }}</td>
-        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+        <td>
+          {{ m.importe_sin_iva | currency:'MXN':'$' }}
+          <span *ngIf="m.metodo_pago_id === 1">💵</span>
+          <span *ngIf="m.metodo_pago_id === 3">💳</span>
+        </td>
 
         <td class="actions">
 
-          <div class="archivos-indicador">
+           <div class="archivos-indicador">
             <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
               {{ contarArchivos(m) }}
             </button>
@@ -164,7 +167,7 @@
 
     <tbody *ngIf="tab != 'todos'">
 
-      <tr *ngFor="let m of movimientosFiltradosTabs()">
+      <tr *ngFor="let m of movimientosFiltradosTabs()" style="font-size: 12px;">
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
           ? 'SIN FECHA'
@@ -189,7 +192,11 @@
 
         <td>{{ m.folio_fiscal }}</td>
         <td>{{ m.concepto }}</td>
-        <td>{{ m.importe_sin_iva | currency:'MXN' }}</td>
+        <td>
+          {{ m.importe_sin_iva | currency:'MXN':'$' }}
+          <span *ngIf="m.metodo_pago_id === 1">💵</span>
+          <span *ngIf="m.metodo_pago_id === 3">💳</span>
+        </td>
 
         <td class="actions">
 
