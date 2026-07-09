@@ -158,6 +158,12 @@ export class FinanzasComponent {
     this.getSaldo(this.filtroAnio, mes)
   }
 
+  onCategoriaChange() {
+  if (+this.categoria_id === 10) {
+    this.fecha_factura = '1900-01-01'; // fecha sentinela para "NO APLICA"
+  }
+}
+
   movimientosFiltradosTabs() {
 
     if (this.tab === 'ingreso') {

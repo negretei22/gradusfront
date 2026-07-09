@@ -636,6 +636,11 @@ select {
   background-color: #16a34a !important;
 }
 
+.invisible {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .archivos-indicador {
   position: relative;
   display: inline-block;

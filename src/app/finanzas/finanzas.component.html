@@ -125,7 +125,7 @@
             }}
           </span>
         </td>
-       <td>{{ m.folio_fiscal }}</td>
+        <td>{{ m.folio_fiscal }}</td>
         <td>{{ m.concepto }}</td>
         <td>
           {{ m.importe_sin_iva | currency:'MXN':'$' }}
@@ -135,7 +135,7 @@
 
         <td class="actions">
 
-           <div class="archivos-indicador">
+          <div class="archivos-indicador">
             <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
               {{ contarArchivos(m) }}
             </button>
@@ -171,6 +171,8 @@
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
           ? 'SIN FECHA'
+          : (m.fecha_factura | date:'yyyy') === '1900'
+          ? 'NO APLICA'
           : (m.fecha_factura | date:'dd/MM/yyyy') }}
         </td>
 
@@ -258,7 +260,7 @@
 
       <div class="form-group">
         <label>Categoría</label>
-        <select [(ngModel)]="categoria_id">
+        <select [(ngModel)]="categoria_id" (ngModelChange)="onCategoriaChange()">
           <option value="0">SELECCIONE...</option>
           <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
         </select>
@@ -270,12 +272,12 @@
     <div class="form-row">
       <div class="form-group">
         <label>Fecha de pago</label>
-        <input type="date" [(ngModel)]="fecha_pago">
+        <input type="date" name="fechaPago" [(ngModel)]="fecha_pago">
       </div>
 
-      <div class="form-group">
+      <div class="form-group" [class.invisible]="+categoria_id === 10">
         <label>Fecha de Factura</label>
-        <input type="date" [(ngModel)]="fecha_factura">
+        <input type="date" name="fechaFactura" [(ngModel)]="fecha_factura">
       </div>
     </div>
 
