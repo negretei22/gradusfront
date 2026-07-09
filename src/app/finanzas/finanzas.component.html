@@ -90,7 +90,8 @@
     <thead>
       <tr>
         <th *ngIf="tab == 'todos'"></th>
-        <th width="100px">Fecha de Factura</th>
+        <th width="100px">Fecha<br>Pago</th>
+        <th width="100px">Fecha<br>Factura</th>
         <th>Tipo</th>
         <th>Folio Fiscal</th>
         <th>Concepto</th>
@@ -104,6 +105,7 @@
 
       <tr *ngFor="let m of movimientos" cdkDrag style="font-size: 11px;">
         <td cdkDragHandle class="drag-handle"> ☰ </td>
+        <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
           ? 'SIN FECHA'
@@ -168,6 +170,7 @@
     <tbody *ngIf="tab != 'todos'">
 
       <tr *ngFor="let m of movimientosFiltradosTabs()" style="font-size: 12px;">
+        <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
           ? 'SIN FECHA'
