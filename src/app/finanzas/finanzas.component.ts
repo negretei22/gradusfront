@@ -31,6 +31,9 @@ export class FinanzasComponent {
   @HostListener('document:keydown.escape')
   onEscapePress() {
     this.mostrarMenuArchivos = null;
+    if (this.showModal) {
+      this.closeModal();
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -159,10 +162,10 @@ export class FinanzasComponent {
   }
 
   onCategoriaChange() {
-  if (+this.categoria_id === 10) {
-    this.fecha_factura = '1900-01-01'; // fecha sentinela para "NO APLICA"
+    if (+this.categoria_id === 10) {
+      this.fecha_factura = '1900-01-01'; // fecha sentinela para "NO APLICA"
+    }
   }
-}
 
   movimientosFiltradosTabs() {
 
@@ -272,10 +275,11 @@ export class FinanzasComponent {
 
 
   openModal() {
+    this.resetForm()
     this.showModal = true
     //this.getCategorias()
     this.getMetodosPago()
-    this.inicializarFechas();
+    this.inicializarFechas()
   }
 
   inicializarFechas() {
@@ -364,14 +368,14 @@ export class FinanzasComponent {
   }
 
   resetForm() {
-
+    this.id=0
     this.inicializarFechas()
     this.tiposArchivo.forEach(t => {
       this.archivos[t.key] = null;
       this.archivosNombre[t.key] = '';
       this.archivosActuales[t.key] = '';
     });
-    //this.tipo_movimiento_id = 1;
+    this.tipo_movimiento_id = 0;
     this.categoria_id = '';
     this.editing = false;
     this.titulo = 'Nuevo Movimento Financiero';
