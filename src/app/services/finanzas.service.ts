@@ -21,6 +21,12 @@ export class FinanzasService {
 
   }
 
+  buscarPorRazonSocial(texto: string): Observable<any[]> {
+  return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-razon-social`, {
+    params: { texto }
+  });
+}
+
   getCatalogo(catalogo: any): Observable<any[]> {
 
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);

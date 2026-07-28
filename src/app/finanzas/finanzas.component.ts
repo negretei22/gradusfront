@@ -15,6 +15,10 @@ import {
   moveItemInArray
 } from '@angular/cdk/drag-drop';
 import { HostListener } from '@angular/core';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+
+
 
 
 @Component({
@@ -25,7 +29,11 @@ import { HostListener } from '@angular/core';
 })
 
 
+
 export class FinanzasComponent {
+
+  private busquedaRazonSocial$ = new Subject<string>();
+  resultadosBusqueda: any[] = [];
 
 
   @HostListener('document:keydown.escape')
@@ -57,18 +65,14 @@ export class FinanzasComponent {
   razon_social: string = ''
   rfc: string = ''
   folio_fiscal: string = ''
-  folio_complemento_fiscal: string = ''
   editing: boolean = false
-  mostrarBuscador: boolean = false // controla visibilidad
   filtroMovimiento: string = ''
   movimientosFiltrados: any[] = []
   showModal = false
-  bloquearRazon = false
   tipo_movimiento_id: number = 0
   fecha_pago: string = '0000-00-00'
   fecha_factura: string = '0000-00-00'
   concepto: string = ''
-  descripcion: string = ''
   importe_sin_iva: number | null = null;
   iva_acreditable: number | null = null;
   iva_traslado: number = 0;
@@ -79,52 +83,37 @@ export class FinanzasComponent {
   filtroMes: number = new Date().getMonth() + 1;
   categoria_id: any = '';
   categorias: any[] = []
-  cuenta_id: any[] = []
-  cuentas: any[] = []
   metodo_pago_id: any = '';
   metodosPago: any[] = []
-  referencia: string = ''
   ingresos = 0;
   egresos = 0;
   inversiones = 0;
   saldo = 0;
   iva: number = 16; // default
-  total: number = 0;
-  archivo: File | null = null;
-  archivoNombre: string = '';
-  archivoActual: string = '';
-  isDragging = false;
   tab = 'ingreso';
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
 
 
   tiposArchivo = [
-    { key: 'prefactura', label: 'PreFactura' },
     { key: 'factura', label: 'Factura' },
-    { key: 'nota_pago', label: 'Nota de Pago' },
-    { key: 'pago', label: 'Pago' },
-    { key: 'otra', label: 'Otra' },
+    { key: 'pago', label: 'Comprobante de Pago' },
   ];
 
 
-  archivos: { [key: string]: File | null } = {
-    prefactura: null, factura: null, nota_pago: null, pago: null, otra: null
+  archivos: { [key: string]: File[] } = {
+    factura: [], pago: []
   };
-  archivosNombre: { [key: string]: string } = {
-    prefactura: '', factura: '', nota_pago: '', pago: '', otra: ''
+  archivosNombre: { [key: string]: string[] } = {
+    factura: [], pago: []
   };
-  archivosActuales: { [key: string]: string } = {
-    prefactura: '', factura: '', nota_pago: '', pago: '', otra: ''
+  archivosActuales: { [key: string]: string[] } = {
+    factura: [], pago: []
   };
   dragging: { [key: string]: boolean } = {
-    prefactura: false, factura: false, nota_pago: false, pago: false, otra: false
+    factura: false, pago: false
   };
 
-
-
-
-  mostrarArchivo = false;
 
 
 
@@ -196,10 +185,6 @@ export class FinanzasComponent {
     return [];
   }
 
-  toggleArchivo() {
-    this.mostrarArchivo = !this.mostrarArchivo;
-  }
-
 
   meses = [
     { value: 1, text: 'ENERO' },
@@ -231,16 +216,42 @@ export class FinanzasComponent {
     this.dragging[key] = false;
   }
 
+  onFileSelected(event: any, key: string) {
+    const files: FileList = event.target.files;
+    if (files && files.length) {
+      for (let i = 0; i < files.length; i++) {
+        this.archivos[key].push(files[i]);
+        this.archivosNombre[key].push(files[i].name);
+      }
+    }
+    event.target.value = ''; // permite volver a seleccionar el mismo archivo si se quita y se sube de nuevo
+  }
+
   onDrop(event: DragEvent, key: string) {
     event.preventDefault();
     this.dragging[key] = false;
 
     if (event.dataTransfer?.files.length) {
-      const file = event.dataTransfer.files[0];
-      this.archivos[key] = file;
-      this.archivosNombre[key] = file.name;
+      const files = event.dataTransfer.files;
+      for (let i = 0; i < files.length; i++) {
+        this.archivos[key].push(files[i]);
+        this.archivosNombre[key].push(files[i].name);
+      }
     }
   }
+
+  removeArchivo(key: string, index: number) {
+    this.archivos[key].splice(index, 1);
+    this.archivosNombre[key].splice(index, 1);
+  }
+
+  removeArchivoActual(key: string, index: number) {
+    // Si quieres que al guardar se elimine también en el backend,
+    // guarda estos nombres en un array "archivosAEliminar" y mándalo en el FormData.
+    this.archivosActuales[key].splice(index, 1);
+  }
+
+
   esImagen(nombre: string) {
     return nombre?.match(/\.(jpg|jpeg|png|gif)$/i);
   }
@@ -249,22 +260,32 @@ export class FinanzasComponent {
     window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
   }
 
-  onFileSelected(event: any, key: string) {
-    const file = event.target.files[0];
-    if (file) {
-      this.archivos[key] = file;
-      this.archivosNombre[key] = file.name;
-    }
-  }
+
 
   contarArchivos(m: any): number {
-    return this.tiposArchivo.filter(t => !!m[`archivo_${t.key}`]).length;
+    return this.tiposArchivo.reduce((acc, t) => {
+      const val = m[`archivo_${t.key}`];
+      if (!val) return acc;
+      const arr = Array.isArray(val) ? val : val.split(',').filter((x: string) => x.trim());
+      return acc + arr.length;
+    }, 0);
   }
 
+
   archivosDeMovimiento(m: any) {
-    return this.tiposArchivo
-      .filter(t => !!m[`archivo_${t.key}`])
-      .map(t => ({ label: t.label, archivo: m[`archivo_${t.key}`] }));
+    const result: { label: string, archivo: string }[] = [];
+
+    this.tiposArchivo.forEach(t => {
+      const val = m[`archivo_${t.key}`];
+      if (!val) return;
+      const arr = Array.isArray(val) ? val : val.split(',').filter((x: string) => x.trim());
+
+      arr.forEach((a: string, index: number) => {
+        result.push({ label: `${t.label} ${index + 1}`, archivo: a });
+      });
+    });
+
+    return result;
   }
 
   mostrarMenuArchivos: number | null = null;
@@ -300,7 +321,7 @@ export class FinanzasComponent {
     }
 
     this.fecha_pago = this.formatearFecha(fecha);
-    this.fecha_factura = this.formatearFecha(fecha);
+   
   }
 
   formatearFecha(fecha: Date): string {
@@ -368,12 +389,12 @@ export class FinanzasComponent {
   }
 
   resetForm() {
-    this.id=0
+    this.id = 0
     this.inicializarFechas()
     this.tiposArchivo.forEach(t => {
-      this.archivos[t.key] = null;
-      this.archivosNombre[t.key] = '';
-      this.archivosActuales[t.key] = '';
+      this.archivos[t.key] = [];
+      this.archivosNombre[t.key] = [];
+      this.archivosActuales[t.key] = [];
     });
     this.tipo_movimiento_id = 0;
     this.categoria_id = '';
@@ -382,7 +403,6 @@ export class FinanzasComponent {
     this.textoBoton = 'Guardar';
 
     this.folio_fiscal = '';
-    this.folio_complemento_fiscal = '';
     this.rfc = '';
     this.razon_social = '';
     this.concepto = '';
@@ -412,6 +432,21 @@ export class FinanzasComponent {
 
 
   ngOnInit() {
+
+
+    this.busquedaRazonSocial$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      switchMap(texto => {
+        if (texto && texto.length > 3) {
+          return this.finanzasService.buscarPorRazonSocial(texto);
+        }
+        this.resultadosBusqueda = [];
+        return of([]);
+      })
+    ).subscribe(resultados => {
+      this.resultadosBusqueda = resultados;
+    });
     console.log(this.filtroMes);
     this.getSaldo(this.filtroAnio, this.filtroMes)
 
@@ -423,6 +458,17 @@ export class FinanzasComponent {
 
 
 
+  }
+
+  onRazonSocialChange(event: any): void {
+    const texto = event.target.value;
+    this.busquedaRazonSocial$.next(texto);
+  }
+
+  seleccionarResultado(item: any): void {
+    this.razon_social = item.razon_social;
+    this.rfc = item.rfc;
+    this.resultadosBusqueda = [];
   }
 
 
@@ -450,11 +496,9 @@ export class FinanzasComponent {
     this.fecha_pago = data.fecha_pago.split('T')[0];
     this.fecha_factura = data.fecha_factura.split('T')[0];
     this.folio_fiscal = data.folio_fiscal;
-    this.folio_complemento_fiscal = data.folio_complemento_fiscal;
     this.rfc = data.rfc;
     this.razon_social = data.razon_social;
     this.concepto = data.concepto;
-    this.descripcion = data.descripcion;
     this.iva = data.iva;
     this.importe_sin_iva = data.importe_sin_iva;
     this.iva_acreditable = data.iva_acreditable;
@@ -469,7 +513,11 @@ export class FinanzasComponent {
     this.tiposArchivo.forEach(t => {
       const campo = `archivo_${t.key}`;
       if (data[campo]) {
-        this.archivosActuales[t.key] = data[campo];
+        this.archivosActuales[t.key] = Array.isArray(data[campo])
+          ? data[campo]
+          : data[campo].split(',').map((x: string) => x.trim()).filter(Boolean);
+      } else {
+        this.archivosActuales[t.key] = [];
       }
     });
 
@@ -771,33 +819,6 @@ export class FinanzasComponent {
   }
 
 
-  forzarConsulta() {
-    this.traeRazonSocial();
-  }
-
-  async traeRazonSocial() {
-
-
-
-    if (this.rfc && this.rfc.length >= 12) {
-
-      await this.finanzasService.getRazonSocial(this.rfc).subscribe(res => {
-        if (res.length > 0) {
-
-          this.bloquearRazon = true
-
-          this.razon_social = res[0].razon_social;
-        } else {
-          this.bloquearRazon = false
-          this.razon_social = ''
-        }
-      });
-    } else {
-      this.razon_social = ''
-    }
-
-  }
-
   async getPrimerDiaMes() {
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -836,10 +857,13 @@ export class FinanzasComponent {
     formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
     this.tiposArchivo.forEach(t => {
-      const file = this.archivos[t.key];
-      if (file) {
-        formData.append(`archivo_${t.key}`, file);
-      }
+      // Archivos nuevos seleccionados por el usuario
+      this.archivos[t.key].forEach(file => {
+        formData.append(`archivo_${t.key}`, file); // mismo nombre de campo repetido
+      });
+
+      // Archivos que ya existían y el usuario decidió conservar (no eliminó)
+      formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
     });
 
     // console.log("Data",formData)

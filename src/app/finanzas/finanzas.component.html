@@ -36,13 +36,9 @@
 
 
   <div class="page-header">
-    <h2>Finanzas</h2>
+    
 
     <div class="contratos-header">
-      <button class="btn-primary" (click)="mostrarBuscador = !mostrarBuscador">
-        {{ mostrarBuscador ? 'Ocultar buscador' : 'Mostrar buscador' }}
-      </button>
-
       <button class="btn-primary" (click)="openModal()">
         + Nuevo movimiento
       </button>
@@ -51,27 +47,7 @@
         📥 Exportar Excel
       </button>
     </div>
-  </div>
-
-  <!-- BUSCADOR -->
-  <div *ngIf="mostrarBuscador"
-    style="max-width: 900px; margin: 20px auto; padding: 20px; background:#f9f9f9; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); display:flex; gap:10px; align-items:center;">
-
-    <!-- Año -->
-    <select [(ngModel)]="filtroAnio" style="padding:8px; border-radius:6px;">
-      <option value="">Año</option>
-      <option value="2026">2026</option>
-    </select>
-
-    <!-- Mes -->
-    <select [(ngModel)]="filtroMes" (change)="cargarMovimientos()" style="padding:8px; border-radius:6px;">
-      <option value="0">TODOS</option>
-      <option *ngFor="let m of meses" [value]="m.value">{{ m.text }}</option>
-    </select>
-
-    <!-- Buscador -->
-    <input type="text" class="buscador-input" placeholder="Buscar concepto…" [(ngModel)]="filtroMovimiento"
-      (input)="filtrarMovimientos()" style="flex:1; padding:10px 15px; border:1px solid #ccc; border-radius:8px;">
+    <h2>Finanzas</h2>
   </div>
 
   <!-- TABLA -->
@@ -254,8 +230,8 @@
         <label>Tipo</label>
         <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id)">
           <option [ngValue]="0">SELECCIONE...</option>
-          <option [ngValue]="1">INGRESO</option>
           <option [ngValue]="2">EGRESO</option>
+          <option [ngValue]="1">INGRESO</option>
           <option [ngValue]="3">INVERSIÓN</option>
 
         </select>
@@ -289,22 +265,21 @@
     <!-- FILA 2 -->
     <div class="form-row">
 
-      <div class="form-group">
-        <label>Folio Fiscal</label>
-        <input type="text" [(ngModel)]="folio_fiscal" style="text-transform: uppercase;">
-      </div>
+      <div class="form-group" style="position: relative;">
+        <label>Razón Social</label>
+        <input type="text" [(ngModel)]="razon_social" style="text-transform: uppercase;" autocomplete="off"
+          (input)="onRazonSocialChange($event)">
 
-      <div class="form-row" *ngIf="+categoria_id === 1">
-        <div class="form-group">
-          <label>Folio Complemento Fiscal</label>
-          <input type="text" [(ngModel)]="folio_complemento_fiscal" style="text-transform: uppercase;">
-        </div>
+        <ul class="autocomplete-popup" *ngIf="resultadosBusqueda.length > 0">
+          <li *ngFor="let item of resultadosBusqueda" (click)="seleccionarResultado(item)">
+            {{ item.razon_social }} — {{ item.rfc }}
+          </li>
+        </ul>
       </div>
 
       <div class="form-group">
         <label>RFC</label>
-        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;" (blur)="forzarConsulta()"
-          (change)="forzarConsulta()" (keyup.enter)="forzarConsulta()">
+        <input type="text" [(ngModel)]="rfc" size="13" style="text-transform: uppercase;">
       </div>
 
 
@@ -315,10 +290,7 @@
 
     <!-- FILA 3 -->
     <div class="form-row">
-      <div class="form-group">
-        <label>Razón Social</label>
-        <input type="text" [(ngModel)]="razon_social" [readonly]="bloquearRazon" style="text-transform: uppercase;">
-      </div>
+
 
       <div class="form-group">
         <label>Concepto</label>
@@ -342,26 +314,32 @@
 
         <div class="archivos-horizontal">
           <div class="drop-zone-mini" *ngFor="let t of tiposArchivo" (dragover)="onDragOver($event, t.key)"
-            [class.dragging]="dragging[t.key]" [class.con-archivo]="archivosNombre[t.key] || archivosActuales[t.key]"
+            [class.dragging]="dragging[t.key]"
+            [class.con-archivo]="archivosNombre[t.key].length || archivosActuales[t.key].length"
             (dragleave)="onDragLeave($event, t.key)" (drop)="onDrop($event, t.key)" (click)="fi.click()">
 
             <strong class="drop-zone-label">{{ t.label }}</strong>
 
-            <p *ngIf="!archivosNombre[t.key] && !archivosActuales[t.key]">📎 Subir</p>
+            <p *ngIf="!archivosNombre[t.key].length && !archivosActuales[t.key].length">📎 Subir</p>
 
-            <div *ngIf="archivosNombre[t.key]">
-              <span *ngIf="esPDF(archivosNombre[t.key])">📄</span>
-              <span *ngIf="esImagen(archivosNombre[t.key])">🖼️</span>
-              <small>{{ archivosNombre[t.key] }}</small>
+            <!-- Archivos nuevos seleccionados -->
+            <div *ngFor="let nombre of archivosNombre[t.key]; let i = index" class="archivo-item">
+              <span *ngIf="esPDF(nombre)">📄</span>
+              <span *ngIf="esImagen(nombre)">🖼️</span>
+              <small>{{ nombre }}</small>
+              <button type="button" class="btn-quitar"
+                (click)="removeArchivo(t.key, i); $event.stopPropagation()">✖</button>
             </div>
 
-            <a *ngIf="archivosActuales[t.key] && !archivosNombre[t.key]"
-              [href]="'http://localhost:3000/uploads/movimientos/' + archivosActuales[t.key]" target="_blank"
-              (click)="$event.stopPropagation()">
-              Ver
-            </a>
-
-            <input #fi type="file" hidden (change)="onFileSelected($event, t.key)" accept=".pdf,.jpg,.jpeg,.png">
+            <!-- Archivos ya guardados en el servidor -->
+            <div *ngFor="let nombre of archivosActuales[t.key]; let i = index" class="archivo-item">
+              <a [href]="'http://localhost:3000/uploads/movimientos/' + nombre" target="_blank"
+                (click)="$event.stopPropagation()">Archivo {{ i + 1 }}</a>
+              <button type="button" class="btn-quitar"
+                (click)="removeArchivoActual(t.key, i); $event.stopPropagation()">✖</button>
+            </div>
+            <input #fi type="file" multiple hidden (change)="onFileSelected($event, t.key)"
+              accept=".pdf,.jpg,.jpeg,.png">
           </div>
         </div>
       </div>
@@ -377,64 +355,21 @@
       <!-- FILA 1: Monto + IVA -->
 
       <div class="form-group">
-        <label>Importe sin iva</label>
+        <label>Importe Total</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_sin_iva"
-          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
+           placeholder="0.00">
       </div>
 
       <div class="form-group">
         <label>IVA</label>
-        <select [(ngModel)]="iva" (change)="calcularTotal()" (blur)="calcularTotal()">
-          <option [value]="0">0%</option>
-          <option [value]="8">8%</option>
-          <option [value]="16">16%</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>IVA Acreditable</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_acreditable"
-          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
+        placeholder="0.00">
       </div>
 
 
 
     </div>
 
-
-    <div class="form-row">
-
-      <div class="form-group">
-        <label>IVA Traslado</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_traslado"
-          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label>ISR Retenido</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="isr_retenido"
-          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label>IVA Retenido</label>
-        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_retenido"
-          (ngModelChange)="calcularTotal()" (blur)="calcularTotal()" placeholder="0.00">
-      </div>
-
-    </div>
-
-    <!-- COLUMNA DERECHA -->
-
-
-    <div class="col-derecha">
-
-
-      <div class="form-group total-grande">
-        <label>GRAN TOTAL</label>
-        <input type="text" mask="separator.2" placeholder="0.00" thousandSeparator="," prefix="$ "
-          [ngModel]="granTotal">
-      </div>
-
-    </div>
 
 
 
