@@ -180,6 +180,9 @@
 }
 
 /* FORM GRID */
+.form-row--espaciada {
+  margin-bottom: 12px; /* ajusta el valor a tu gusto */
+}
 
 .form-row {
   display: grid;

@@ -93,7 +93,7 @@ export class FinanzasComponent {
   inversiones = 0;
   saldo = 0;
   iva: number = 16; // default
-  tab = 'ingreso';
+  tab = 'todos';
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
 
@@ -336,8 +336,7 @@ export class FinanzasComponent {
   }
 
   cargaCategorias(id_categoria: number) {
-    this.resetForm()
-    this.getCategorias(id_categoria)
+       this.getCategorias(id_categoria)
   }
 
 
@@ -926,7 +925,7 @@ seleccionarConcepto(item: any): void {
       this.showModal = false;
 
       await this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
-      window.location.reload();
+      
       this.getSaldo(this.filtroAnio, this.filtroMes);
 
       this.cargarMovimientos();

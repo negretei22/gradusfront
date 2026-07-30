@@ -53,11 +53,11 @@
   <!-- TABLA -->
   <div class="tabs">
 
+    <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
     <button (click)="tab='ingreso'" [class.active]="tab=='ingreso'">INGRESOS</button>
     <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
     <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
     <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
-    <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
 
   </div>
 
@@ -226,7 +226,7 @@
 
     <!-- FILA 1 -->
     <div class="form-row">
-      <div class="form-group">
+      <div class="form-group form-row--espaciada" >
         <label>Tipo</label>
         <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id)">
           <option [ngValue]="0">SELECCIONE...</option>
@@ -254,7 +254,7 @@
         <input type="date" name="fechaPago" [(ngModel)]="fecha_pago">
       </div>
 
-      <div class="form-group" [class.invisible]="+categoria_id === 10">
+      <div class="form-group">
         <label>Fecha de Factura</label>
         <input type="date" name="fechaFactura" [(ngModel)]="fecha_factura">
       </div>
@@ -262,7 +262,7 @@
 
 
 
-    <!-- FILA 2 -->
+    
     <div class="form-row">
 
       <div class="form-group" style="position: relative;">
@@ -295,7 +295,8 @@
       <div class="form-group" style="position: relative;">
         <label>Concepto</label>
         <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;" autocomplete="off"
-          (focus)="onConceptoFocus()" (keydown.enter)="onConceptoEnter()" (input)="onConceptoChange($event)" (blur)="onConceptoBlur()">
+          (focus)="onConceptoFocus()" (keydown.enter)="onConceptoEnter()" (input)="onConceptoChange($event)"
+          (blur)="onConceptoBlur()">
 
         <ul class="autocomplete-popup" *ngIf="resultadosConceptos.length > 0">
           <li *ngFor="let item of resultadosConceptos" (mousedown)="seleccionarConcepto(item)">
