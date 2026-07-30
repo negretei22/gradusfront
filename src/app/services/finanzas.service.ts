@@ -1,5 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient,HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 
 import { firstValueFrom, Observable } from 'rxjs';
 
@@ -25,6 +26,14 @@ export class FinanzasService {
   return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-razon-social`, {
     params: { texto }
   });
+}
+
+buscarConceptosPorRfc(rfc: string, texto: string = ''): Observable<any[]> {
+  let params = new HttpParams().set('rfc', rfc);
+  if (texto) {
+    params = params.set('q', texto);
+  }
+  return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-conceptos`, { params });
 }
 
   getCatalogo(catalogo: any): Observable<any[]> {

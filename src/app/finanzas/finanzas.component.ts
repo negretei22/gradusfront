@@ -33,7 +33,10 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 export class FinanzasComponent {
 
   private busquedaRazonSocial$ = new Subject<string>();
+  private busquedaConcepto$ = new Subject<string>();
   resultadosBusqueda: any[] = [];
+  resultadosConceptos: any[] = [];
+
 
 
   @HostListener('document:keydown.escape')
@@ -447,6 +450,19 @@ export class FinanzasComponent {
     ).subscribe(resultados => {
       this.resultadosBusqueda = resultados;
     });
+
+    this.busquedaConcepto$.pipe(
+    debounceTime(300),
+    distinctUntilChanged(),
+    switchMap(texto => {
+      if (this.rfc) {
+        return this.finanzasService.buscarConceptosPorRfc(this.rfc, texto);
+      }
+      return of([]);
+    })
+  ).subscribe(resultados => {
+    this.resultadosConceptos = resultados;
+  });
     console.log(this.filtroMes);
     this.getSaldo(this.filtroAnio, this.filtroMes)
 
@@ -460,16 +476,48 @@ export class FinanzasComponent {
 
   }
 
-  onRazonSocialChange(event: any): void {
-    const texto = event.target.value;
-    this.busquedaRazonSocial$.next(texto);
-  }
 
-  seleccionarResultado(item: any): void {
-    this.razon_social = item.razon_social;
-    this.rfc = item.rfc;
-    this.resultadosBusqueda = [];
+
+  
+
+  onRazonSocialChange(event: any): void {
+  this.busquedaRazonSocial$.next(event.target.value);
+}
+
+seleccionarResultado(item: any): void {
+  this.razon_social = item.razon_social;
+  this.rfc = item.rfc;
+  this.resultadosBusqueda = [];
+}
+
+// --- Handlers de Concepto ---
+
+onConceptoFocus(): void {
+  // Al entrar al campo, muestra todos los conceptos ya usados para ese RFC
+  if (this.rfc) {
+    this.busquedaConcepto$.next(this.concepto || '');
   }
+}
+
+onConceptoChange(event: any): void {
+  this.busquedaConcepto$.next(event.target.value);
+}
+
+onConceptoEnter(): void {
+  this.resultadosConceptos = [];
+}
+
+onConceptoBlur(): void {
+  // Delay para permitir que el (mousedown) del <li> se procese antes de ocultar la lista
+  setTimeout(() => {
+    this.resultadosConceptos = [];
+  }, 150);
+}
+
+seleccionarConcepto(item: any): void {
+  this.concepto = item.concepto;
+  this.resultadosConceptos = [];
+}
 
 
   async editMovimiento(id: number) {
@@ -877,8 +925,8 @@ export class FinanzasComponent {
 
       this.showModal = false;
 
-      this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
-
+      await this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
+      window.location.reload();
       this.getSaldo(this.filtroAnio, this.filtroMes);
 
       this.cargarMovimientos();
@@ -888,7 +936,8 @@ export class FinanzasComponent {
       console.log(err);
 
     }
-    this.resetForm()
+
+  
 
   }
 

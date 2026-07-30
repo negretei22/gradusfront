@@ -36,7 +36,7 @@
 
 
   <div class="page-header">
-    
+
 
     <div class="contratos-header">
       <button class="btn-primary" (click)="openModal()">
@@ -292,9 +292,16 @@
     <div class="form-row">
 
 
-      <div class="form-group">
+      <div class="form-group" style="position: relative;">
         <label>Concepto</label>
-        <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;">
+        <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;" autocomplete="off"
+          (focus)="onConceptoFocus()" (keydown.enter)="onConceptoEnter()" (input)="onConceptoChange($event)" (blur)="onConceptoBlur()">
+
+        <ul class="autocomplete-popup" *ngIf="resultadosConceptos.length > 0">
+          <li *ngFor="let item of resultadosConceptos" (mousedown)="seleccionarConcepto(item)">
+            {{ item.concepto }}
+          </li>
+        </ul>
       </div>
 
     </div>
@@ -357,13 +364,13 @@
       <div class="form-group">
         <label>Importe Total</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_sin_iva"
-           placeholder="0.00">
+          placeholder="0.00">
       </div>
 
       <div class="form-group">
         <label>IVA</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="iva_acreditable"
-        placeholder="0.00">
+          placeholder="0.00">
       </div>
 
 

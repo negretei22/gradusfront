@@ -21,7 +21,9 @@ export class AlertsService {
       title: titulo,
       html: mensaje,
       confirmButtonColor: '#00a36c'
-    });
+    }).then(() => {
+    window.location.reload();
+  });
   }
 
   AlertaWarning(titulo: string, mensaje: string) {
