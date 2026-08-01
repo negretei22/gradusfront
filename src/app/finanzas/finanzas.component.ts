@@ -52,7 +52,6 @@ export class FinanzasComponent {
     if (this.mostrarMenuArchivos === null) return;
 
     const target = event.target as HTMLElement;
-    // Si el click NO fue dentro de un .archivos-indicador, cierra el menú
     if (!target.closest('.archivos-indicador')) {
       this.mostrarMenuArchivos = null;
     }
@@ -96,6 +95,7 @@ export class FinanzasComponent {
   tab = 'todos';
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
+  metodoPagoFiltro: number = 0;
 
 
   tiposArchivo = [
@@ -118,7 +118,58 @@ export class FinanzasComponent {
   };
 
 
+  // ===== FILTRO COMBINADO PARA LA TABLA (tab + método de pago) =====
+  movimientosVisibles(): any[] {
+    const base = this.tab === 'todos' ? this.movimientos : this.movimientosFiltradosTabs();
+    return this.metodoPagoFiltro === 0
+      ? base
+      : base.filter(m => m.metodo_pago_id == this.metodoPagoFiltro);
+  }
 
+  private coincideMetodoPago(m: any): boolean {
+    return this.metodoPagoFiltro === 0 || m.metodo_pago_id == this.metodoPagoFiltro;
+  }
+
+  private coincideTab(tipo: 'ingreso' | 'egreso' | 'nomina' | 'inversion'): boolean {
+    return this.tab === 'todos' || this.tab === tipo;
+  }
+
+  get ingresosCard(): number {
+    if (!this.coincideTab('ingreso')) return 0;
+    return this.movimientos
+      .filter(m => m.tipo_movimiento_id == 1 && this.coincideMetodoPago(m))
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  get nominaCard(): number {
+    if (!this.coincideTab('nomina')) return 0;
+    return this.movimientos
+      .filter(m => m.tipo_movimiento_id == 2 && m.categoria_id == 2 && this.coincideMetodoPago(m))
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  get egresosCard(): number {
+    if (!this.coincideTab('egreso')) return 0;
+    return this.movimientos
+      .filter(m => m.tipo_movimiento_id == 2 && m.categoria_id != 2 && this.coincideMetodoPago(m))
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  get inversionesCard(): number {
+    if (!this.coincideTab('inversion')) return 0;
+    return this.movimientos
+      .filter(m => m.tipo_movimiento_id != 1 && m.tipo_movimiento_id != 2 && this.coincideMetodoPago(m))
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  get saldoCard(): number {
+    return this.ingresosCard - this.egresosCard - this.nominaCard - this.inversionesCard;
+  }
+
+  cambiarTab(nuevoTab: string) {
+    this.tab = nuevoTab;
+    this.metodoPagoFiltro = 0; // reset a "TODOS" cada vez que cambias de tab
+  }
 
   async drop(event: CdkDragDrop<any[]>) {
 
@@ -227,7 +278,7 @@ export class FinanzasComponent {
         this.archivosNombre[key].push(files[i].name);
       }
     }
-    event.target.value = ''; // permite volver a seleccionar el mismo archivo si se quita y se sube de nuevo
+    event.target.value = '';
   }
 
   onDrop(event: DragEvent, key: string) {
@@ -249,8 +300,6 @@ export class FinanzasComponent {
   }
 
   removeArchivoActual(key: string, index: number) {
-    // Si quieres que al guardar se elimine también en el backend,
-    // guarda estos nombres en un array "archivosAEliminar" y mándalo en el FormData.
     this.archivosActuales[key].splice(index, 1);
   }
 
@@ -301,7 +350,6 @@ export class FinanzasComponent {
   openModal() {
     this.resetForm()
     this.showModal = true
-    //this.getCategorias()
     this.getMetodosPago()
     this.inicializarFechas()
   }
@@ -309,22 +357,20 @@ export class FinanzasComponent {
   inicializarFechas() {
     const hoy = new Date();
     const anioActual = hoy.getFullYear();
-    const mesActual = hoy.getMonth() + 1; // 1-12
+    const mesActual = hoy.getMonth() + 1;
 
     let fecha: Date;
 
     if (this.filtroMes === mesActual) {
-      // Mes actual: usar el día de hoy, capado al último día del mes
       const ultimoDiaMes = new Date(anioActual, this.filtroMes, 0).getDate();
       const diaFinal = Math.min(hoy.getDate(), ultimoDiaMes);
       fecha = new Date(anioActual, this.filtroMes - 1, diaFinal);
     } else {
-      // Meses anteriores (enero al mes previo a hoy): siempre día 1
       fecha = new Date(anioActual, this.filtroMes - 1, 1);
     }
 
     this.fecha_pago = this.formatearFecha(fecha);
-   
+
   }
 
   formatearFecha(fecha: Date): string {
@@ -336,14 +382,11 @@ export class FinanzasComponent {
   }
 
   cargaCategorias(id_categoria: number) {
-       this.getCategorias(id_categoria)
+    this.getCategorias(id_categoria)
   }
 
 
   cargarMovimientos() {
-    console.log('filtroMes:', this.filtroMes);
-    console.log('tipo:', typeof this.filtroMes);
-
     this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes)
       .subscribe(res => {
         this.movimientos = res as any[];
@@ -353,10 +396,8 @@ export class FinanzasComponent {
 
 
   calcularTotal() {
-    //console.log("entro")
 
     if (this.cargandoFormulario) return;
-
 
     const m = Number(this.importe_sin_iva) || 0;
     const ivaNum = Number(this.iva) || 0;
@@ -367,20 +408,11 @@ export class FinanzasComponent {
 
     const ivaCalc = m * ivaNum / 100;
 
-    console.log("Monto:" + m)
-    console.log("IVA Num:" + ivaNum)
-    console.log("TipoMovimiento:" + this.tipo_movimiento_id)
-    console.log("IvaTraslado:" + this.iva_traslado)
-    console.log("IvaCalculado: " + ivaCalc)
-
     if (this.tipo_movimiento_id == 1) {
-      console.log("hola")
       this.iva_traslado = ivaCalc;
     } else {
-      console.log("adios")
       this.iva_acreditable = ivaCalc;
     }
-
 
     this.granTotal = m + m2 + m3 - m4 - m5;
   }
@@ -426,6 +458,8 @@ export class FinanzasComponent {
     this.filtroAnio = hoy.getFullYear();
     this.filtroMes = (hoy.getMonth() + 1);
 
+    this.getMetodosPago();
+
     setTimeout(() => {
       this.cargarMovimientos();
       this.getSaldo(this.filtroAnio, this.filtroMes);
@@ -434,7 +468,6 @@ export class FinanzasComponent {
 
 
   ngOnInit() {
-
 
     this.busquedaRazonSocial$.pipe(
       debounceTime(400),
@@ -451,18 +484,18 @@ export class FinanzasComponent {
     });
 
     this.busquedaConcepto$.pipe(
-    debounceTime(300),
-    distinctUntilChanged(),
-    switchMap(texto => {
-      if (this.rfc) {
-        return this.finanzasService.buscarConceptosPorRfc(this.rfc, texto);
-      }
-      return of([]);
-    })
-  ).subscribe(resultados => {
-    this.resultadosConceptos = resultados;
-  });
-    console.log(this.filtroMes);
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(texto => {
+        if (this.rfc) {
+          return this.finanzasService.buscarConceptosPorRfc(this.rfc, texto);
+        }
+        return of([]);
+      })
+    ).subscribe(resultados => {
+      this.resultadosConceptos = resultados;
+    });
+
     this.getSaldo(this.filtroAnio, this.filtroMes)
 
     const mesActual = new Date().getMonth() + 1;
@@ -470,65 +503,51 @@ export class FinanzasComponent {
       m => m.value <= mesActual
     );
 
-
-
-
   }
 
-
-
-  
 
   onRazonSocialChange(event: any): void {
-  this.busquedaRazonSocial$.next(event.target.value);
-}
-
-seleccionarResultado(item: any): void {
-  this.razon_social = item.razon_social;
-  this.rfc = item.rfc;
-  this.resultadosBusqueda = [];
-}
-
-// --- Handlers de Concepto ---
-
-onConceptoFocus(): void {
-  // Al entrar al campo, muestra todos los conceptos ya usados para ese RFC
-  if (this.rfc) {
-    this.busquedaConcepto$.next(this.concepto || '');
+    this.busquedaRazonSocial$.next(event.target.value);
   }
-}
 
-onConceptoChange(event: any): void {
-  this.busquedaConcepto$.next(event.target.value);
-}
+  seleccionarResultado(item: any): void {
+    this.razon_social = item.razon_social;
+    this.rfc = item.rfc;
+    this.resultadosBusqueda = [];
+  }
 
-onConceptoEnter(): void {
-  this.resultadosConceptos = [];
-}
+  onConceptoFocus(): void {
+    if (this.rfc) {
+      this.busquedaConcepto$.next(this.concepto || '');
+    }
+  }
 
-onConceptoBlur(): void {
-  // Delay para permitir que el (mousedown) del <li> se procese antes de ocultar la lista
-  setTimeout(() => {
+  onConceptoChange(event: any): void {
+    this.busquedaConcepto$.next(event.target.value);
+  }
+
+  onConceptoEnter(): void {
     this.resultadosConceptos = [];
-  }, 150);
-}
+  }
 
-seleccionarConcepto(item: any): void {
-  this.concepto = item.concepto;
-  this.resultadosConceptos = [];
-}
+  onConceptoBlur(): void {
+    setTimeout(() => {
+      this.resultadosConceptos = [];
+    }, 150);
+  }
+
+  seleccionarConcepto(item: any): void {
+    this.concepto = item.concepto;
+    this.resultadosConceptos = [];
+  }
 
 
   async editMovimiento(id: number) {
-
-    //  console.log("hola");
 
     this.cargandoFormulario = true;
     const data: any = await firstValueFrom(
       this.finanzasService.getMovimientoById(id)
     );
-
-
 
     this.editing = true;
     this.id = data.id;
@@ -549,10 +568,8 @@ seleccionarConcepto(item: any): void {
     this.iva = data.iva;
     this.importe_sin_iva = data.importe_sin_iva;
     this.iva_acreditable = data.iva_acreditable;
-    console.log(data.iva_traslado);
     this.iva_traslado = Number(data.iva_traslado);
     this.granTotal = data.gran_total;
-
 
     this.isr_retenido = data.isr_retenido;
     this.metodo_pago_id = data.metodo_pago_id;
@@ -650,8 +667,6 @@ seleccionarConcepto(item: any): void {
       const isr = Number(m.isr_retenido || 0);
       const ivaRet = Number(m.iva_retenido || 0);
       const total = importe + ivaAcred + ivaTras - isr - ivaRet;
-      //console.log(total)
-
 
       return [
         index + 1,
@@ -677,31 +692,21 @@ seleccionarConcepto(item: any): void {
     const movimientosOrdenados = [...this.movimientosFiltrados]
       .sort((a: any, b: any) => a.orden - b.orden);
 
-    // FILTROS
     const ingresos = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 1);
-    //const egresos = this.movimientosFiltrados.filter((m: any) => m.tipo_movimiento_id == 2); // CON NOMINAS 
-    //console.log(this.movimientosFiltrados)
     const egresos = movimientosOrdenados.filter(
-
       (m: any) => m.tipo_movimiento_id == 2
     );
-    console.log(egresos)
-
 
     const egresosSinNomina = egresos.filter((m: any) =>
       m.categoria_id !== 2
     );
 
-    console.log(egresosSinNomina);
-
     const nomina = egresos.filter((m: any) =>
       m.categoria_id == 2
     );
 
-    console.log(nomina)
     const inversiones = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 3);
 
-    // SUMAS
     const sum = (arr: any[], field: string) =>
       arr.reduce((t, m) => t + Number(m[field] || 0), 0);
 
@@ -712,7 +717,6 @@ seleccionarConcepto(item: any): void {
       const isr = sum(arr, 'isr_retenido');
       const ivaRet = sum(arr, 'iva_retenido');
       const total = importe + ivaAcred + ivaTras - isr - ivaRet;
-      //console.log(total)
       return { importe, ivaAcred, ivaTras, isr, ivaRet, total };
     };
 
@@ -730,7 +734,6 @@ seleccionarConcepto(item: any): void {
     const isrRetenido = sum(egresos, 'isr_retenido');
     const ivaRetenido = sum(egresos, 'iva_retenido');
 
-    // ARMAR EXCEL
     const sheetData: any[][] = [];
     const emptyRow = () => Array(headers.length).fill("");
 
@@ -740,7 +743,6 @@ seleccionarConcepto(item: any): void {
 
       data.forEach((m, i) => sheetData.push(formatRow(m, i)));
 
-      // ---- TOTALES DEL BLOQUE ----
       const t = calcTotales(data);
       sheetData.push([
         ...emptyRow().slice(0, 8),
@@ -764,7 +766,6 @@ seleccionarConcepto(item: any): void {
 
     addSection("INVERSIONES", inversiones);
 
-    // ===== TOTALES GENERALES =====
     sheetData.push(emptyRow());
     sheetData.push(["", "", "", "", "", "", "", "", "TOTALES GENERALES"]);
 
@@ -791,7 +792,6 @@ seleccionarConcepto(item: any): void {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Finanzas');
 
-    // FORMATO MONEDA
     const ref = worksheet['!ref'];
     if (ref) {
       const range = XLSX.utils.decode_range(ref);
@@ -806,7 +806,6 @@ seleccionarConcepto(item: any): void {
         });
       }
 
-      // CALIBRI 8
       for (let R = range.s.r; R <= range.e.r; R++) {
         for (let C = range.s.c; C <= range.e.c; C++) {
           const cell = XLSX.utils.encode_cell({ r: R, c: C });
@@ -820,14 +819,12 @@ seleccionarConcepto(item: any): void {
 
     const zip = new JSZip();
 
-    // 1️⃣ agregar el excel que ya generas
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const mesSeleccionado = this.mesesVisibles.find(m => m.value === this.filtroMes);
     const nombreArchivo = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.xlsx`;
 
     zip.file(nombreArchivo, excelBuffer);
 
-    // 2️⃣ descargar adjuntos
     for (const m of movimientosOrdenados) {
 
       if (!m.archivo) continue;
@@ -837,7 +834,6 @@ seleccionarConcepto(item: any): void {
       const response = await fetch(url);
       const blob = await response.blob();
 
-      // 🔧 FIX de encoding roto (NÃ³mina → Nómina)
       const fixEncoding = (str: string) =>
         decodeURIComponent(escape(str));
 
@@ -851,7 +847,6 @@ seleccionarConcepto(item: any): void {
       zip.file(`comprobantes/${nombreArchivo}`, blob);
     }
 
-    // 3️⃣ generar zip
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const nombreZip = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.zip`;
     saveAs(zipBlob, nombreZip);
@@ -904,28 +899,23 @@ seleccionarConcepto(item: any): void {
     formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
     this.tiposArchivo.forEach(t => {
-      // Archivos nuevos seleccionados por el usuario
       this.archivos[t.key].forEach(file => {
-        formData.append(`archivo_${t.key}`, file); // mismo nombre de campo repetido
+        formData.append(`archivo_${t.key}`, file);
       });
 
-      // Archivos que ya existían y el usuario decidió conservar (no eliminó)
       formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
     });
 
-    // console.log("Data",formData)
     try {
 
       const res = this.editing
         ? await this.finanzasService.updateMovimiento(this.id, formData)
         : await this.finanzasService.saveMovimiento(formData);
 
-      console.log(res);
-
       this.showModal = false;
 
       await this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
-      
+
       this.getSaldo(this.filtroAnio, this.filtroMes);
 
       this.cargarMovimientos();
@@ -935,8 +925,6 @@ seleccionarConcepto(item: any): void {
       console.log(err);
 
     }
-
-  
 
   }
 

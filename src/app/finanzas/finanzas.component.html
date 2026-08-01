@@ -11,23 +11,28 @@
 
     <div class="finance-card ingreso-card">
       <h4>INGRESOS</h4>
-      <h2>{{ ingresos | currency:'MXN' }}</h2>
+      <h2>{{ ingresosCard | currency:'MXN' }}</h2>
     </div>
 
     <div class="finance-card egreso-card">
       <h4>EGRESOS</h4>
-      <h2>{{ egresos | currency:'MXN' }}</h2>
+      <h2>{{ egresosCard | currency:'MXN' }}</h2>
+    </div>
+
+    <div class="finance-card nomina-card">
+      <h4>NÓMINA</h4>
+      <h2>{{ nominaCard | currency:'MXN' }}</h2>
     </div>
 
     <div class="finance-card inversiones-card">
       <h4>INVERSIONES</h4>
-      <h2>{{ inversiones | currency:'MXN' }}</h2>
+      <h2>{{ inversionesCard | currency:'MXN' }}</h2>
     </div>
 
     <div class="finance-card saldo-card">
       <h4>TOTAL</h4>
-      <h2 [ngClass]="saldo < 0 ? 'saldo-negativo' : 'saldo-positivo'">
-        {{ saldo | currency:'MXN' }}
+      <h2 [ngClass]="saldoCard < 0 ? 'saldo-negativo' : 'saldo-positivo'">
+        {{ saldoCard | currency:'MXN' }}
       </h2>
     </div>
 
@@ -52,20 +57,24 @@
 
   <!-- TABLA -->
   <div class="tabs">
-
-    <button (click)="tab='todos'" [class.active]="tab=='todos'">TODOS</button>
-    <button (click)="tab='ingreso'" [class.active]="tab=='ingreso'">INGRESOS</button>
-    <button (click)="tab='egreso'" [class.active]="tab=='egreso'">EGRESOS</button>
-    <button (click)="tab='nomina'" [class.active]="tab=='nomina'">NÓMINA</button>
-    <button (click)="tab='inversion'" [class.active]="tab=='inversion'">INVERSIÓN</button>
-
+    <button (click)="cambiarTab('todos')" [class.active]="tab=='todos'">TODOS</button>
+    <button (click)="cambiarTab('ingreso')" [class.active]="tab=='ingreso'">INGRESOS</button>
+    <button (click)="cambiarTab('egreso')" [class.active]="tab=='egreso'">EGRESOS</button>
+    <button (click)="cambiarTab('nomina')" [class.active]="tab=='nomina'">NÓMINA</button>
+    <button (click)="cambiarTab('inversion')" [class.active]="tab=='inversion'">INVERSIÓN</button>
+  </div>
+  <div class="filtros-metodo-pago">
+    <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
+    <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
+    <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
+    <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
   </div>
 
 
   <table class="gradus-table">
     <thead>
       <tr>
-        <th *ngIf="tab == 'todos'"></th>
+        <th></th>
         <th width="100px">Fecha<br>Pago</th>
         <th width="100px">Fecha<br>Factura</th>
         <th>Tipo</th>
@@ -77,24 +86,26 @@
     </thead>
 
 
-    <tbody *ngIf="tab == 'todos'" cdkDropList (cdkDropListDropped)="drop($event)">
+    <tbody>
 
-      <tr *ngFor="let m of movimientos" cdkDrag style="font-size: 11px;">
-        <td cdkDragHandle class="drag-handle"> ☰ </td>
+      <tr *ngFor="let m of movimientosVisibles(); let i = index" style="font-size: 11px;">
+        <td style="text-align:center;">{{ i + 1 }}</td>
         <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
         <td>
           {{ (m.fecha_factura | date:'yyyy') === '1899'
           ? 'SIN FECHA'
+          : (m.fecha_factura | date:'yyyy') === '1900'
+          ? 'NO APLICA'
           : (m.fecha_factura | date:'dd/MM/yyyy') }}
         </td>
 
         <td>
           <span [ngClass]="
-        m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
-        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
-        m.tipo_movimiento_id == 2 ? 'tag-egreso' :
-        'tag-inversion'
-        ">
+    m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
+    m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
+    m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+    'tag-inversion'
+    ">
             {{
             m.tipo_movimiento_id == 1 ? 'INGRESO' :
             m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
@@ -107,76 +118,17 @@
         <td>{{ m.concepto }}</td>
         <td>
           {{ m.importe_sin_iva | currency:'MXN':'$' }}
-          <span *ngIf="m.metodo_pago_id === 1">💵</span>
-          <span *ngIf="m.metodo_pago_id === 3">💳</span>
-        </td>
-
-        <td class="actions">
-
-          <div class="archivos-indicador">
-            <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
-              {{ contarArchivos(m) }}
-            </button>
-
-            <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
-              <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
-                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
-                <span *ngIf="esPDF(a.archivo)">📄</span>
-                <span *ngIf="esImagen(a.archivo)">🖼️</span>
-                {{ a.label }}
-              </div>
-            </div>
-          </div>
-
-          <button class="btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-          <button class="btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-        </td>
-
-      </tr>
-
-      <tr *ngIf="movimientos.length === 0">
-        <td colspan="7" style="text-align:center;padding:30px;">
-          Sin resultados
-        </td>
-      </tr>
-
-    </tbody>
-
-
-    <tbody *ngIf="tab != 'todos'">
-
-      <tr *ngFor="let m of movimientosFiltradosTabs()" style="font-size: 12px;">
-        <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
-        <td>
-          {{ (m.fecha_factura | date:'yyyy') === '1899'
-          ? 'SIN FECHA'
-          : (m.fecha_factura | date:'yyyy') === '1900'
-          ? 'NO APLICA'
-          : (m.fecha_factura | date:'dd/MM/yyyy') }}
-        </td>
-
-        <td>
-          <span [ngClass]="
-        m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
-        m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
-        m.tipo_movimiento_id == 2 ? 'tag-egreso' :
-        'tag-inversion'
-        ">
+          <span class="tag-pago" [ngClass]="
+    m.metodo_pago_id == 1 ? 'pago-efectivo' :
+    m.metodo_pago_id == 2 ? 'pago-transferencia' :
+    m.metodo_pago_id == 3 ? 'pago-debito' : ''
+  ">
             {{
-            m.tipo_movimiento_id == 1 ? 'INGRESO' :
-            m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
-            m.tipo_movimiento_id == 2 ? 'EGRESO' :
-            'INVERSION'
+            m.metodo_pago_id == 1 ? '💵' :
+            m.metodo_pago_id == 2 ? '🏦' :
+            m.metodo_pago_id == 3 ? '💳' : ''
             }}
           </span>
-        </td>
-
-        <td>{{ m.folio_fiscal }}</td>
-        <td>{{ m.concepto }}</td>
-        <td>
-          {{ m.importe_sin_iva | currency:'MXN':'$' }}
-          <span *ngIf="m.metodo_pago_id === 1">💵</span>
-          <span *ngIf="m.metodo_pago_id === 3">💳</span>
         </td>
 
         <td class="actions">
@@ -198,13 +150,12 @@
 
           <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
           <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-
         </td>
 
       </tr>
 
-      <tr *ngIf="movimientosFiltradosTabs().length === 0">
-        <td colspan="20" style="text-align:center;padding:20px;">
+      <tr *ngIf="movimientosVisibles().length === 0">
+        <td colspan="8" style="text-align:center;padding:30px;">
           Sin resultados
         </td>
       </tr>
@@ -216,17 +167,13 @@
 
 
 
-
-
-
-
 <div class="modal-backdrop" *ngIf="showModal">
   <div class="modal-card">
     <h3>{{titulo}}</h3>
 
     <!-- FILA 1 -->
     <div class="form-row">
-      <div class="form-group form-row--espaciada" >
+      <div class="form-group form-row--espaciada">
         <label>Tipo</label>
         <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id)">
           <option [ngValue]="0">SELECCIONE...</option>
@@ -262,7 +209,7 @@
 
 
 
-    
+
     <div class="form-row">
 
       <div class="form-group" style="position: relative;">

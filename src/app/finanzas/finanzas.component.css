@@ -47,6 +47,35 @@
   font-weight: 500;
 }
 
+.filtros-metodo-pago {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.filtros-metodo-pago button {
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background-color: #f5f5f5;
+  color: #555;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filtros-metodo-pago button:hover {
+  background-color: #e8e8e8;
+}
+
+.filtros-metodo-pago button.active {
+  background-color: var(--gradus-green);
+  color: #fff;
+  border-color: var(--gradus-green);
+}
+
 .gradus-table td {
   padding: 10px;
   border-bottom: 1px solid var(--gradus-border);
