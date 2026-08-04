@@ -5,6 +5,7 @@ import { LicitacionesComponent } from './licitaciones/licitaciones.component';
 import { MaquinariaComponent } from './maquinaria/maquinaria.component';
 import { FinanzasComponent } from './finanzas/finanzas.component';
 import { MonitorProcedimientosComponent } from './monitor-procedimientos/monitor-procedimientos.component';
+import { CajaChicaComponent } from './caja-chica/caja-chica.component';
 
 
 export const routes: Route[] = [
@@ -14,4 +15,6 @@ export const routes: Route[] = [
   { path: 'maquinaria', component: MaquinariaComponent },
   { path: 'finanzas', component: FinanzasComponent },
   { path: 'monitor-procedimientos', component: MonitorProcedimientosComponent },
+  { path: 'caja-chica', component: CajaChicaComponent },
+
 ];

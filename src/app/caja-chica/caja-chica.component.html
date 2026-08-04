@@ -1,0 +1,144 @@
+<div class="page-container">
+
+  <div class="meses-cards">
+    <div *ngFor="let mes of mesesVisibles" class="mes-card" [class.activo]="mes.value === filtroMes"
+      (click)="seleccionarMes(mes.value)">
+      {{ mes.text }}
+    </div>
+  </div>
+
+  <div class="finance-cards">
+
+    <div class="finance-card egreso-card">
+      <h4>GASTO (-)</h4>
+      <h2>{{ totalGasto | currency:'MXN' }}</h2>
+    </div>
+
+    <div class="finance-card ingreso-card">
+      <h4>INGRESO (+)</h4>
+      <h2>{{ totalIngreso | currency:'MXN' }}</h2>
+    </div>
+
+    <div class="finance-card saldo-card">
+      <h4>SALDO ACTUAL</h4>
+      <h2 [ngClass]="saldoActual < 0 ? 'saldo-negativo' : 'saldo-positivo'">
+        {{ saldoActual | currency:'MXN' }}
+      </h2>
+    </div>
+
+  </div>
+
+  <div class="page-header">
+    <div class="contratos-header">
+      <button class="btn-primary" (click)="openModal()">
+        + Nuevo movimiento
+      </button>
+
+      <button class="btn-primary" (click)="exportarExcel()">
+        📥 Exportar Excel
+      </button>
+    </div>
+    <h2>Caja Chica</h2>
+  </div>
+
+  <div class="tabs">
+    <button (click)="cambiarTab('todos')" [class.active]="tab=='todos'">TODOS</button>
+    <button (click)="cambiarTab('gasto')" [class.active]="tab=='gasto'">GASTOS</button>
+    <button (click)="cambiarTab('ingreso')" [class.active]="tab=='ingreso'">INGRESOS</button>
+  </div>
+
+  <table class="gradus-table" cdkDropList (cdkDropListDropped)="drop($event)">
+    <thead>
+      <tr>
+        <th></th>
+        <th width="100px">Fecha</th>
+        <th>Concepto</th>
+        <th>Gasto (-)</th>
+        <th>Ingreso (+)</th>
+        <th>Saldo Actual</th>
+        <th>Capturó</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr *ngFor="let m of movimientosVisibles(); let i = index" cdkDrag style="font-size: 11px;">
+        <td style="text-align:center;">{{ i + 1 }}</td>
+        <td>{{ (m.fecha | date:'dd/MM/yyyy') }}</td>
+        <td>{{ m.concepto }}</td>
+        <td [ngClass]="{'tag-egreso': m.gasto > 0}">
+          {{ m.gasto > 0 ? (m.gasto | currency:'MXN':'$') : '' }}
+        </td>
+        <td [ngClass]="{'tag-ingreso': m.ingreso > 0}">
+          {{ m.ingreso > 0 ? (m.ingreso | currency:'MXN':'$') : '' }}
+        </td>
+        <td>
+          <strong>{{ m.saldo_actual | currency:'MXN':'$' }}</strong>
+        </td>
+        <td>{{ m.capturo }}</td>
+
+        <td class="actions">
+          <button class="action-btn btn-edit" (click)="editMovimiento(m)">✏️</button>
+          <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id!)">🗑️</button>
+        </td>
+      </tr>
+
+      <tr *ngIf="movimientosVisibles().length === 0">
+        <td colspan="8" style="text-align:center;padding:30px;">
+          Sin resultados
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+</div>
+
+
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <h3>{{ titulo }}</h3>
+
+    <div class="form-row">
+      <div class="form-group form-row--espaciada">
+        <label>Tipo</label>
+        <select [(ngModel)]="tipo_movimiento">
+          <option value="gasto">GASTO (-)</option>
+          <option value="ingreso">INGRESO (+)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="fecha">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" style="flex: 1;">
+        <label>Concepto</label>
+        <input type="text" [(ngModel)]="concepto" style="text-transform: uppercase;" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="monto"
+          placeholder="0.00">
+      </div>
+
+      <div class="form-group">
+        <label>Capturó</label>
+        <input type="text" [(ngModel)]="capturo" style="text-transform: uppercase;">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveMovimiento()">{{ textoBoton }}</button>
+    </div>
+
+  </div>
+</div>
