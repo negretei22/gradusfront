@@ -404,7 +404,7 @@ select {
   padding: 22px;
   border-radius: 14px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  min-width: 260px;
+  min-width: 180px;
   transition: transform .15s ease;
 }
 
@@ -525,7 +525,7 @@ select {
   width: 30px;
   text-align: center;
   color: #888;
-  font-size: 18px;
+  
 }
 
 .drag-handle:active {

@@ -22,6 +22,11 @@ export class FinanzasService {
 
   }
 
+  updateOrdenMasivo(items: { id: number; orden: number }[]) {
+  return firstValueFrom(
+    this.http.post(`${this.api}/finanzas/movimientos/orden-masivo`, { items })
+  );
+}
   buscarPorRazonSocial(texto: string): Observable<any[]> {
   return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-razon-social`, {
     params: { texto }

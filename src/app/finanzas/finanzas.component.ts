@@ -118,6 +118,7 @@ export class FinanzasComponent {
   };
 
 
+
   // ===== FILTRO COMBINADO PARA LA TABLA (tab + método de pago) =====
   movimientosVisibles(): any[] {
     const base = this.tab === 'todos' ? this.movimientos : this.movimientosFiltradosTabs();
@@ -179,19 +180,18 @@ export class FinanzasComponent {
       event.currentIndex
     );
 
-    for (let i = 0; i < this.movimientos.length; i++) {
-
-      const m = this.movimientos[i];
-
+    // Reasignar orden localmente a TODOS los registros visibles
+    const items = this.movimientos.map((m, i) => {
       m.orden = i + 1;
+      return { id: m.id, orden: m.orden };
+    });
 
-      await this.finanzasService.updateOrden(
-        m.id,
-        m.orden
-      );
-
+    try {
+      await this.finanzasService.updateOrdenMasivo(items);
+    } catch (err) {
+      console.error('Error actualizando orden', err);
+      // opcional: revertir el drag si falla, o mostrar toast de error
     }
-
   }
 
 

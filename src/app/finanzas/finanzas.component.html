@@ -11,29 +11,29 @@
 
     <div class="finance-card ingreso-card">
       <h4>INGRESOS</h4>
-      <h2>{{ ingresosCard | currency:'MXN' }}</h2>
+      <h3>{{ ingresosCard | currency:'MXN' }}</h3>
     </div>
 
     <div class="finance-card egreso-card">
       <h4>EGRESOS</h4>
-      <h2>{{ egresosCard | currency:'MXN' }}</h2>
+      <h3>{{ egresosCard | currency:'MXN' }}</h3>
     </div>
 
     <div class="finance-card nomina-card">
       <h4>NÓMINA</h4>
-      <h2>{{ nominaCard | currency:'MXN' }}</h2>
+      <h3>{{ nominaCard | currency:'MXN' }}</h3>
     </div>
 
     <div class="finance-card inversiones-card">
       <h4>INVERSIONES</h4>
-      <h2>{{ inversionesCard | currency:'MXN' }}</h2>
+      <h3>{{ inversionesCard | currency:'MXN' }}</h3>
     </div>
 
     <div class="finance-card saldo-card">
       <h4>TOTAL</h4>
-      <h2 [ngClass]="saldoCard < 0 ? 'saldo-negativo' : 'saldo-positivo'">
+      <h3 [ngClass]="saldoCard < 0 ? 'saldo-negativo' : 'saldo-positivo'">
         {{ saldoCard | currency:'MXN' }}
-      </h2>
+      </h3>
     </div>
 
   </div>
@@ -72,96 +72,100 @@
 
 
   <table class="gradus-table">
-    <thead>
-      <tr>
-        <th></th>
-        <th width="100px">Fecha<br>Pago</th>
-        <th width="100px">Fecha<br>Factura</th>
-        <th>Tipo</th>
-        <th>Razón Social</th>
-        <th>Concepto</th>
-        <th>Monto</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
+  <thead>
+    <tr>
+      <th></th>
+      <th width="8%">Fecha<br>Pago</th>
+      <th width="8%">Fecha<br>Factura</th>
+      <th width="8%">Tipo</th>
+      <th width="22%">Razón Social</th>
+      <th width="34%">Concepto</th>
+      <th width="10%">Monto</th>
+      <th width="10%">Acciones</th>
+    </tr>
+  </thead>
 
+  <tbody cdkDropList (cdkDropListDropped)="drop($event)">
 
-    <tbody>
+    <tr *ngFor="let m of movimientosVisibles(); let i = index"
+        cdkDrag
+        [cdkDragDisabled]="tab !== 'todos' || metodoPagoFiltro !== 0"
+        style="font-size: 11px;">
 
-      <tr *ngFor="let m of movimientosVisibles(); let i = index" style="font-size: 11px;">
-        <td style="text-align:center;">{{ i + 1 }}</td>
-        <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
-        <td>
-          {{ (m.fecha_factura | date:'yyyy') === '1899'
-          ? 'SIN FECHA'
-          : (m.fecha_factura | date:'yyyy') === '1900'
-          ? 'NO APLICA'
-          : (m.fecha_factura | date:'dd/MM/yyyy') }}
-        </td>
+      <td style="text-align:center;" cdkDragHandle [class.drag-handle]="tab === 'todos' && metodoPagoFiltro === 0">
+      {{ i + 1 }}
+      </td>
+      <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
+      <td>
+        {{ (m.fecha_factura | date:'yyyy') === '1899'
+        ? 'SIN FECHA'
+        : (m.fecha_factura | date:'yyyy') === '1900'
+        ? 'NO APLICA'
+        : (m.fecha_factura | date:'dd/MM/yyyy') }}
+      </td>
 
-        <td>
-          <span [ngClass]="
-    m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
-    m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
-    m.tipo_movimiento_id == 2 ? 'tag-egreso' :
-    'tag-inversion'
-    ">
-            {{
-            m.tipo_movimiento_id == 1 ? 'INGRESO' :
-            m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
-            m.tipo_movimiento_id == 2 ? 'EGRESO' :
-            'INVERSION'
-            }}
-          </span>
-        </td>
-        <td>{{ m.razon_social }}</td>
-        <td>{{ m.concepto }}</td>
-        <td>
-          {{ m.importe_sin_iva | currency:'MXN':'$' }}
-          <span class="tag-pago" [ngClass]="
-    m.metodo_pago_id == 1 ? 'pago-efectivo' :
-    m.metodo_pago_id == 2 ? 'pago-transferencia' :
-    m.metodo_pago_id == 3 ? 'pago-debito' : ''
-  ">
-            {{
-            m.metodo_pago_id == 1 ? '💵' :
-            m.metodo_pago_id == 2 ? '🏦' :
-            m.metodo_pago_id == 3 ? '💳' : ''
-            }}
-          </span>
-        </td>
+      <td>
+        <span [ngClass]="
+          m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
+          m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
+          m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+          'tag-inversion'
+          ">
+          {{
+          m.tipo_movimiento_id == 1 ? 'INGRESO' :
+          m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+          m.tipo_movimiento_id == 2 ? 'EGRESO' :
+          'INVERSION'
+          }}
+        </span>
+      </td>
+      <td>{{ m.razon_social }}</td>
+      <td>{{ m.concepto }}</td>
+      <td>
+        {{ m.importe_sin_iva | currency:'MXN':'$' }}
+        <span class="tag-pago" [ngClass]="
+          m.metodo_pago_id == 1 ? 'pago-efectivo' :
+          m.metodo_pago_id == 2 ? 'pago-transferencia' :
+          m.metodo_pago_id == 3 ? 'pago-debito' : ''
+        ">
+          {{
+          m.metodo_pago_id == 1 ? '💵' :
+          m.metodo_pago_id == 2 ? '🏦' :
+          m.metodo_pago_id == 3 ? '💳' : ''
+          }}
+        </span>
+      </td>
 
-        <td class="actions">
+      <td class="actions">
+        <div class="archivos-indicador">
+          <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
+            {{ contarArchivos(m) }}
+          </button>
 
-          <div class="archivos-indicador">
-            <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
-              {{ contarArchivos(m) }}
-            </button>
-
-            <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
-              <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
-                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
-                <span *ngIf="esPDF(a.archivo)">📄</span>
-                <span *ngIf="esImagen(a.archivo)">🖼️</span>
-                {{ a.label }}
-              </div>
+          <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
+            <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
+              (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
+              <span *ngIf="esPDF(a.archivo)">📄</span>
+              <span *ngIf="esImagen(a.archivo)">🖼️</span>
+              {{ a.label }}
             </div>
           </div>
+        </div>
 
-          <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-          <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-        </td>
+        <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+        <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+      </td>
 
-      </tr>
+    </tr>
 
-      <tr *ngIf="movimientosVisibles().length === 0">
-        <td colspan="8" style="text-align:center;padding:30px;">
-          Sin resultados
-        </td>
-      </tr>
+    <tr *ngIf="movimientosVisibles().length === 0">
+      <td colspan="8" style="text-align:center;padding:30px;">
+        Sin resultados
+      </td>
+    </tr>
 
-    </tbody>
-  </table>
+  </tbody>
+</table>
 
 </div>
 
