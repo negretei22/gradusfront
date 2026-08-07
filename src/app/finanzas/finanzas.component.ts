@@ -825,16 +825,14 @@ export class FinanzasComponent {
 
     zip.file(nombreArchivoExcel, excelBuffer);
 
-    // Carpetas dentro del zip
-    const carpetaFacturas = zip.folder('Facturas');
-    const carpetaComprobantes = zip.folder('Comprobantes');
+    const carpetaFacturasRecibidas = zip.folder('Facturas Recibidas');
+    const carpetaFacturasEmitidas = zip.folder('Facturas Emitidas');
+    const carpetaComprobantes = zip.folder('Comprobantes de Pago');
 
-    // Año-Mes, ej: "2027-07"  -> ajusta this.filtroAnio si tu variable se llama distinto
     const anioMes = `${this.filtroAnio}-${String(this.filtroMes).padStart(2, '0')}`;
 
     const fixEncoding = (str: string) => decodeURIComponent(escape(str));
 
-    // Quita caracteres inválidos para nombres de archivo
     const sanitizar = (str: string) =>
       (str || '').replace(/[\\/:*?"<>|]/g, '-').trim();
 
@@ -843,7 +841,6 @@ export class FinanzasComponent {
       return idx >= 0 ? nombreArchivo.substring(idx) : '';
     };
 
-    // archivo_factura / archivo_pago vienen separados por comas
     const parseArchivos = (campo: any): string[] => {
       if (!campo) return [];
       return String(campo)
@@ -857,7 +854,7 @@ export class FinanzasComponent {
       carpeta: JSZip | null,
       nombreFinal: string
     ) => {
-      const url = `http://localhost:3000/uploads/movimientos/${nombreOriginal}`;
+      const url = `http://anvotv.ddns.net:3000/uploads/movimientos/${nombreOriginal}`;
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -876,16 +873,27 @@ export class FinanzasComponent {
 
       const baseNombre = `${idx + 1}. ${anioMes} - ${sanitizar(m.concepto)}`;
 
-      // Facturas
+      // Facturas: INGRESO (1) -> Emitidas | EGRESO (2, incluye nómina) -> Recibidas | INVERSIÓN (3) -> sin facturas
       const facturas = parseArchivos(m.archivo_factura);
-      for (let i = 0; i < facturas.length; i++) {
-        const original = fixEncoding(facturas[i]);
-        const ext = getExtension(original);
-        const nombreFinal = `${baseNombre} - Factura ${i + 1}${ext}`;
-        await descargarYAgregar(original, carpetaFacturas, nombreFinal);
+
+      let carpetaFactura: JSZip | null = null;
+      if (Number(m.tipo_movimiento_id) === 1) {
+        carpetaFactura = carpetaFacturasEmitidas;
+      } else if (Number(m.tipo_movimiento_id) === 2) {
+        carpetaFactura = carpetaFacturasRecibidas;
+      }
+      // tipo_movimiento_id === 3 (inversión) -> no tiene facturas, se omite
+
+      if (carpetaFactura) {
+        for (let i = 0; i < facturas.length; i++) {
+          const original = fixEncoding(facturas[i]);
+          const ext = getExtension(original);
+          const nombreFinal = `${baseNombre} - Factura ${i + 1}${ext}`;
+          await descargarYAgregar(original, carpetaFactura, nombreFinal);
+        }
       }
 
-      // Comprobantes
+      // Comprobantes de pago: aplica para todos los tipos
       const comprobantes = parseArchivos(m.archivo_pago);
       for (let i = 0; i < comprobantes.length; i++) {
         const original = fixEncoding(comprobantes[i]);
