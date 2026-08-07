@@ -821,30 +821,78 @@ export class FinanzasComponent {
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const mesSeleccionado = this.mesesVisibles.find(m => m.value === this.filtroMes);
-    const nombreArchivo = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.xlsx`;
+    const nombreArchivoExcel = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.xlsx`;
 
-    zip.file(nombreArchivo, excelBuffer);
+    zip.file(nombreArchivoExcel, excelBuffer);
 
-    for (const m of movimientosOrdenados) {
+    // Carpetas dentro del zip
+    const carpetaFacturas = zip.folder('Facturas');
+    const carpetaComprobantes = zip.folder('Comprobantes');
 
-      if (!m.archivo) continue;
+    // Año-Mes, ej: "2027-07"  -> ajusta this.filtroAnio si tu variable se llama distinto
+    const anioMes = `${this.filtroAnio}-${String(this.filtroMes).padStart(2, '0')}`;
 
-      const url = `http://localhost:3000/uploads/movimientos/${m.archivo}`;
+    const fixEncoding = (str: string) => decodeURIComponent(escape(str));
 
-      const response = await fetch(url);
-      const blob = await response.blob();
+    // Quita caracteres inválidos para nombres de archivo
+    const sanitizar = (str: string) =>
+      (str || '').replace(/[\\/:*?"<>|]/g, '-').trim();
 
-      const fixEncoding = (str: string) =>
-        decodeURIComponent(escape(str));
+    const getExtension = (nombreArchivo: string) => {
+      const idx = nombreArchivo.lastIndexOf('.');
+      return idx >= 0 ? nombreArchivo.substring(idx) : '';
+    };
 
-      let nombreArchivo = fixEncoding(m.archivo);
+    // archivo_factura / archivo_pago vienen separados por comas
+    const parseArchivos = (campo: any): string[] => {
+      if (!campo) return [];
+      return String(campo)
+        .split(',')
+        .map(f => f.trim())
+        .filter(f => f.length > 0);
+    };
 
-      if (Number(m.tipo_movimiento_id) === 2) {
-        nombreArchivo =
-          `${String(m.orden).padStart(2, '0')}. ${nombreArchivo}`;
+    const descargarYAgregar = async (
+      nombreOriginal: string,
+      carpeta: JSZip | null,
+      nombreFinal: string
+    ) => {
+      const url = `http://localhost:3000/uploads/movimientos/${nombreOriginal}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.warn(`No se pudo descargar: ${nombreOriginal}`);
+          return;
+        }
+        const blob = await response.blob();
+        carpeta?.file(nombreFinal, blob);
+      } catch (e) {
+        console.warn(`Error descargando ${nombreOriginal}`, e);
+      }
+    };
+
+    for (let idx = 0; idx < movimientosOrdenados.length; idx++) {
+      const m = movimientosOrdenados[idx];
+
+      const baseNombre = `${idx + 1}. ${anioMes} - ${sanitizar(m.concepto)}`;
+
+      // Facturas
+      const facturas = parseArchivos(m.archivo_factura);
+      for (let i = 0; i < facturas.length; i++) {
+        const original = fixEncoding(facturas[i]);
+        const ext = getExtension(original);
+        const nombreFinal = `${baseNombre} - Factura ${i + 1}${ext}`;
+        await descargarYAgregar(original, carpetaFacturas, nombreFinal);
       }
 
-      zip.file(`comprobantes/${nombreArchivo}`, blob);
+      // Comprobantes
+      const comprobantes = parseArchivos(m.archivo_pago);
+      for (let i = 0; i < comprobantes.length; i++) {
+        const original = fixEncoding(comprobantes[i]);
+        const ext = getExtension(original);
+        const nombreFinal = `${baseNombre} - Comprobante ${i + 1}${ext}`;
+        await descargarYAgregar(original, carpetaComprobantes, nombreFinal);
+      }
     }
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
