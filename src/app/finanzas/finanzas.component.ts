@@ -96,6 +96,7 @@ export class FinanzasComponent {
   cargandoFormulario = false;
   mesesVisibles: any[] = [];
   metodoPagoFiltro: number = 0;
+  expandidoKey: string | null = null;
 
 
   tiposArchivo = [
@@ -118,6 +119,15 @@ export class FinanzasComponent {
   };
 
 
+  toggleExpandido(key: string, event: Event): void {
+  event.stopPropagation();
+  this.expandidoKey = this.expandidoKey === key ? null : key;
+  console.log('Expandido ahora:', this.expandidoKey);
+}
+
+  trackByKey(index: number, item: any): string {
+    return item.key;
+  }
 
   // ===== FILTRO COMBINADO PARA LA TABLA (tab + método de pago) =====
   movimientosVisibles(): any[] {
@@ -308,7 +318,7 @@ export class FinanzasComponent {
     return nombre?.match(/\.(jpg|jpeg|png|gif)$/i);
   }
 
-  verArchivo(nombre: string) {
+  o(nombre: string) {
     window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
   }
 
@@ -635,6 +645,12 @@ export class FinanzasComponent {
   }
 
 
+  verArchivo(nombre: string) {
+    console.log(nombre)
+    window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
+  }
+
+
   async getSaldo(anio: number, mes: number) {
     await this.finanzasService.getSaldo(anio, mes).subscribe((res: any) => {
       this.ingresos = res.ingresos;
@@ -704,6 +720,8 @@ export class FinanzasComponent {
     const nomina = egresos.filter((m: any) =>
       m.categoria_id == 2
     );
+
+
 
     const inversiones = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 3);
 
@@ -854,7 +872,7 @@ export class FinanzasComponent {
       carpeta: JSZip | null,
       nombreFinal: string
     ) => {
-      const url = `http://anvotv.ddns.net:3000/uploads/movimientos/${nombreOriginal}`;
+      const url = `http://anvotv.ddns.net:  ${nombreOriginal}`;
       try {
         const response = await fetch(url);
         if (!response.ok) {

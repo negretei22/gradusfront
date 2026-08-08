@@ -645,96 +645,266 @@ tr.cdk-drag-preview td {
 
 .archivos-horizontal {
   display: flex;
-  gap: 16px;
   flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
 }
 
-.drop-zone-mini {
+.drop-zone-card {
   flex: 1;
-  min-width: 220px;
-  min-height: 90px;
-  border: 2px dashed #b8c2cc;
-  border-radius: 10px;
-  padding: 14px 16px;
-  background-color: #f8f9fa;
+  min-width: 280px;
+  max-width: 380px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  overflow: hidden;
+  transition: all 0.25s ease;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.drop-zone-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.drop-zone-card.dragging {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.drop-zone-card.con-archivo {
+  border-style: solid;
+  border-color: #e2e8f0;
+  background: #ffffff;
+}
+
+/* HEADER */
+.dz-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.drop-zone-mini:hover {
-  border-color: #6c757d;
-  background-color: #f1f3f5;
-}
+.dz-icono { font-size: 18px; }
 
-.drop-zone-mini.dragging {
-  border-color: #198754;
-  background-color: #e9fbf0;
-}
-
-.drop-zone-mini.con-archivo {
-  border: 2px solid #16a34a;
-  background-color: #dcfce7;
-}
-
-.drop-zone-mini.con-archivo:hover {
-  background-color: #16a34a;
-}
-
-.drop-zone-mini.con-archivo:hover .drop-zone-label,
-.drop-zone-mini.con-archivo:hover .archivo-item small,
-.drop-zone-mini.con-archivo:hover .archivo-item a {
-  color: #ffffff;
-}
-
-.drop-zone-label {
+.dz-label {
+  flex: 1;
   font-size: 13px;
-  font-weight: 600;
-  color: #495057;
+  font-weight: 700;
+  color: #1e293b;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  text-align: center;
 }
 
-.drop-zone-mini p {
-  margin: 0;
+.dz-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+/* BODY */
+.dz-body {
+  padding: 12px 16px 16px 16px;
+}
+
+/* VACÍO */
+.dz-vacio {
+  text-align: center;
+  padding: 20px 10px;
+  pointer-events: none;
+}
+
+.vacio-icono {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dz-vacio p {
   font-size: 13px;
-  color: #868e96;
-  text-align: center;
+  color: #94a3b8;
+  margin: 0;
+  font-weight: 500;
 }
 
-/* Archivo dentro del dropzone de subida (distinto del listado de "archivos actuales") */
+/* GRUPOS */
+.dz-grupo {
+  margin-bottom: 12px;
+}
 
-.drop-zone-mini .archivo-item {
+.dz-grupo:last-child {
+  margin-bottom: 0;
+}
+
+.dz-grupo-titulo {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.dz-grupo-titulo.nuevos {
+  color: #059669;
+}
+
+/* LISTAS */
+.dz-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dz-lista li {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  width: 100%;
-  background-color: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.25s ease-out;
 }
 
-.drop-zone-mini .archivo-item small,
-.drop-zone-mini .archivo-item a {
-  color: #212529;
+.dz-lista li:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateX(2px);
+}
+
+.dz-lista.lista-nuevos li {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  border-style: dashed;
+}
+
+.dz-lista.lista-nuevos li:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+/* LINK / INFO */
+.dz-link,
+.dz-file-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dz-file-icono {
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.dz-file-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 140px;
 }
 
-.drop-zone-mini .archivo-item a {
+.dz-link:hover .dz-file-nombre {
+  color: #2563eb;
   text-decoration: underline;
-  cursor: pointer;
 }
 
+.lista-nuevos .dz-file-nombre {
+  color: #166534;
+}
+
+.dz-badge-pendiente {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #059669;
+  background: #d1fae5;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+/* BOTÓN QUITAR */
+.dz-btn-quitar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  z-index: 2;
+}
+
+.dz-btn-quitar:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* INPUT OCULTO */
+.drop-zone-card input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.dz-btn-quitar,
+.dz-link {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 /* ===== ARCHIVOS ACTUALES (caja de archivos ya subidos al editar) ===== */
 
 .archivos-actuales-box {
@@ -883,17 +1053,58 @@ tr.cdk-drag-preview td {
   border-color: #ffffff transparent transparent transparent;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ========== ZONA DE DROP ========== */
+/* ========== ZONA DE DROP ========== */
+.zona-drop {
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  background: #f8fafc;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 16px;
 }
+
+.zona-drop:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.zona-drop.dragover {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.zona-drop-contenido {
+  pointer-events: none;
+}
+
+.icono-drop {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.texto-principal {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 4px 0;
+}
+
+.texto-secundario {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ========== PANEL DOCUMENTOS (tu CSS actual, sin cambios) ========== */
+/* ... tu CSS del panel ... */
 
 .invisible {
   visibility: hidden;

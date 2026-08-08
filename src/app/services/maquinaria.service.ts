@@ -26,7 +26,15 @@ export class MaquinariaService {
   }
 
 
-  saveMaquinaria(data: any) {
+  saveMaquinaria(data: FormData) {
     return firstValueFrom(this.http.post(`${this.api}/maquinaria/save`, data));
+  }
+
+  updateMaquinaria(data: FormData) {
+    return firstValueFrom(this.http.put(`${this.api}/maquinaria/update`, data));
+  }
+
+  deleteMaquinaria(id: number) {
+    return firstValueFrom(this.http.delete(`${this.api}/maquinaria/delete/${id}`));
   }
 }

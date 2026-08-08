@@ -72,100 +72,98 @@
 
 
   <table class="gradus-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th width="8%">Fecha<br>Pago</th>
-      <th width="8%">Fecha<br>Factura</th>
-      <th width="8%">Tipo</th>
-      <th width="22%">Razón Social</th>
-      <th width="34%">Concepto</th>
-      <th width="10%">Monto</th>
-      <th width="10%">Acciones</th>
-    </tr>
-  </thead>
+    <thead>
+      <tr>
+        <th></th>
+        <th width="8%">Fecha<br>Pago</th>
+        <th width="8%">Fecha<br>Factura</th>
+        <th width="8%">Tipo</th>
+        <th width="22%">Razón Social</th>
+        <th width="34%">Concepto</th>
+        <th width="10%">Monto</th>
+        <th width="10%">Acciones</th>
+      </tr>
+    </thead>
 
-  <tbody cdkDropList (cdkDropListDropped)="drop($event)">
+    <tbody cdkDropList (cdkDropListDropped)="drop($event)">
 
-    <tr *ngFor="let m of movimientosVisibles(); let i = index"
-        cdkDrag
-        [cdkDragDisabled]="tab !== 'todos' || metodoPagoFiltro !== 0"
-        style="font-size: 11px;">
+      <tr *ngFor="let m of movimientosVisibles(); let i = index" cdkDrag
+        [cdkDragDisabled]="tab !== 'todos' || metodoPagoFiltro !== 0" style="font-size: 11px;">
 
-      <td style="text-align:center;" cdkDragHandle [class.drag-handle]="tab === 'todos' && metodoPagoFiltro === 0">
-      {{ i + 1 }}
-      </td>
-      <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
-      <td>
-        {{ (m.fecha_factura | date:'yyyy') === '1899'
-        ? 'SIN FECHA'
-        : (m.fecha_factura | date:'yyyy') === '1900'
-        ? 'NO APLICA'
-        : (m.fecha_factura | date:'dd/MM/yyyy') }}
-      </td>
+        <td style="text-align:center;" cdkDragHandle [class.drag-handle]="tab === 'todos' && metodoPagoFiltro === 0">
+          {{ i + 1 }}
+        </td>
+        <td>{{ (m.fecha_pago | date:'dd/MM/yyyy')}}</td>
+        <td>
+          {{ (m.fecha_factura | date:'yyyy') === '1899'
+          ? 'SIN FECHA'
+          : (m.fecha_factura | date:'yyyy') === '1900'
+          ? 'NO APLICA'
+          : (m.fecha_factura | date:'dd/MM/yyyy') }}
+        </td>
 
-      <td>
-        <span [ngClass]="
+        <td>
+          <span [ngClass]="
           m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
           m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
           m.tipo_movimiento_id == 2 ? 'tag-egreso' :
           'tag-inversion'
           ">
-          {{
-          m.tipo_movimiento_id == 1 ? 'INGRESO' :
-          m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
-          m.tipo_movimiento_id == 2 ? 'EGRESO' :
-          'INVERSION'
-          }}
-        </span>
-      </td>
-      <td>{{ m.razon_social }}</td>
-      <td>{{ m.concepto }}</td>
-      <td>
-        {{ m.importe_sin_iva | currency:'MXN':'$' }}
-        <span class="tag-pago" [ngClass]="
+            {{
+            m.tipo_movimiento_id == 1 ? 'INGRESO' :
+            m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
+            m.tipo_movimiento_id == 2 ? 'EGRESO' :
+            'INVERSION'
+            }}
+          </span>
+        </td>
+        <td>{{ m.razon_social }}</td>
+        <td>{{ m.concepto }}</td>
+        <td>
+          {{ m.importe_sin_iva | currency:'MXN':'$' }}
+          <span class="tag-pago" [ngClass]="
           m.metodo_pago_id == 1 ? 'pago-efectivo' :
           m.metodo_pago_id == 2 ? 'pago-transferencia' :
           m.metodo_pago_id == 3 ? 'pago-debito' : ''
         ">
-          {{
-          m.metodo_pago_id == 1 ? '💵' :
-          m.metodo_pago_id == 2 ? '🏦' :
-          m.metodo_pago_id == 3 ? '💳' : ''
-          }}
-        </span>
-      </td>
+            {{
+            m.metodo_pago_id == 1 ? '💵' :
+            m.metodo_pago_id == 2 ? '🏦' :
+            m.metodo_pago_id == 3 ? '💳' : ''
+            }}
+          </span>
+        </td>
 
-      <td class="actions">
-        <div class="archivos-indicador">
-          <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
-            {{ contarArchivos(m) }}
-          </button>
+        <td class="actions">
+          <div class="archivos-indicador">
+            <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
+              {{ contarArchivos(m) }}
+            </button>
 
-          <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
-            <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
-              (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
-              <span *ngIf="esPDF(a.archivo)">📄</span>
-              <span *ngIf="esImagen(a.archivo)">🖼️</span>
-              {{ a.label }}
+            <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
+              <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
+                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
+                <span *ngIf="esPDF(a.archivo)">📄</span>
+                <span *ngIf="esImagen(a.archivo)">🖼️</span>
+                {{ a.label }}
+              </div>
             </div>
           </div>
-        </div>
 
-        <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-        <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
-      </td>
+          <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+          <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+        </td>
 
-    </tr>
+      </tr>
 
-    <tr *ngIf="movimientosVisibles().length === 0">
-      <td colspan="8" style="text-align:center;padding:30px;">
-        Sin resultados
-      </td>
-    </tr>
+      <tr *ngIf="movimientosVisibles().length === 0">
+        <td colspan="8" style="text-align:center;padding:30px;">
+          Sin resultados
+        </td>
+      </tr>
 
-  </tbody>
-</table>
+    </tbody>
+  </table>
 
 </div>
 
@@ -269,38 +267,87 @@
     <br>
     <div class="form-row">
       <div class="form-group" style="flex: 1;">
-        <label>Archivos</label>
+       
 
-        <div class="archivos-horizontal">
-          <div class="drop-zone-mini" *ngFor="let t of tiposArchivo" (dragover)="onDragOver($event, t.key)"
-            [class.dragging]="dragging[t.key]"
-            [class.con-archivo]="archivosNombre[t.key].length || archivosActuales[t.key].length"
-            (dragleave)="onDragLeave($event, t.key)" (drop)="onDrop($event, t.key)" (click)="fi.click()">
+        <div class="form-row">
+  <div class="form-group" style="flex: 1;">
+    <label>Archivos</label>
 
-            <strong class="drop-zone-label">{{ t.label }}</strong>
+    <div class="archivos-horizontal">
+      <div class="drop-zone-card" 
+           *ngFor="let t of tiposArchivo" 
+           (dragover)="onDragOver($event, t.key)"
+           [class.dragging]="dragging[t.key]"
+           (dragleave)="onDragLeave($event, t.key)" 
+           (drop)="onDrop($event, t.key)"
+           (click)="fi.click()">
 
-            <p *ngIf="!archivosNombre[t.key].length && !archivosActuales[t.key].length">📎 Subir</p>
-
-            <!-- Archivos nuevos seleccionados -->
-            <div *ngFor="let nombre of archivosNombre[t.key]; let i = index" class="archivo-item">
-              <span *ngIf="esPDF(nombre)">📄</span>
-              <span *ngIf="esImagen(nombre)">🖼️</span>
-              <small>{{ nombre }}</small>
-              <button type="button" class="btn-quitar"
-                (click)="removeArchivo(t.key, i); $event.stopPropagation()">✖</button>
-            </div>
-
-            <!-- Archivos ya guardados en el servidor -->
-            <div *ngFor="let nombre of archivosActuales[t.key]; let i = index" class="archivo-item">
-              <a [href]="'http://localhost:3000/uploads/movimientos/' + nombre" target="_blank"
-                (click)="$event.stopPropagation()">Archivo {{ i + 1 }}</a>
-              <button type="button" class="btn-quitar"
-                (click)="removeArchivoActual(t.key, i); $event.stopPropagation()">✖</button>
-            </div>
-            <input #fi type="file" multiple hidden (change)="onFileSelected($event, t.key)"
-              accept=".pdf,.jpg,.jpeg,.png">
-          </div>
+        <!-- Header fijo (solo visual) -->
+        <div class="dz-header">
+          <span class="dz-icono">📁</span>
+          <span class="dz-label">{{ t.label }}</span>
+          <span class="dz-badge" *ngIf="(archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) > 0">
+            {{ (archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) }}
+          </span>
         </div>
+
+        <!-- Contenido siempre visible -->
+        <div class="dz-body">
+
+          <!-- Vacío -->
+          <div class="dz-vacio" *ngIf="!(archivosNombre[t.key]?.length || 0) && !(archivosActuales[t.key]?.length || 0)">
+            <span class="vacio-icono">📎</span>
+            <p>Arrastra aquí o haz clic</p>
+          </div>
+
+          <!-- Guardados -->
+          <div class="dz-grupo" *ngIf="archivosActuales[t.key]?.length">
+            <div class="dz-grupo-titulo">Guardados</div>
+            <ul class="dz-lista">
+              <li *ngFor="let nombre of archivosActuales[t.key]; let i = index">
+                <a class="dz-link" 
+                   [href]="'http://localhost:3000/uploads/movimientos/' + nombre" 
+                   target="_blank"
+                   [title]="nombre"
+                   (click)="$event.stopPropagation()">
+                  <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
+                  <span class="dz-file-nombre">{{ nombre }}</span>
+                </a>
+                <button type="button" 
+                        class="dz-btn-quitar"
+                        (click)="removeArchivoActual(t.key, i); $event.stopPropagation()"
+                        title="Eliminar">✕</button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Nuevos -->
+          <div class="dz-grupo nuevos" *ngIf="archivosNombre[t.key]?.length">
+            <div class="dz-grupo-titulo nuevos">Por subir</div>
+            <ul class="dz-lista lista-nuevos">
+              <li *ngFor="let nombre of archivosNombre[t.key]; let i = index">
+                <div class="dz-file-info">
+                  <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
+                  <span class="dz-file-nombre" [title]="nombre">{{ nombre }}</span>
+                </div>
+                <span class="dz-badge-pendiente">Pendiente</span>
+                <button type="button" 
+                        class="dz-btn-quitar"
+                        (click)="removeArchivo(t.key, i); $event.stopPropagation()"
+                        title="Quitar">✕</button>
+              </li>
+            </ul>
+          </div>
+
+          <input #fi type="file" multiple hidden 
+                 (change)="onFileSelected($event, t.key)"
+                 accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </div>
     <br>
