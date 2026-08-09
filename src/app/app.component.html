@@ -1,44 +1,57 @@
-<div class="layout">
+@if (isLogin) {
+  <router-outlet></router-outlet>
+} @else {
+  <div class="layout" [class.sidebar-closed]="!sidebarOpen">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <img src="https://gradus.com.mx/wp-content/uploads/2024/07/LOGO-BLANCO-1080x.png" />
-      
-    </div>
+    <!-- Overlay solo en móvil -->
+    @if (sidebarOpen && isMobile()) {
+      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+    }
 
-    <ul class="menu">
-      <li><a routerLink="/maquinaria" routerLinkActive="active">🚜 Activos</a></li>
-      <li><a routerLink="/caja-chica" routerLinkActive="active">💵 Caja Chica</a></li>
-      <li><a routerLink="/contratos" routerLinkActive="active">📑 Contratos</a></li>
-      <li><a routerLink="/finanzas" routerLinkActive="active">💰 Finanzas</a></li>
-     <li routerLink="/obra-puerto-penasco">🏗️ Puerto Peñasco</li>
-     <!-- <li><a routerLink="/licitaciones" routerLinkActive="active">🏗️ Licitaciones</a></li>
-      <li><a routerLink="/monitor-procedimientos" routerLinkActive="active">📊 Monitor Procedimientos</a></li>
-      <li><a routerLink="/usuarios" routerLinkActive="active">👤 Usuarios</a></li>-->
-    </ul>
-  </aside>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" [class.open]="sidebarOpen">
+      <button class="sidebar-close" (click)="toggleSidebar()">✕</button>
 
-  <!-- MAIN -->
-  <div class="main">
-
-    <!-- TOPBAR -->
-    <header class="topbar">
-      <div class="left">
-        <button class="menu-btn">☰</button>
-        <span>Sistema GRADUS</span>
+      <div class="sidebar-logo">
+        <img src="https://gradus.com.mx/wp-content/uploads/2024/07/LOGO-BLANCO-1080x.png" />
       </div>
 
-      <div class="right">
-        <span class="user">Ivo</span>
-        <img class="avatar" src="https://i.pravatar.cc/36" />
+      <ul class="menu">
+        <li><a routerLink="/maquinaria" routerLinkActive="active" (click)="onNavigate()">🚜 Activos</a></li>
+        <li><a routerLink="/caja-chica" routerLinkActive="active" (click)="onNavigate()">💵 Caja Chica</a></li>
+        <li><a routerLink="/contratos" routerLinkActive="active" (click)="onNavigate()">📑 Contratos</a></li>
+        <li><a routerLink="/finanzas" routerLinkActive="active" (click)="onNavigate()">💰 Finanzas</a></li>
+        <li><a routerLink="/obra-puerto-penasco" (click)="onNavigate()">🏗️ Puerto Peñasco</a></li>
+      </ul>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+      <header class="topbar">
+        <div class="left">
+          <button class="menu-btn" (click)="toggleSidebar()">☰</button>
+          <span>Sistema GRADUS</span>
+        </div>
+
+        <div class="right">
+          <div class="user-dropdown">
+            <button class="user-btn" (click)="toggleMenu()">
+              <span class="user-name">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
+              <span class="arrow" [class.open]="menuOpen">▼</span>
+            </button>
+            @if (menuOpen) {
+              <div class="dropdown-menu">
+                <button (click)="logout()" class="dropdown-item">🚪 Cerrar sesión</button>
+              </div>
+            }
+          </div>
+        
+        </div>
+      </header>
+
+      <div class="content">
+        <router-outlet></router-outlet>
       </div>
-    </header>
-
-    <!-- CONTENT -->
-    <div class="content">
-      <router-outlet></router-outlet>
     </div>
-
   </div>
-</div>
+}

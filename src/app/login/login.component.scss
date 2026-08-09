@@ -1,0 +1,220 @@
+// ========== BASE (Desktop) ==========
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(145deg, #006341 0%, #004d33 40%, #008f5d 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 20px; // 👈 Padding para que no pegue en los bordes
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.97);
+  padding: 40px 36px;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(20px);
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 28px;
+
+  img {
+    max-width: 170px;
+    height: auto;
+    filter: brightness(0) saturate(100%) invert(18%) sepia(95%) saturate(1800%) hue-rotate(140deg) brightness(90%) contrast(95%);
+  }
+}
+
+h2 {
+  text-align: center;
+  margin: 0 0 28px 0;
+  color: #006341;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #475569;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #f8fafc;
+    color: #334155;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: #008f5d;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(0, 143, 93, 0.1);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+
+  small {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+  }
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #fecaca;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #006341 0%, #008f5d 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 14px rgba(0, 99, 65, 0.3);
+  transition: all 0.25s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 99, 65, 0.4);
+    background: linear-gradient(135deg, #007a52 0%, #00a86b 100%);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #cbd5e1;
+    box-shadow: none;
+  }
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+// ========== MÓVIL ==========
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px; // 👈 Menos padding en los bordes
+    align-items: flex-start; // 👈 Card arriba en vez de centrada
+    padding-top: 60px; // 👈 Espacio arriba
+  }
+
+  .login-card {
+    padding: 28px 22px; // 👈 Menos padding interno
+    border-radius: 14px;
+    max-width: 100%;
+  }
+
+  .logo-container {
+    margin-bottom: 20px;
+
+    img {
+      max-width: 140px; // 👈 Logo más pequeño
+    }
+  }
+
+  h2 {
+    font-size: 20px;
+    margin-bottom: 22px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+
+    input {
+      padding: 12px;
+      font-size: 16px; // 👈 16px evita zoom en iOS Safari
+    }
+  }
+
+  button[type="submit"] {
+    padding: 13px;
+    font-size: 16px; // 👈 16px evita zoom en iOS
+  }
+
+  .login-footer {
+    margin-top: 14px;
+    font-size: 11px;
+  }
+}
+
+// ========== TABLET ==========
+@media (min-width: 481px) and (max-width: 768px) {
+  .login-card {
+    padding: 32px 28px;
+    max-width: 360px;
+  }
+
+  .logo-container img {
+    max-width: 150px;
+  }
+}

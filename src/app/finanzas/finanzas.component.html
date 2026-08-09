@@ -182,6 +182,7 @@
           <option [ngValue]="2">EGRESO</option>
           <option [ngValue]="1">INGRESO</option>
           <option [ngValue]="3">INVERSIÓN</option>
+          <option [ngValue]="4">PRÉSTAMOS</option>
 
         </select>
       </div>
@@ -287,7 +288,7 @@
           <span class="dz-icono">📁</span>
           <span class="dz-label">{{ t.label }}</span>
           <span class="dz-badge" *ngIf="(archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) > 0">
-            {{ (archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) }}
+           {{ (archivosNombre[t.key].length || 0) + (archivosActuales[t.key].length || 0) }}
           </span>
         </div>
 

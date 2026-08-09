@@ -17,6 +17,7 @@ import {
 import { HostListener } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { PDFDocument } from 'pdf-lib';
 
 
 
@@ -120,10 +121,10 @@ export class FinanzasComponent {
 
 
   toggleExpandido(key: string, event: Event): void {
-  event.stopPropagation();
-  this.expandidoKey = this.expandidoKey === key ? null : key;
-  console.log('Expandido ahora:', this.expandidoKey);
-}
+    event.stopPropagation();
+    this.expandidoKey = this.expandidoKey === key ? null : key;
+    console.log('Expandido ahora:', this.expandidoKey);
+  }
 
   trackByKey(index: number, item: any): string {
     return item.key;
@@ -174,7 +175,7 @@ export class FinanzasComponent {
   }
 
   get saldoCard(): number {
-    return this.ingresosCard - this.egresosCard - this.nominaCard - this.inversionesCard;
+    return this.ingresosCard - this.egresosCard - this.nominaCard;
   }
 
   cambiarTab(nuevoTab: string) {
@@ -667,6 +668,8 @@ export class FinanzasComponent {
     });
   }
 
+
+
   async exportarExcel() {
 
     const headers = [
@@ -675,6 +678,23 @@ export class FinanzasComponent {
       "CONCEPTO", "IMPORTE SIN IVA (BASE ISR)", "IVA Acreditable (Pagado)",
       "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido", "TOTAL", "MÉTODO DE PAGO"
     ];
+
+
+    const getTipoMovimientoLabel = (tipoId: any): string => {
+      return tipoId == 1 ? 'INGRESO' :
+        tipoId == 2 ? 'EGRESO' : 'INVERSIÓN';
+    };
+
+    const getMetodoPagoLabel = (metodoId: any): string => {
+      const metodos: Record<number, string> = {
+        1: 'EFECTIVO',
+        2: 'TRANSFERENCIA',
+        3: 'TARJETA DE DÉBITO',
+        4: 'CHEQUE',
+        5: 'TARJETA DE CRÉDITO'
+      };
+      return metodos[Number(metodoId)] || '';
+    };
 
     const formatRow = (m: any, index: number) => {
       const importe = Number(m.importe_sin_iva || 0);
@@ -720,8 +740,6 @@ export class FinanzasComponent {
     const nomina = egresos.filter((m: any) =>
       m.categoria_id == 2
     );
-
-
 
     const inversiones = movimientosOrdenados.filter((m: any) => m.tipo_movimiento_id == 3);
 
@@ -834,7 +852,6 @@ export class FinanzasComponent {
       }
     }
 
-
     const zip = new JSZip();
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -843,9 +860,8 @@ export class FinanzasComponent {
 
     zip.file(nombreArchivoExcel, excelBuffer);
 
-    const carpetaFacturasRecibidas = zip.folder('Facturas Recibidas');
-    const carpetaFacturasEmitidas = zip.folder('Facturas Emitidas');
-    const carpetaComprobantes = zip.folder('Comprobantes de Pago');
+    // Una sola carpeta para los PDFs combinados (factura + comprobante)
+    const carpetaDocumentos = zip.folder('Documentos');
 
     const anioMes = `${this.filtroAnio}-${String(this.filtroMes).padStart(2, '0')}`;
 
@@ -856,7 +872,7 @@ export class FinanzasComponent {
 
     const getExtension = (nombreArchivo: string) => {
       const idx = nombreArchivo.lastIndexOf('.');
-      return idx >= 0 ? nombreArchivo.substring(idx) : '';
+      return idx >= 0 ? nombreArchivo.substring(idx).toLowerCase() : '';
     };
 
     const parseArchivos = (campo: any): string[] => {
@@ -867,57 +883,102 @@ export class FinanzasComponent {
         .filter(f => f.length > 0);
     };
 
-    const descargarYAgregar = async (
-      nombreOriginal: string,
-      carpeta: JSZip | null,
-      nombreFinal: string
-    ) => {
-      const url = `http://anvotv.ddns.net:  ${nombreOriginal}`;
+    // Descarga un archivo y devuelve su blob (o null si falla)
+    const descargarBlob = async (nombreOriginal: string): Promise<Blob | null> => {
+      const url = `http://anvotv.ddns.net:3000/uploads/movimientos/${nombreOriginal}`;
       try {
         const response = await fetch(url);
         if (!response.ok) {
           console.warn(`No se pudo descargar: ${nombreOriginal}`);
-          return;
+          return null;
         }
-        const blob = await response.blob();
-        carpeta?.file(nombreFinal, blob);
+        return await response.blob();
       } catch (e) {
         console.warn(`Error descargando ${nombreOriginal}`, e);
+        return null;
       }
     };
 
+    // Agrega el contenido de un archivo (pdf o imagen) al PDF final
+    const agregarArchivoAlPdf = async (pdfFinal: PDFDocument, blob: Blob, ext: string) => {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+
+      if (ext === '.pdf') {
+        const pdfOrigen = await PDFDocument.load(bytes);
+        const paginas = await pdfFinal.copyPages(pdfOrigen, pdfOrigen.getPageIndices());
+        paginas.forEach(p => pdfFinal.addPage(p));
+        return;
+      }
+
+      let imagen;
+      if (ext === '.png') {
+        imagen = await pdfFinal.embedPng(bytes);
+      } else if (ext === '.jpg' || ext === '.jpeg') {
+        imagen = await pdfFinal.embedJpg(bytes);
+      } else {
+        console.warn(`Extensión no soportada para PDF: ${ext}`);
+        return;
+      }
+
+      const { width, height } = imagen.scale(1);
+      const maxWidth = 595; // ancho carta en puntos aprox
+      const escala = width > maxWidth ? maxWidth / width : 1;
+      const pagina = pdfFinal.addPage([width * escala, height * escala]);
+      pagina.drawImage(imagen, { x: 0, y: 0, width: width * escala, height: height * escala });
+    };
+
     for (let idx = 0; idx < movimientosOrdenados.length; idx++) {
+
+
       const m = movimientosOrdenados[idx];
 
-      const baseNombre = `${idx + 1}. ${anioMes} - ${sanitizar(m.concepto)}`;
+      const tipoLabel = getTipoMovimientoLabel(m.tipo_movimiento_id);
+     
 
-      // Facturas: INGRESO (1) -> Emitidas | EGRESO (2, incluye nómina) -> Recibidas | INVERSIÓN (3) -> sin facturas
+      const baseNombre = `${idx + 1}. ${anioMes} - ${tipoLabel} - ${sanitizar(m.concepto)}${m.metodo_pago ? ' - ' + m.metodo_pago : ''}`;
+
       const facturas = parseArchivos(m.archivo_factura);
+      const comprobantes = parseArchivos(m.archivo_pago);
 
-      let carpetaFactura: JSZip | null = null;
-      if (Number(m.tipo_movimiento_id) === 1) {
-        carpetaFactura = carpetaFacturasEmitidas;
-      } else if (Number(m.tipo_movimiento_id) === 2) {
-        carpetaFactura = carpetaFacturasRecibidas;
-      }
-      // tipo_movimiento_id === 3 (inversión) -> no tiene facturas, se omite
+      // Si el movimiento no tiene ningún archivo, se omite
+      if (facturas.length === 0 && comprobantes.length === 0) continue;
 
-      if (carpetaFactura) {
-        for (let i = 0; i < facturas.length; i++) {
-          const original = fixEncoding(facturas[i]);
+      const pdfFinal = await PDFDocument.create();
+      let tuvoContenido = false;
+
+      // Facturas: INGRESO (1) y EGRESO (2, incluye nómina). INVERSIÓN (3) no tiene.
+      if (Number(m.tipo_movimiento_id) !== 3) {
+        for (const f of facturas) {
+          const original = fixEncoding(f);
           const ext = getExtension(original);
-          const nombreFinal = `${baseNombre} - Factura ${i + 1}${ext}`;
-          await descargarYAgregar(original, carpetaFactura, nombreFinal);
+          const blob = await descargarBlob(original);
+          if (!blob) continue;
+          try {
+            await agregarArchivoAlPdf(pdfFinal, blob, ext);
+            tuvoContenido = true;
+          } catch (e) {
+            console.warn(`No se pudo incrustar factura ${original}`, e);
+          }
         }
       }
 
       // Comprobantes de pago: aplica para todos los tipos
-      const comprobantes = parseArchivos(m.archivo_pago);
-      for (let i = 0; i < comprobantes.length; i++) {
-        const original = fixEncoding(comprobantes[i]);
+      for (const c of comprobantes) {
+        const original = fixEncoding(c);
         const ext = getExtension(original);
-        const nombreFinal = `${baseNombre} - Comprobante ${i + 1}${ext}`;
-        await descargarYAgregar(original, carpetaComprobantes, nombreFinal);
+        const blob = await descargarBlob(original);
+        if (!blob) continue;
+        try {
+          await agregarArchivoAlPdf(pdfFinal, blob, ext);
+          tuvoContenido = true;
+        } catch (e) {
+          console.warn(`No se pudo incrustar comprobante ${original}`, e);
+        }
+      }
+
+      if (tuvoContenido) {
+        const pdfBytes = await pdfFinal.save();
+        carpetaDocumentos?.file(`${baseNombre}.pdf`, pdfBytes);
       }
     }
 
