@@ -135,7 +135,7 @@
         </td>
 
         <td class="actions">
-          <div class="archivos-indicador">
+          <div class="archivos-indicador" *ngIf="puedeVer">
             <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
               {{ contarArchivos(m) }}
             </button>
@@ -150,8 +150,8 @@
             </div>
           </div>
 
-          <button class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-          <button class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+          <button *ngIf="puedeEditar" class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
+          <button *ngIf="puedeEliminar"cont class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
         </td>
 
       </tr>
@@ -239,7 +239,7 @@
 
 
     <!-- FILA 3 -->
-    <div class="form-row">
+    <div class="form-row" *ngIf="puedeVer">
 
 
       <div class="form-group" style="position: relative;">

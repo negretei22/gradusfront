@@ -1,57 +1,59 @@
 @if (isLogin) {
-  <router-outlet></router-outlet>
+<router-outlet></router-outlet>
 } @else {
-  <div class="layout" [class.sidebar-closed]="!sidebarOpen">
+<div class="layout" [class.sidebar-closed]="!sidebarOpen">
 
-    <!-- Overlay solo en móvil -->
-    @if (sidebarOpen && isMobile()) {
-      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
-    }
+  <!-- Overlay solo en móvil -->
+  @if (sidebarOpen && isMobile()) {
+  <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+  }
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" [class.open]="sidebarOpen">
-      <button class="sidebar-close" (click)="toggleSidebar()">✕</button>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
+    <button class="sidebar-close" (click)="toggleSidebar()">✕</button>
 
-      <div class="sidebar-logo">
-        <img src="https://gradus.com.mx/wp-content/uploads/2024/07/LOGO-BLANCO-1080x.png" />
+    <div class="sidebar-logo">
+      <img src="https://gradus.com.mx/wp-content/uploads/2024/07/LOGO-BLANCO-1080x.png" />
+    </div>
+
+    <ul class="menu">
+      @for (modulo of modulos; track modulo.id) {
+      <li>
+        <a [routerLink]="modulo.ruta" routerLinkActive="active" (click)="onNavigate()">
+          {{ modulo.icono }} {{ modulo.nombre }}
+        </a>
+      </li>
+      }
+    </ul>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div class="left">
+        <button class="menu-btn" (click)="toggleSidebar()">☰</button>
+        <span>Sistema GRADUS</span>
       </div>
 
-      <ul class="menu">
-        <li><a routerLink="/maquinaria" routerLinkActive="active" (click)="onNavigate()">🚜 Activos</a></li>
-        <li><a routerLink="/caja-chica" routerLinkActive="active" (click)="onNavigate()">💵 Caja Chica</a></li>
-        <li><a routerLink="/contratos" routerLinkActive="active" (click)="onNavigate()">📑 Contratos</a></li>
-        <li><a routerLink="/finanzas" routerLinkActive="active" (click)="onNavigate()">💰 Finanzas</a></li>
-        <li><a routerLink="/obra-puerto-penasco" (click)="onNavigate()">🏗️ Puerto Peñasco</a></li>
-      </ul>
-    </aside>
-
-    <!-- MAIN -->
-    <div class="main">
-      <header class="topbar">
-        <div class="left">
-          <button class="menu-btn" (click)="toggleSidebar()">☰</button>
-          <span>Sistema GRADUS</span>
-        </div>
-
-        <div class="right">
-          <div class="user-dropdown">
-            <button class="user-btn" (click)="toggleMenu()">
-              <span class="user-name">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
-              <span class="arrow" [class.open]="menuOpen">▼</span>
-            </button>
-            @if (menuOpen) {
-              <div class="dropdown-menu">
-                <button (click)="logout()" class="dropdown-item">🚪 Cerrar sesión</button>
-              </div>
-            }
+      <div class="right">
+        <div class="user-dropdown">
+          <button class="user-btn" (click)="toggleMenu()">
+            <span class="user-name">{{ authService.getCurrentUser()?.nombre || 'Usuario' }}</span>
+            <span class="arrow" [class.open]="menuOpen">▼</span>
+          </button>
+          @if (menuOpen) {
+          <div class="dropdown-menu">
+            <button (click)="logout()" class="dropdown-item">🚪 Cerrar sesión</button>
           </div>
-        
+          }
         </div>
-      </header>
 
-      <div class="content">
-        <router-outlet></router-outlet>
       </div>
+    </header>
+
+    <div class="content">
+      <router-outlet></router-outlet>
     </div>
   </div>
+</div>
 }

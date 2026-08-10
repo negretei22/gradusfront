@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxMaskDirective } from 'ngx-mask';
 import { FinanzasService } from '../services/finanzas.service';
@@ -18,6 +18,8 @@ import { HostListener } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { PDFDocument } from 'pdf-lib';
+import { AuthService } from '../core/services/auth.service';
+import { Router } from '@angular/router';
 
 
 
@@ -31,7 +33,12 @@ import { PDFDocument } from 'pdf-lib';
 
 
 
-export class FinanzasComponent {
+export class FinanzasComponent implements OnInit {
+
+  puedeVer = false;
+  puedeEditar = false;
+  puedeEliminar = false;
+
 
   private busquedaRazonSocial$ = new Subject<string>();
   private busquedaConcepto$ = new Subject<string>();
@@ -58,7 +65,12 @@ export class FinanzasComponent {
     }
   }
 
-  constructor(private finanzasService: FinanzasService, private alert: AlertsService) { }
+  constructor(
+    private finanzasService: FinanzasService,
+    private alert: AlertsService,
+    private authService: AuthService,
+    private router: Router
+  ) { }
 
 
   movimientos: any[] = []
@@ -118,6 +130,9 @@ export class FinanzasComponent {
   dragging: { [key: string]: boolean } = {
     factura: false, pago: false
   };
+
+
+
 
 
   toggleExpandido(key: string, event: Event): void {
@@ -479,6 +494,17 @@ export class FinanzasComponent {
 
 
   ngOnInit() {
+
+    this.authService.getPermisos('finanzas').subscribe({
+      next: (permisos) => {
+        this.puedeVer = permisos.puedeVer;
+        this.puedeEditar = permisos.puedeEditar;
+        this.puedeEliminar = permisos.puedeEliminar;
+      },
+      error: () => {
+        this.router.navigate(['/unauthorized']);
+      }
+    });
 
     this.busquedaRazonSocial$.pipe(
       debounceTime(400),
@@ -933,7 +959,7 @@ export class FinanzasComponent {
       const m = movimientosOrdenados[idx];
 
       const tipoLabel = getTipoMovimientoLabel(m.tipo_movimiento_id);
-     
+
 
       const baseNombre = `${idx + 1}. ${anioMes} - ${tipoLabel} - ${sanitizar(m.concepto)}${m.metodo_pago ? ' - ' + m.metodo_pago : ''}`;
 
