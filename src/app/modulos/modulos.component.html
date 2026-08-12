@@ -1,0 +1,112 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Gestor de Modulos</h2>
+    <div class="header-actions">
+      @if (mensaje) {
+        <div class="toast" [class.error]="mensaje.startsWith('Error')">{{ mensaje }}</div>
+      }
+      <button class="btn-primary" (click)="openModal()">+ Nuevo modulo</button>
+    </div>
+  </div>
+
+  @if (cargando) {
+    <div class="loading">Cargando modulos...</div>
+  }
+
+  <div class="modulos-lista">
+    @for (modulo of modulos; track modulo.id) {
+      <div class="modulo-card">
+        <div class="modulo-header" (click)="toggleExpand(modulo.id)">
+          <div class="modulo-info">
+            <span class="modulo-icono">{{ modulo.icono }}</span>
+            <div class="modulo-texto">
+              <h3>{{ modulo.nombre }}</h3>
+              <small>{{ modulo.ruta }}</small>
+            </div>
+          </div>
+          <button class="btn-toggle" type="button">
+            {{ expandido[modulo.id] ? '▲' : '▼' }} Permisos
+          </button>
+        </div>
+
+        @if (expandido[modulo.id]) {
+          <div class="permisos-section">
+            <table class="permisos-table">
+              <thead>
+                <tr>
+                  <th>Rol</th>
+                  @for (accion of acciones; track accion) {
+                    <th>{{ accion | titlecase }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (rol of roles; track rol.id) {  <!-- 👈 Dinámico -->
+                  <tr>
+                    <td class="rol-name">
+                      <span class="badge" [class]="'badge-' + rol.nombre">{{ rol.nombre | uppercase }}</span>
+                    </td>
+                    @for (accion of acciones; track accion) {
+                      <td>
+                        <label class="checkbox-wrapper">
+                          <input
+                            type="checkbox"
+                            [checked]="tienePermiso(modulo, rol.nombre, accion)"
+                            (change)="togglePermiso(modulo, rol.nombre, accion)"
+                          />
+                        </label>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <div class="actions">
+              <button class="btn-primary" (click)="guardarPermisos(modulo)" type="button">
+                Guardar permisos
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- MODAL NUEVO MODULO -->
+@if (showModal) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h3>Nuevo Modulo</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" [(ngModel)]="nuevoNombre" placeholder="Ej: Finanzas">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ruta</label>
+          <input type="text" [(ngModel)]="nuevaRuta" placeholder="Ej: /finanzas">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Icono</label>
+          <input type="text" [(ngModel)]="nuevoIcono" placeholder="Ej: 💰 (emoji)">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeModal()" type="button">Cancelar</button>
+        <button class="btn-primary" (click)="guardarNuevoModulo()" [disabled]="guardando" type="button">
+          {{ guardando ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

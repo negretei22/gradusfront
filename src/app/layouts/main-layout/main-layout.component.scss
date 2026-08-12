@@ -1,0 +1,269 @@
+/* ========== LAYOUT ========== */
+.layout {
+  display: flex;
+  height: 100vh;
+  background: #f4f7f6;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #007b5f, #0a4f4a);
+  color: white;
+  padding: 20px;
+  box-shadow: 3px 0 10px rgba(0,0,0,.2);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex-shrink: 0;
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+}
+
+/* Botón X siempre visible */
+.sidebar-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  padding-right: 40px; /* espacio para la X */
+}
+
+.sidebar-logo img {
+  width: 150px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu li {
+  padding: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.2s;
+  margin-bottom: 4px;
+}
+
+.menu li a {
+  display: block;
+  padding: 12px;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.menu li:hover,
+.menu li a:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* ========== MAIN ========== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.3s ease;
+}
+
+/* ========== TOPBAR ========== */
+.topbar {
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.topbar .left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  display: flex; /* 👈 Siempre visible */
+}
+
+.menu-btn:hover {
+  background: #f0f0f0;
+}
+
+.topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+}
+
+/* ========== CONTENT ========== */
+.content {
+  padding: 25px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ========== DROPDOWN USUARIO ========== */
+.user-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.user-btn {
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.user-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.arrow {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  opacity: 0.8;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  overflow: hidden;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  color: #333;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+  color: #006341;
+}
+
+/* ========== DESKTOP: Sidebar cerrado ========== */
+@media (min-width: 769px) {
+  .layout.sidebar-closed .sidebar {
+    width: 0;
+    padding: 0;
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+
+  .layout.sidebar-closed .main {
+    margin-left: 0;
+  }
+}
+
+/* ========== MÓVIL ========== */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 100;
+    transform: translateX(-100%);
+    width: 260px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 99;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .content {
+    padding: 16px;
+  }
+}

@@ -201,6 +201,11 @@ table {
     background: #f3f4f6;
     color: #374151;
   }
+  &.badge-superadmin {
+  background: #fff8e1;   /* fondo dorado muy claro */
+  color: #b8860b;        /* texto dorado oscuro */
+  border: 1px solid #daa520;
+}
 }
 
 .status {

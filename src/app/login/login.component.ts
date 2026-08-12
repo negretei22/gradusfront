@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators,ReactiveFormsModule  } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 
@@ -19,11 +19,13 @@ export class LoginComponent {
   loginForm: FormGroup;
   error: string = '';
   loading = false;
+  sesionExpirada = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute 
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -46,6 +48,16 @@ export class LoginComponent {
       error: (err) => {
         this.error = err.error?.message || 'Error al iniciar sesión';
         this.loading = false;
+      }
+    });
+  }
+
+  ngOnInit() {
+    // 👇 Leer si vino redirigido por sesión expirada
+    this.route.queryParams.subscribe(params => {
+      if (params['sesion'] === 'expirada') {
+        this.sesionExpirada = true;
+        this.error = 'Tu sesión ha expirado. Por favor inicia sesión de nuevo.';
       }
     });
   }
