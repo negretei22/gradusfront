@@ -891,7 +891,15 @@ export class FinanzasComponent implements OnInit {
 
     const anioMes = `${this.filtroAnio}-${String(this.filtroMes).padStart(2, '0')}`;
 
-    const fixEncoding = (str: string) => decodeURIComponent(escape(str));
+    const fixEncoding = (str: string): string => {
+      if (!str) return str;
+      try {
+        return decodeURIComponent(escape(str));
+      } catch (e) {
+        console.warn(`No se pudo corregir encoding de: "${str}"`, e);
+        return str; // si falla, se usa el nombre original sin modificar
+      }
+    };
 
     const sanitizar = (str: string) =>
       (str || '').replace(/[\\/:*?"<>|]/g, '-').trim();
@@ -966,6 +974,7 @@ export class FinanzasComponent implements OnInit {
       const facturas = parseArchivos(m.archivo_factura);
       const comprobantes = parseArchivos(m.archivo_pago);
 
+      console.log('Movimiento', idx + 1, 'facturas:', facturas, 'comprobantes:', comprobantes);
       // Si el movimiento no tiene ningún archivo, se omite
       if (facturas.length === 0 && comprobantes.length === 0) continue;
 
