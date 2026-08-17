@@ -110,6 +110,8 @@ export class FinanzasComponent implements OnInit {
   mesesVisibles: any[] = [];
   metodoPagoFiltro: number = 0;
   expandidoKey: string | null = null;
+  
+
 
 
   tiposArchivo = [
@@ -286,6 +288,21 @@ export class FinanzasComponent implements OnInit {
     return nombre?.toLowerCase().endsWith('.pdf');
   }
 
+  parseArchivosCampo(val: any): string[] {
+    if (!val) return [];
+    if (Array.isArray(val)) {
+      // console.log('YA ES ARRAY:', val);
+      return val;
+    }
+    try {
+      const arr = JSON.parse(val);
+      //  console.log('PARSEADO JSON:', val, '->', arr);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      //console.log('FALLBACK COMA (falló el JSON.parse):', val, e);
+      return String(val).split(',').map((x: string) => x.trim()).filter(Boolean);
+    }
+  }
   onDragOver(event: DragEvent, key: string) {
     event.preventDefault();
     this.dragging[key] = true;
@@ -344,7 +361,7 @@ export class FinanzasComponent implements OnInit {
     return this.tiposArchivo.reduce((acc, t) => {
       const val = m[`archivo_${t.key}`];
       if (!val) return acc;
-      const arr = Array.isArray(val) ? val : val.split(',').filter((x: string) => x.trim());
+      const arr = this.parseArchivosCampo(val);
       return acc + arr.length;
     }, 0);
   }
@@ -356,7 +373,7 @@ export class FinanzasComponent implements OnInit {
     this.tiposArchivo.forEach(t => {
       const val = m[`archivo_${t.key}`];
       if (!val) return;
-      const arr = Array.isArray(val) ? val : val.split(',').filter((x: string) => x.trim());
+      const arr = this.parseArchivosCampo(val);
 
       arr.forEach((a: string, index: number) => {
         result.push({ label: `${t.label} ${index + 1}`, archivo: a });
@@ -613,13 +630,7 @@ export class FinanzasComponent implements OnInit {
 
     this.tiposArchivo.forEach(t => {
       const campo = `archivo_${t.key}`;
-      if (data[campo]) {
-        this.archivosActuales[t.key] = Array.isArray(data[campo])
-          ? data[campo]
-          : data[campo].split(',').map((x: string) => x.trim()).filter(Boolean);
-      } else {
-        this.archivosActuales[t.key] = [];
-      }
+      this.archivosActuales[t.key] = this.parseArchivosCampo(data[campo]);
     });
 
     setTimeout(() => {
@@ -911,10 +922,17 @@ export class FinanzasComponent implements OnInit {
 
     const parseArchivos = (campo: any): string[] => {
       if (!campo) return [];
-      return String(campo)
-        .split(',')
-        .map(f => f.trim())
-        .filter(f => f.length > 0);
+      if (Array.isArray(campo)) return campo;
+      try {
+        const arr = JSON.parse(campo);
+        return Array.isArray(arr) ? arr.filter(f => f && String(f).trim().length > 0) : [];
+      } catch {
+        // Fallback para registros viejos guardados con coma
+        return String(campo)
+          .split(',')
+          .map(f => f.trim())
+          .filter(f => f.length > 0);
+      }
     };
 
     // Descarga un archivo y devuelve su blob (o null si falla)
@@ -933,12 +951,15 @@ export class FinanzasComponent implements OnInit {
       }
     };
 
+
+
     // Agrega el contenido de un archivo (pdf o imagen) al PDF final
     const agregarArchivoAlPdf = async (pdfFinal: PDFDocument, blob: Blob, ext: string) => {
       const bytes = new Uint8Array(await blob.arrayBuffer());
+      
 
       if (ext === '.pdf') {
-        const pdfOrigen = await PDFDocument.load(bytes);
+        const pdfOrigen = await PDFDocument.load(bytes, { ignoreEncryption: true });
         const paginas = await pdfFinal.copyPages(pdfOrigen, pdfOrigen.getPageIndices());
         paginas.forEach(p => pdfFinal.addPage(p));
         return;
@@ -955,12 +976,12 @@ export class FinanzasComponent implements OnInit {
       }
 
       const { width, height } = imagen.scale(1);
-      const maxWidth = 595; // ancho carta en puntos aprox
+      const maxWidth = 595;
       const escala = width > maxWidth ? maxWidth / width : 1;
       const pagina = pdfFinal.addPage([width * escala, height * escala]);
       pagina.drawImage(imagen, { x: 0, y: 0, width: width * escala, height: height * escala });
     };
-
+    const archivosConError: string[] = [];
     for (let idx = 0; idx < movimientosOrdenados.length; idx++) {
 
 
@@ -987,12 +1008,14 @@ export class FinanzasComponent implements OnInit {
           const original = fixEncoding(f);
           const ext = getExtension(original);
           const blob = await descargarBlob(original);
+      
           if (!blob) continue;
           try {
             await agregarArchivoAlPdf(pdfFinal, blob, ext);
             tuvoContenido = true;
           } catch (e) {
             console.warn(`No se pudo incrustar factura ${original}`, e);
+            archivosConError.push(`${baseNombre} → Factura: ${original}`);
           }
         }
       }
@@ -1002,12 +1025,15 @@ export class FinanzasComponent implements OnInit {
         const original = fixEncoding(c);
         const ext = getExtension(original);
         const blob = await descargarBlob(original);
+        
+
         if (!blob) continue;
         try {
           await agregarArchivoAlPdf(pdfFinal, blob, ext);
           tuvoContenido = true;
         } catch (e) {
           console.warn(`No se pudo incrustar comprobante ${original}`, e);
+          archivosConError.push(`${baseNombre} → Factura: ${original}`);
         }
       }
 
@@ -1020,6 +1046,13 @@ export class FinanzasComponent implements OnInit {
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const nombreZip = `Finanzas ${mesSeleccionado?.text || 'SinMes'}.zip`;
     saveAs(zipBlob, nombreZip);
+    if (archivosConError.length > 0) {
+      console.warn('Archivos que no se pudieron incrustar:', archivosConError);
+      await this.alert.AlertaWarning?.(
+        'Algunos archivos no se pudieron incluir',
+        `${archivosConError.length} archivo(s) no se pudieron incluir en el PDF (posiblemente dañados):\n\n${archivosConError.join('\n')}`
+      ) 
+    }
 
   }
 
@@ -1041,6 +1074,9 @@ export class FinanzasComponent implements OnInit {
 
     return await `${yyyy}-${mm}-${dd}`;
   }
+
+
+
 
   async saveMovimiento() {
 
