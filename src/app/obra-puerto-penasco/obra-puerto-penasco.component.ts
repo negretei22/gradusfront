@@ -12,6 +12,7 @@ import { FinanzasService } from '../services/finanzas.service';
 export class ObraPuertoPenascoComponent implements OnInit {
 
   movimientos: any[] = [];
+  mostrarDetalle: boolean = false; // 
 
   filtroAnio: number = new Date().getFullYear();
   filtroMes: number = new Date().getMonth() + 1; // mes actual por defecto
@@ -48,11 +49,15 @@ export class ObraPuertoPenascoComponent implements OnInit {
 
   cargarMovimientos(): void {
     this.finanzasService
-      .getMovimientosPorCategoria(27, 2, this.filtroAnio, this.filtroMes)
+      .getMovimientosPorCategoria(17, 2, this.filtroAnio, this.filtroMes)
       .subscribe({
         next: (data) => this.movimientos = data,
         error: (err) => console.error('Error cargando movimientos de Puerto Peñasco:', err)
       });
+  }
+
+  toggleDetalle(): void {
+    this.mostrarDetalle = !this.mostrarDetalle;
   }
 
   get gastoPenasco(): number {

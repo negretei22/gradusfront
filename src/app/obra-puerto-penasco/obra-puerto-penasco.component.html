@@ -1,17 +1,62 @@
 <div class="meses-cards">
-  <div
-    *ngFor="let mes of mesesVisibles"
-    class="mes-card"
-    [class.activo]="mes.value === filtroMes"
-    (click)="seleccionarMes(mes.value)"
-  >
-    {{ mes.text }}
-  </div>
+    <div *ngFor="let mes of mesesVisibles" class="mes-card" [class.activo]="mes.value === filtroMes"
+        (click)="seleccionarMes(mes.value)">
+        {{ mes.text }}
+    </div>
 </div>
 
 <div class="finance-cards">
-  <div class="finance-card gasto-card">
-    <h4>GASTOS PEÑASCO</h4>
-    <h3>{{ gastoPenasco | currency:'MXN' }}</h3>
-  </div>
+    <div class="finance-card gasto-card" [class.abierta]="mostrarDetalle" (click)="toggleDetalle()">
+        <h4>GASTOS PEÑASCO</h4>
+        <h3>{{ gastoPenasco | currency:'MXN' }}</h3>
+    </div>
+</div>
+
+<div class="detalle-tabla" *ngIf="mostrarDetalle">
+    <table class="gradus-table">
+        <thead>
+            <tr>
+                <th width="10%">Fecha Pago</th>
+                <th width="10%">Fecha Factura</th>
+                <th width="26%">Razón Social</th>
+                <th width="40%">Concepto</th>
+                <th width="14%">Monto</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr *ngFor="let m of movimientos" style="font-size: 11px;">
+                <td>{{ m.fecha_pago | date:'dd/MM/yyyy' }}</td>
+                <td>
+                    {{ (m.fecha_factura | date:'yyyy') === '1899'
+                    ? 'SIN FECHA'
+                    : (m.fecha_factura | date:'yyyy') === '1900'
+                    ? 'NO APLICA'
+                    : (m.fecha_factura | date:'dd/MM/yyyy') }}
+                </td>
+                <td>{{ m.razon_social }}</td>
+                <td>{{ m.concepto }}</td>
+                <td>
+                    {{ m.importe_sin_iva | currency:'MXN':'$' }}
+                    <span class="tag-pago" [ngClass]="
+            m.metodo_pago_id == 1 ? 'pago-efectivo' :
+            m.metodo_pago_id == 2 ? 'pago-transferencia' :
+            m.metodo_pago_id == 3 ? 'pago-debito' : ''
+          ">
+                        {{
+                        m.metodo_pago_id == 1 ? '💵' :
+                        m.metodo_pago_id == 2 ? '🏦' :
+                        m.metodo_pago_id == 3 ? '💳' : ''
+                        }}
+                    </span>
+                </td>
+            </tr>
+
+            <tr *ngIf="movimientos.length === 0">
+                <td colspan="5" style="text-align:center; padding:30px;">
+                    Sin resultados
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
