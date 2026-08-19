@@ -151,3 +151,108 @@ p {
 .tag-pago {
   margin-left: 6px;
 }
+
+.filtros-metodo-pago {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filtros-metodo-pago button {
+  padding: 6px 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filtros-metodo-pago button:hover {
+  background: #f1f5f9;
+}
+
+.filtros-metodo-pago button.active {
+  background: #006341;
+  color: #fff;
+  border-color: #006341;
+}
+
+.actions {
+  position: relative;
+  text-align: center;
+}
+
+.archivos-indicador {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-archivos {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none !important;
+  background-color: var(--gradus-green) !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.badge-archivos:hover {
+  background-color: #16a34a !important;
+}
+
+.menu-archivos {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border: 1px solid #eef0f2;
+  padding: 6px;
+  min-width: 180px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeInUp 0.15s ease-out;
+}
+
+.menu-archivo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.menu-archivo-item:hover {
+  background: #f4f6f8;
+}
+
+.menu-archivos::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+}

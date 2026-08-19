@@ -13,19 +13,31 @@
 </div>
 
 <div class="detalle-tabla" *ngIf="mostrarDetalle">
+
+    <div class="filtros-metodo-pago">
+        <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
+        <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
+        <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
+        <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
+    </div>
+
+
     <table class="gradus-table">
         <thead>
             <tr>
+                <th width="3%"></th>
                 <th width="10%">Fecha Pago</th>
                 <th width="10%">Fecha Factura</th>
-                <th width="26%">Razón Social</th>
-                <th width="40%">Concepto</th>
-                <th width="14%">Monto</th>
+                <th width="20%">Razón Social</th>
+                <th width="32%">Concepto</th>
+                <th width="13%">Monto</th>
+                <th width="12%">Archivos</th>
             </tr>
         </thead>
 
         <tbody>
-            <tr *ngFor="let m of movimientos" style="font-size: 11px;">
+            <tr *ngFor="let m of movimientosVisibles(); let i = index" style="font-size: 11px;">
+                <td style="text-align:center;">{{ i + 1 }}</td>
                 <td>{{ m.fecha_pago | date:'dd/MM/yyyy' }}</td>
                 <td>
                     {{ (m.fecha_factura | date:'yyyy') === '1899'
@@ -39,10 +51,10 @@
                 <td>
                     {{ m.importe_sin_iva | currency:'MXN':'$' }}
                     <span class="tag-pago" [ngClass]="
-            m.metodo_pago_id == 1 ? 'pago-efectivo' :
-            m.metodo_pago_id == 2 ? 'pago-transferencia' :
-            m.metodo_pago_id == 3 ? 'pago-debito' : ''
-          ">
+          m.metodo_pago_id == 1 ? 'pago-efectivo' :
+          m.metodo_pago_id == 2 ? 'pago-transferencia' :
+          m.metodo_pago_id == 3 ? 'pago-debito' : ''
+        ">
                         {{
                         m.metodo_pago_id == 1 ? '💵' :
                         m.metodo_pago_id == 2 ? '🏦' :
@@ -50,10 +62,27 @@
                         }}
                     </span>
                 </td>
+
+                <td class="actions">
+                    <div class="archivos-indicador" *ngIf="puedeVer">
+                        <button *ngIf="contarArchivos(m) > 0" class="badge-archivos" (click)="toggleMenuArchivos(m.id)">
+                            {{ contarArchivos(m) }}
+                        </button>
+
+                        <div *ngIf="mostrarMenuArchivos === m.id" class="menu-archivos">
+                            <div *ngFor="let a of archivosDeMovimiento(m)" class="menu-archivo-item"
+                                (click)="verArchivo(a.archivo); toggleMenuArchivos(m.id)">
+                                <span *ngIf="esPDF(a.archivo)">📄</span>
+                                <span *ngIf="esImagen(a.archivo)">🖼️</span>
+                                {{ a.label }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
             </tr>
 
-            <tr *ngIf="movimientos.length === 0">
-                <td colspan="5" style="text-align:center; padding:30px;">
+            <tr *ngIf="movimientosVisibles().length === 0">
+                <td colspan="7" style="text-align:center; padding:30px;">
                     Sin resultados
                 </td>
             </tr>

@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FinanzasService } from '../services/finanzas.service';
+import { AuthService } from '../core/services/auth.service';
+import { Router } from '@angular/router';
+import { HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-obra-puerto-penasco',
@@ -12,12 +15,22 @@ import { FinanzasService } from '../services/finanzas.service';
 export class ObraPuertoPenascoComponent implements OnInit {
 
   movimientos: any[] = [];
-  mostrarDetalle: boolean = false; // 
+  mostrarDetalle: boolean = false;
+  metodoPagoFiltro: number = 0;
+
+  puedeVer = false;
+
+  tiposArchivo = [
+    { key: 'factura', label: 'Factura' },
+    { key: 'pago', label: 'Comprobante de Pago' },
+  ];
+
+  mostrarMenuArchivos: number | null = null;
 
   filtroAnio: number = new Date().getFullYear();
   filtroMes: number = new Date().getMonth() + 1; // mes actual por defecto
 
-    meses = [
+  meses = [
     { value: 1, text: 'ENERO' },
     { value: 2, text: 'FEBRERO' },
     { value: 3, text: 'MARZO' },
@@ -33,13 +46,46 @@ export class ObraPuertoPenascoComponent implements OnInit {
   ];
 
   get mesesVisibles() {
-  const mesActual = new Date().getMonth() + 1; // 1-12
-  return this.meses.filter(m => m.value === 0 || m.value <= mesActual);
-}
-  constructor(private finanzasService: FinanzasService) {}
+    const mesActual = new Date().getMonth() + 1; // 1-12
+    return this.meses.filter(m => m.value === 0 || m.value <= mesActual);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress() {
+    this.mostrarMenuArchivos = null;
+    
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.mostrarMenuArchivos === null) return;
+
+    const target = event.target as HTMLElement;
+    if (!target.closest('.archivos-indicador')) {
+      this.mostrarMenuArchivos = null;
+    }
+  }
+
+
+
+  constructor(private finanzasService: FinanzasService,
+    private authService: AuthService,
+    private router: Router
+
+  ) { }
 
   ngOnInit(): void {
     this.cargarMovimientos();
+        this.authService.getPermisos('finanzas').subscribe({
+      next: (permisos) => {
+        this.puedeVer = permisos.puedeVer;
+        
+      },
+      error: () => {
+        this.router.navigate(['/unauthorized']);
+      }
+    });
+
   }
 
   seleccionarMes(mesValue: number): void {
@@ -60,8 +106,65 @@ export class ObraPuertoPenascoComponent implements OnInit {
     this.mostrarDetalle = !this.mostrarDetalle;
   }
 
+  movimientosVisibles(): any[] {
+    if (this.metodoPagoFiltro === 0) return this.movimientos;
+    return this.movimientos.filter(m => m.metodo_pago_id === this.metodoPagoFiltro);
+  }
+
   get gastoPenasco(): number {
     return this.movimientos
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  private parseArchivosCampo(val: string): string[] {
+    if (!val) return [];
+    try {
+      const arr = JSON.parse(val);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      // Fallback para registros viejos guardados como texto separado por comas
+      return val.split(',').map(x => x.trim()).filter(Boolean);
+    }
+  }
+
+  contarArchivos(m: any): number {
+    return this.tiposArchivo.reduce((acc, t) => {
+      const val = m[`archivo_${t.key}`];
+      if (!val) return acc;
+      const arr = this.parseArchivosCampo(val);
+      return acc + arr.length;
+    }, 0);
+  }
+
+  archivosDeMovimiento(m: any) {
+    const result: { label: string, archivo: string }[] = [];
+
+    this.tiposArchivo.forEach(t => {
+      const val = m[`archivo_${t.key}`];
+      if (!val) return;
+      const arr = this.parseArchivosCampo(val);
+
+      arr.forEach((a: string, index: number) => {
+        result.push({ label: `${t.label} ${index + 1}`, archivo: a });
+      });
+    });
+
+    return result;
+  }
+
+  toggleMenuArchivos(id: number) {
+    this.mostrarMenuArchivos = this.mostrarMenuArchivos === id ? null : id;
+  }
+
+  verArchivo(nombre: string) {
+    window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
+  }
+
+  esPDF(nombre: string): boolean {
+    return nombre?.toLowerCase().endsWith('.pdf');
+  }
+
+  esImagen(nombre: string): boolean {
+    return !!nombre?.match(/\.(jpg|jpeg|png|gif)$/i);
   }
 }
