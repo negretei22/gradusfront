@@ -1120,7 +1120,7 @@ export class FinanzasComponent implements OnInit {
 
       this.showModal = false;
 
-      await this.alert.AlertaVerde('', 'Se agregó el contrato exitosamente.');
+      await this.alert.AlertaVerde('', 'Se agregó el registro exitosamente.');
 
       this.getSaldo(this.filtroAnio, this.filtroMes);
 

@@ -118,7 +118,7 @@
           </span>
         </td>
         <td>{{ m.razon_social }}</td>
-        <td>{{ m.concepto }}</td>
+        <td>{{ m.concepto}}</td>
         <td>
           {{ m.importe_sin_iva | currency:'MXN':'$' }}
           <span class="tag-pago" [ngClass]="
@@ -151,7 +151,7 @@
           </div>
 
           <button *ngIf="puedeEditar" class="action-btn btn-edit" (click)="editMovimiento(m.id)">✏️</button>
-          <button *ngIf="puedeEliminar"cont class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
+          <button *ngIf="puedeEliminar" class="action-btn btn-delete" (click)="deleteMovimiento(m.id)">🗑️</button>
         </td>
 
       </tr>
@@ -268,87 +268,77 @@
     <br>
     <div class="form-row">
       <div class="form-group" style="flex: 1;">
-       
+
 
         <div class="form-row">
-  <div class="form-group" style="flex: 1;">
-    <label>Archivos</label>
+          <div class="form-group" style="flex: 1;">
+            <label>Archivos</label>
 
-    <div class="archivos-horizontal">
-      <div class="drop-zone-card" 
-           *ngFor="let t of tiposArchivo" 
-           (dragover)="onDragOver($event, t.key)"
-           [class.dragging]="dragging[t.key]"
-           (dragleave)="onDragLeave($event, t.key)" 
-           (drop)="onDrop($event, t.key)"
-           (click)="fi.click()">
+            <div class="archivos-horizontal">
+              <div class="drop-zone-card" *ngFor="let t of tiposArchivo" (dragover)="onDragOver($event, t.key)"
+                [class.dragging]="dragging[t.key]" (dragleave)="onDragLeave($event, t.key)"
+                (drop)="onDrop($event, t.key)" (click)="fi.click()">
 
-        <!-- Header fijo (solo visual) -->
-        <div class="dz-header">
-          <span class="dz-icono">📁</span>
-          <span class="dz-label">{{ t.label }}</span>
-          <span class="dz-badge" *ngIf="(archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) > 0">
-           {{ (archivosNombre[t.key].length || 0) + (archivosActuales[t.key].length || 0) }}
-          </span>
-        </div>
-
-        <!-- Contenido siempre visible -->
-        <div class="dz-body">
-
-          <!-- Vacío -->
-          <div class="dz-vacio" *ngIf="!(archivosNombre[t.key]?.length || 0) && !(archivosActuales[t.key]?.length || 0)">
-            <span class="vacio-icono">📎</span>
-            <p>Arrastra aquí o haz clic</p>
-          </div>
-
-          <!-- Guardados -->
-          <div class="dz-grupo" *ngIf="archivosActuales[t.key]?.length">
-            <div class="dz-grupo-titulo">Guardados</div>
-            <ul class="dz-lista">
-              <li *ngFor="let nombre of archivosActuales[t.key]; let i = index">
-                <a class="dz-link" 
-                   [href]="'http://localhost:3000/uploads/movimientos/' + nombre" 
-                   target="_blank"
-                   [title]="nombre"
-                   (click)="$event.stopPropagation()">
-                  <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
-                  <span class="dz-file-nombre">{{ nombre }}</span>
-                </a>
-                <button type="button" 
-                        class="dz-btn-quitar"
-                        (click)="removeArchivoActual(t.key, i); $event.stopPropagation()"
-                        title="Eliminar">✕</button>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Nuevos -->
-          <div class="dz-grupo nuevos" *ngIf="archivosNombre[t.key]?.length">
-            <div class="dz-grupo-titulo nuevos">Por subir</div>
-            <ul class="dz-lista lista-nuevos">
-              <li *ngFor="let nombre of archivosNombre[t.key]; let i = index">
-                <div class="dz-file-info">
-                  <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
-                  <span class="dz-file-nombre" [title]="nombre">{{ nombre }}</span>
+                <!-- Header fijo (solo visual) -->
+                <div class="dz-header">
+                  <span class="dz-icono">📁</span>
+                  <span class="dz-label">{{ t.label }}</span>
+                  <span class="dz-badge"
+                    *ngIf="(archivosNombre[t.key]?.length || 0) + (archivosActuales[t.key]?.length || 0) > 0">
+                    {{ (archivosNombre[t.key].length || 0) + (archivosActuales[t.key].length || 0) }}
+                  </span>
                 </div>
-                <span class="dz-badge-pendiente">Pendiente</span>
-                <button type="button" 
-                        class="dz-btn-quitar"
-                        (click)="removeArchivo(t.key, i); $event.stopPropagation()"
-                        title="Quitar">✕</button>
-              </li>
-            </ul>
+
+                <!-- Contenido siempre visible -->
+                <div class="dz-body">
+
+                  <!-- Vacío -->
+                  <div class="dz-vacio"
+                    *ngIf="!(archivosNombre[t.key]?.length || 0) && !(archivosActuales[t.key]?.length || 0)">
+                    <span class="vacio-icono">📎</span>
+                    <p>Arrastra aquí o haz clic</p>
+                  </div>
+
+                  <!-- Guardados -->
+                  <div class="dz-grupo" *ngIf="archivosActuales[t.key]?.length">
+                    <div class="dz-grupo-titulo">Guardados</div>
+                    <ul class="dz-lista">
+                      <li *ngFor="let nombre of archivosActuales[t.key]; let i = index">
+                        <a class="dz-link" [href]="'http://anvotv.ddns.net:3000/uploads/movimientos/' + nombre"
+                          target="_blank" [title]="nombre" (click)="$event.stopPropagation()">
+                          <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
+                          <span class="dz-file-nombre">{{ nombre }}</span>
+                        </a>
+                        <button type="button" class="dz-btn-quitar"
+                          (click)="removeArchivoActual(t.key, i); $event.stopPropagation()" title="Eliminar">✕</button>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- Nuevos -->
+                  <div class="dz-grupo nuevos" *ngIf="archivosNombre[t.key]?.length">
+                    <div class="dz-grupo-titulo nuevos">Por subir</div>
+                    <ul class="dz-lista lista-nuevos">
+                      <li *ngFor="let nombre of archivosNombre[t.key]; let i = index">
+                        <div class="dz-file-info">
+                          <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
+                          <span class="dz-file-nombre" [title]="nombre">{{ nombre }}</span>
+                        </div>
+                        <span class="dz-badge-pendiente">Pendiente</span>
+                        <button type="button" class="dz-btn-quitar"
+                          (click)="removeArchivo(t.key, i); $event.stopPropagation()" title="Quitar">✕</button>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <input #fi type="file" multiple hidden (change)="onFileSelected($event, t.key)"
+                    accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+
+              </div>
+            </div>
           </div>
-
-          <input #fi type="file" multiple hidden 
-                 (change)="onFileSelected($event, t.key)"
-                 accept=".pdf,.jpg,.jpeg,.png">
         </div>
-
-      </div>
-    </div>
-  </div>
-</div>
       </div>
     </div>
     <br>

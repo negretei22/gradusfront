@@ -80,6 +80,9 @@
   padding: 10px;
   border-bottom: 1px solid var(--gradus-border);
   color: #333;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  vertical-align: top;
 }
 
 .gradus-table tr:hover {
@@ -1120,12 +1123,13 @@ tr {
 }
 
 td.actions {
-  display: flex;
+ /* display: flex;*/
   align-items: center;
   gap: 4px;
   overflow: visible !important;
   position: relative;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 /* TABS */
