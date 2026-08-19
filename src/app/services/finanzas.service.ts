@@ -1,4 +1,4 @@
-import { HttpClient,HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 
@@ -21,25 +21,35 @@ export class FinanzasService {
     return this.http.get<any[]>(`${this.api}/finanzas/`, { params });
 
   }
+  getMovimientosPorCategoria(
+    categoriaId: number,
+    tipoMovimientoId: number,
+    anio: number,
+    mes: number
+  ): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.api}/finanzas/categoria/${categoriaId}/tipo/${tipoMovimientoId}/anio/${anio}/mes/${mes}`
+    );
+  }
 
   updateOrdenMasivo(items: { id: number; orden: number }[]) {
-  return firstValueFrom(
-    this.http.post(`${this.api}/finanzas/movimientos/orden-masivo`, { items })
-  );
-}
-  buscarPorRazonSocial(texto: string): Observable<any[]> {
-  return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-razon-social`, {
-    params: { texto }
-  });
-}
-
-buscarConceptosPorRfc(rfc: string, texto: string = ''): Observable<any[]> {
-  let params = new HttpParams().set('rfc', rfc);
-  if (texto) {
-    params = params.set('q', texto);
+    return firstValueFrom(
+      this.http.post(`${this.api}/finanzas/movimientos/orden-masivo`, { items })
+    );
   }
-  return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-conceptos`, { params });
-}
+  buscarPorRazonSocial(texto: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-razon-social`, {
+      params: { texto }
+    });
+  }
+
+  buscarConceptosPorRfc(rfc: string, texto: string = ''): Observable<any[]> {
+    let params = new HttpParams().set('rfc', rfc);
+    if (texto) {
+      params = params.set('q', texto);
+    }
+    return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-conceptos`, { params });
+  }
 
   getCatalogo(catalogo: any): Observable<any[]> {
 

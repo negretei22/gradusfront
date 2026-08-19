@@ -1,0 +1,17 @@
+<div class="meses-cards">
+  <div
+    *ngFor="let mes of mesesVisibles"
+    class="mes-card"
+    [class.activo]="mes.value === filtroMes"
+    (click)="seleccionarMes(mes.value)"
+  >
+    {{ mes.text }}
+  </div>
+</div>
+
+<div class="finance-cards">
+  <div class="finance-card gasto-card">
+    <h4>GASTOS PEÑASCO</h4>
+    <h3>{{ gastoPenasco | currency:'MXN' }}</h3>
+  </div>
+</div>

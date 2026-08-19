@@ -1,0 +1,102 @@
+.container {
+  padding: 40px;
+  text-align: center;
+}
+h1 {
+  color: #006341;
+  margin-bottom: 20px;
+}
+p {
+  color: #64748b;
+  font-size: 18px;
+}
+
+
+.finance-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 22px;
+    margin-bottom: 30px;
+}
+
+.finance-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 18px;
+    padding: 22px 24px;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.08),
+        0 2px 8px rgba(0,0,0,.05);
+    transition: all .25s ease;
+    border: 1px solid #ececec;
+}
+
+.finance-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 18px 40px rgba(0,0,0,.15),
+        0 4px 12px rgba(0,0,0,.08);
+}
+
+/* Barra lateral de color */
+.finance-card::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:8px;
+    height:100%;
+    border-radius:18px 0 0 18px;
+}
+
+/* Encabezado */
+.finance-card h4{
+    margin:0;
+    font-size:14px;
+    font-weight:700;
+    text-transform:uppercase;
+    color:#6c757d;
+    letter-spacing:.8px;
+}
+
+/* Cantidad */
+.finance-card h3{
+    margin:18px 0 0;
+    font-size:20px;
+    font-weight:800;
+    color:#111827;
+    line-height:1.2;
+}
+
+/* Colores */
+.ingreso-card::before{
+    background:#198754;
+}
+
+
+.meses-cards {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.mes-card {
+  padding: 8px 14px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: .2s;
+}
+
+.mes-card:hover {
+  background: #e0e0e0;
+}
+
+.mes-card.activo {
+  background: var(--gradus-green);
+  color: white;
+}
