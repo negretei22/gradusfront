@@ -13,8 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
-    // 👇 ESTO FALTABA — registra HttpClient Y tu interceptor
     provideHttpClient(withInterceptors([authInterceptor]))
-
+    
   ]
 };

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators,ReactiveFormsModule  } from '@angular/forms';
+import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -9,10 +9,11 @@ import { CommonModule } from '@angular/common';
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
-   standalone: true,
-    imports: [
-    CommonModule,        // 👈 Para *ngIf, *ngFor, etc.
-    ReactiveFormsModule, // 👈 Para formGroup, formControlName
+  standalone: true,
+  imports: [
+    CommonModule,        
+    ReactiveFormsModule, 
+    FormsModule,
   ],
 })
 export class LoginComponent {
@@ -20,12 +21,13 @@ export class LoginComponent {
   error: string = '';
   loading = false;
   sesionExpirada = false;
+  recordarme = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute 
+    private route: ActivatedRoute,
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -41,6 +43,12 @@ export class LoginComponent {
 
     const { email, password } = this.loginForm.value;
 
+    if (this.recordarme) {
+      localStorage.setItem('rememberedEmail', email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+
     this.authService.login(email, password).subscribe({
       next: () => {
         this.router.navigate(['/finanzas']);
@@ -53,7 +61,12 @@ export class LoginComponent {
   }
 
   ngOnInit() {
-    // 👇 Leer si vino redirigido por sesión expirada
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      this.loginForm.patchValue({ email: savedEmail });
+      this.recordarme = true;
+    }
+
     this.route.queryParams.subscribe(params => {
       if (params['sesion'] === 'expirada') {
         this.sesionExpirada = true;
