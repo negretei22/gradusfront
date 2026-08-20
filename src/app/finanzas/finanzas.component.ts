@@ -125,7 +125,7 @@ export class FinanzasComponent implements OnInit {
   filtroFechaFacturaHasta: string = '';
   filtroRazonSocial: string = '';
   filtroConcepto: string = '';
-  filtroMonto: number | null = null;
+  filtroMonto: string = '';
 
 
 
@@ -173,7 +173,7 @@ export class FinanzasComponent implements OnInit {
     return this.metodoPagoFiltro === 0
       ? base
       : base.filter(m => m.metodo_pago_id == this.metodoPagoFiltro);
-}
+  }
 
   private coincideMetodoPago(m: any): boolean {
     return this.metodoPagoFiltro === 0 || m.metodo_pago_id == this.metodoPagoFiltro;
@@ -596,7 +596,7 @@ export class FinanzasComponent implements OnInit {
         this.filtroConcepto = '';
         break;
       case 'monto':
-        this.filtroMonto = null;
+        this.filtroMonto = '';
         break;
     }
     this.aplicarFiltros();
@@ -628,9 +628,10 @@ export class FinanzasComponent implements OnInit {
       }
 
       // Monto (igualdad exacta)
-      if (this.filtroMonto !== null && this.filtroMonto !== undefined) {
-        const importe = Number(m.importe_sin_iva) || 0;
-        if (importe !== this.filtroMonto) return false;
+      if (this.filtroMonto && this.filtroMonto.trim() !== '') {
+        const importeStr = String(Number(m.importe_sin_iva) || 0).replace(/,/g, '');
+        const filtroStr = this.filtroMonto.trim().replace(/,/g, '');
+        if (!importeStr.includes(filtroStr)) return false;
       }
 
       return true;

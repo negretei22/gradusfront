@@ -145,7 +145,7 @@
 
             <!-- Monto -->
             <ng-container *ngIf="filtroAbierto === 'monto'">
-              <input type="number" [(ngModel)]="filtroMonto" (input)="aplicarFiltros()" placeholder="Ej: 25000">
+              <input type="text" [(ngModel)]="filtroMonto" (input)="aplicarFiltros()" placeholder="Ej: 71,000">
             </ng-container>
 
             <button class="btn-limpiar" (click)="limpiarFiltro(filtroAbierto || '')">✕ Limpiar</button>
