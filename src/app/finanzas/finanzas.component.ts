@@ -57,11 +57,16 @@ export class FinanzasComponent implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    if (this.mostrarMenuArchivos === null) return;
+    if (this.mostrarMenuArchivos === null && !this.filtroAbierto) return;
 
     const target = event.target as HTMLElement;
-    if (!target.closest('.archivos-indicador')) {
+
+    if (this.mostrarMenuArchivos !== null && !target.closest('.archivos-indicador')) {
       this.mostrarMenuArchivos = null;
+    }
+
+    if (this.filtroAbierto && !target.closest('.filter-row') && !target.closest('.th-filter')) {
+      this.filtroAbierto = null;
     }
   }
 
@@ -110,7 +115,18 @@ export class FinanzasComponent implements OnInit {
   mesesVisibles: any[] = [];
   metodoPagoFiltro: number = 0;
   expandidoKey: string | null = null;
-  
+
+  // ===== FILTROS DE ENCABEZADO =====
+  filtroAbierto: string | null = null;
+
+  filtroFechaPagoDesde: string = '';
+  filtroFechaPagoHasta: string = '';
+  filtroFechaFacturaDesde: string = '';
+  filtroFechaFacturaHasta: string = '';
+  filtroRazonSocial: string = '';
+  filtroConcepto: string = '';
+  filtroMonto: number | null = null;
+
 
 
 
@@ -147,13 +163,17 @@ export class FinanzasComponent implements OnInit {
     return item.key;
   }
 
+  toggleFiltro(campo: string): void {
+    this.filtroAbierto = this.filtroAbierto === campo ? null : campo;
+  }
+
   // ===== FILTRO COMBINADO PARA LA TABLA (tab + método de pago) =====
   movimientosVisibles(): any[] {
-    const base = this.tab === 'todos' ? this.movimientos : this.movimientosFiltradosTabs();
+    const base = this.tab === 'todos' ? this.movimientosFiltrados : this.movimientosFiltradosTabs();
     return this.metodoPagoFiltro === 0
       ? base
       : base.filter(m => m.metodo_pago_id == this.metodoPagoFiltro);
-  }
+}
 
   private coincideMetodoPago(m: any): boolean {
     return this.metodoPagoFiltro === 0 || m.metodo_pago_id == this.metodoPagoFiltro;
@@ -433,7 +453,7 @@ export class FinanzasComponent implements OnInit {
     this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes)
       .subscribe(res => {
         this.movimientos = res as any[];
-        this.movimientosFiltrados = [...this.movimientos];
+        this.aplicarFiltros();  // <-- antes era: this.movimientosFiltrados = [...this.movimientos];
       });
   }
 
@@ -557,6 +577,64 @@ export class FinanzasComponent implements OnInit {
       m => m.value <= mesActual
     );
 
+  }
+
+  limpiarFiltro(campo: string): void {
+    switch (campo) {
+      case 'fecha_pago':
+        this.filtroFechaPagoDesde = '';
+        this.filtroFechaPagoHasta = '';
+        break;
+      case 'fecha_factura':
+        this.filtroFechaFacturaDesde = '';
+        this.filtroFechaFacturaHasta = '';
+        break;
+      case 'razon_social':
+        this.filtroRazonSocial = '';
+        break;
+      case 'concepto':
+        this.filtroConcepto = '';
+        break;
+      case 'monto':
+        this.filtroMonto = null;
+        break;
+    }
+    this.aplicarFiltros();
+  }
+
+  aplicarFiltros(): void {
+    this.movimientosFiltrados = this.movimientos.filter(m => {
+      const fechaPago = m.fecha_pago ? String(m.fecha_pago).split('T')[0] : '';
+      const fechaFactura = m.fecha_factura ? String(m.fecha_factura).split('T')[0] : '';
+
+      // Rango Fecha Pago
+      if (this.filtroFechaPagoDesde && fechaPago < this.filtroFechaPagoDesde) return false;
+      if (this.filtroFechaPagoHasta && fechaPago > this.filtroFechaPagoHasta) return false;
+
+      // Rango Fecha Factura
+      if (this.filtroFechaFacturaDesde && fechaFactura < this.filtroFechaFacturaDesde) return false;
+      if (this.filtroFechaFacturaHasta && fechaFactura > this.filtroFechaFacturaHasta) return false;
+
+      // Razón Social (contiene)
+      if (this.filtroRazonSocial) {
+        const rs = m.razon_social ? String(m.razon_social).toLowerCase() : '';
+        if (!rs.includes(this.filtroRazonSocial.toLowerCase())) return false;
+      }
+
+      // Concepto (contiene)
+      if (this.filtroConcepto) {
+        const c = m.concepto ? String(m.concepto).toLowerCase() : '';
+        if (!c.includes(this.filtroConcepto.toLowerCase())) return false;
+      }
+
+      // Monto (igualdad exacta)
+      if (this.filtroMonto !== null && this.filtroMonto !== undefined) {
+        const importe = Number(m.importe_sin_iva) || 0;
+        if (importe !== this.filtroMonto) return false;
+      }
+
+      return true;
+    });
   }
 
 
@@ -956,7 +1034,7 @@ export class FinanzasComponent implements OnInit {
     // Agrega el contenido de un archivo (pdf o imagen) al PDF final
     const agregarArchivoAlPdf = async (pdfFinal: PDFDocument, blob: Blob, ext: string) => {
       const bytes = new Uint8Array(await blob.arrayBuffer());
-      
+
 
       if (ext === '.pdf') {
         const pdfOrigen = await PDFDocument.load(bytes, { ignoreEncryption: true });
@@ -1008,7 +1086,7 @@ export class FinanzasComponent implements OnInit {
           const original = fixEncoding(f);
           const ext = getExtension(original);
           const blob = await descargarBlob(original);
-      
+
           if (!blob) continue;
           try {
             await agregarArchivoAlPdf(pdfFinal, blob, ext);
@@ -1025,7 +1103,7 @@ export class FinanzasComponent implements OnInit {
         const original = fixEncoding(c);
         const ext = getExtension(original);
         const blob = await descargarBlob(original);
-        
+
 
         if (!blob) continue;
         try {
@@ -1051,7 +1129,7 @@ export class FinanzasComponent implements OnInit {
       await this.alert.AlertaWarning?.(
         'Algunos archivos no se pudieron incluir',
         `${archivosConError.length} archivo(s) no se pudieron incluir en el PDF (posiblemente dañados):\n\n${archivosConError.join('\n')}`
-      ) 
+      )
     }
 
   }

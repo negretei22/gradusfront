@@ -1160,3 +1160,76 @@ td.actions {
   color: white;
   border-color: var(--gradus-green);
 }
+
+
+.th-filter {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+.th-filter:hover {
+  background-color: #e9ecef;
+}
+.th-filter.active-filter {
+  color: #000814;
+  background-color: #e7f1ff;
+}
+.filter-dot {
+  color: #000814;
+  font-size: 10px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.filter-row {
+  background-color: #f8f9fa;
+}
+.filter-row td {
+  border-top: none;
+  padding: 8px 12px;
+}
+.filter-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.filter-title {
+  font-size: 13px;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.filter-panel label {
+  font-size: 13px;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-panel input[type="date"],
+.filter-panel input[type="text"],
+.filter-panel input[type="number"] {
+  padding: 5px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+.filter-panel input:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+}
+.btn-limpiar {
+  padding: 5px 14px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn-limpiar:hover {
+  background: #bb2d3b;
+}

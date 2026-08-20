@@ -75,16 +75,84 @@
     <thead>
       <tr>
         <th width="3%"></th>
-        <th width="8%">Fecha<br>Pago</th>
-        <th width="8%">Fecha<br>Factura</th>
+        <th width="8%" (click)="toggleFiltro('fecha_pago')" class="th-filter"
+          [class.active-filter]="filtroFechaPagoDesde || filtroFechaPagoHasta">
+          Fecha<br>Pago
+          <span class="filter-dot" *ngIf="filtroFechaPagoDesde || filtroFechaPagoHasta">●</span>
+        </th>
+        <th width="8%" (click)="toggleFiltro('fecha_factura')" class="th-filter"
+          [class.active-filter]="filtroFechaFacturaDesde || filtroFechaFacturaHasta">
+          Fecha<br>Factura
+          <span class="filter-dot" *ngIf="filtroFechaFacturaDesde || filtroFechaFacturaHasta">●</span>
+        </th>
         <th width="8%">Tipo</th>
-        <th width="22%">Razón Social</th>
-        <th width="34%">Concepto</th>
-        <th width="10%">Monto</th>
+        <th width="22%" (click)="toggleFiltro('razon_social')" class="th-filter"
+          [class.active-filter]="filtroRazonSocial">
+          Razón Social
+          <span class="filter-dot" *ngIf="filtroRazonSocial">●</span>
+        </th>
+        <th width="34%" (click)="toggleFiltro('concepto')" class="th-filter" [class.active-filter]="filtroConcepto">
+          Concepto
+          <span class="filter-dot" *ngIf="filtroConcepto">●</span>
+        </th>
+        <th width="10%" (click)="toggleFiltro('monto')" class="th-filter" [class.active-filter]="filtroMonto !== null">
+          Monto
+          <span class="filter-dot" *ngIf="filtroMonto !== null">●</span>
+        </th>
         <th width="10%">Acciones</th>
       </tr>
-    </thead>
 
+      <!-- FILA DE FILTROS -->
+      <tr *ngIf="filtroAbierto" class="filter-row">
+        <td></td>
+        <td colspan="7">
+          <div class="filter-panel">
+            <strong class="filter-title">
+              <ng-container [ngSwitch]="filtroAbierto">
+                <span *ngSwitchCase="'fecha_pago'">Filtrar por Fecha de Pago</span>
+                <span *ngSwitchCase="'fecha_factura'">Filtrar por Fecha de Factura</span>
+                <span *ngSwitchCase="'razon_social'">Filtrar por Razón Social</span>
+                <span *ngSwitchCase="'concepto'">Filtrar por Concepto</span>
+                <span *ngSwitchCase="'monto'">Filtrar por Monto</span>
+              </ng-container>
+            </strong>
+
+            <!-- Fecha Pago -->
+            <ng-container *ngIf="filtroAbierto === 'fecha_pago'">
+              <label>Desde: <input type="date" [(ngModel)]="filtroFechaPagoDesde" (change)="aplicarFiltros()"></label>
+              <label>Hasta: <input type="date" [(ngModel)]="filtroFechaPagoHasta" (change)="aplicarFiltros()"></label>
+            </ng-container>
+
+            <!-- Fecha Factura -->
+            <ng-container *ngIf="filtroAbierto === 'fecha_factura'">
+              <label>Desde: <input type="date" [(ngModel)]="filtroFechaFacturaDesde"
+                  (change)="aplicarFiltros()"></label>
+              <label>Hasta: <input type="date" [(ngModel)]="filtroFechaFacturaHasta"
+                  (change)="aplicarFiltros()"></label>
+            </ng-container>
+
+            <!-- Razón Social -->
+            <ng-container *ngIf="filtroAbierto === 'razon_social'">
+              <input type="text" [(ngModel)]="filtroRazonSocial" (input)="aplicarFiltros()"
+                placeholder="Escribe para buscar..." style="min-width: 250px;">
+            </ng-container>
+
+            <!-- Concepto -->
+            <ng-container *ngIf="filtroAbierto === 'concepto'">
+              <input type="text" [(ngModel)]="filtroConcepto" (input)="aplicarFiltros()"
+                placeholder="Escribe para buscar..." style="min-width: 300px;">
+            </ng-container>
+
+            <!-- Monto -->
+            <ng-container *ngIf="filtroAbierto === 'monto'">
+              <input type="number" [(ngModel)]="filtroMonto" (input)="aplicarFiltros()" placeholder="Ej: 25000">
+            </ng-container>
+
+            <button class="btn-limpiar" (click)="limpiarFiltro(filtroAbierto || '')">✕ Limpiar</button>
+          </div>
+        </td>
+      </tr>
+    </thead>
     <tbody cdkDropList (cdkDropListDropped)="drop($event)">
 
       <tr *ngFor="let m of movimientosVisibles(); let i = index" cdkDrag
