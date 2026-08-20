@@ -95,9 +95,10 @@
           Concepto
           <span class="filter-dot" *ngIf="filtroConcepto">●</span>
         </th>
-        <th width="10%" (click)="toggleFiltro('monto')" class="th-filter" [class.active-filter]="filtroMonto !== null">
+        <th width="10%" (click)="toggleFiltro('monto')" class="th-filter"
+          [class.active-filter]="filtroMonto && filtroMonto.trim() !== ''">
           Monto
-          <span class="filter-dot" *ngIf="filtroMonto !== null">●</span>
+          <span class="filter-dot" *ngIf="filtroMonto && filtroMonto.trim() !== ''">●</span>
         </th>
         <th width="10%">Acciones</th>
       </tr>
