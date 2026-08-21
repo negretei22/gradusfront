@@ -6,6 +6,9 @@ export const moduloGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  console.log('🛡️ moduloGuard ejecutado para ruta:', route.routeConfig?.path);
+  console.log('🔑 isAuthenticated:', authService.isAuthenticated());
+
   if (!authService.isAuthenticated()) {
     router.navigate(['/login']);
     return false;

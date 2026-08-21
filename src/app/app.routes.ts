@@ -13,6 +13,7 @@ import { FinanzasComponent } from './finanzas/finanzas.component';
 import { MonitorProcedimientosComponent } from './monitor-procedimientos/monitor-procedimientos.component';
 import { CajaChicaComponent } from './caja-chica/caja-chica.component';
 import { ObraPuertoPenascoComponent } from './obra-puerto-penasco/obra-puerto-penasco.component';
+import { ServicioComponent } from './servicios/servicio.component';
 
 export const routes: Route[] = [
   // 🔓 PÚBLICO — sin menú lateral
@@ -62,6 +63,11 @@ export const routes: Route[] = [
       {
         path: 'obra-puerto-penasco',
         component: ObraPuertoPenascoComponent,
+        canActivate: [moduloGuard],
+      },
+      {
+        path: 'servicios',
+        component: ServicioComponent,
         canActivate: [moduloGuard],
       },
       {
