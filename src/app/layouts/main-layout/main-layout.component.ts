@@ -58,7 +58,7 @@ interface Modulo {
               </button>
               @if (menuOpen) {
                 <div class="dropdown-menu">
-                  <button (click)="logout()" class="dropdown-item">🚪 Cerrar sesión</button>
+                  <button (click)="logout()" class="dropdown-item">⏻ Cerrar sesión</button>
                 </div>
               }
             </div>

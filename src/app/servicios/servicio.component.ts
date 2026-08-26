@@ -4,11 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ServicioService } from './servicio.service';
 import { MaquinariaService } from '../services/maquinaria.service';
 import { AlertsService } from '../core/alerts.service';
+import { NgxMaskDirective } from 'ngx-mask';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
 
 @Component({
   selector: 'app-servicio',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgxMaskDirective],
   templateUrl: './servicio.component.html',
   styleUrl: './servicio.component.css'
 })
@@ -25,7 +28,7 @@ export class ServicioComponent {
   openCarousel(s: any) {
     this.carouselCodigo = s.codigo;
     this.carouselImages = this.fotosDeServicio(s).map(f =>
-      `http://localhost:3000/uploads/servicios/${s.codigo}/${f}`
+      `http://localhost:3000/uploads/servicios/${s.codigo}/${f.nombreArchivo}`
     );
     this.carouselIndex = 0;
     this.showCarousel = true;
@@ -61,7 +64,9 @@ export class ServicioComponent {
   constructor(
     private servicioService: ServicioService,
     private maquinariaService: MaquinariaService,
-    private alerts: AlertsService
+    private alerts: AlertsService,
+    private sanitizer: DomSanitizer,
+
   ) { }
 
   servicios: any[] = [];
@@ -74,7 +79,7 @@ export class ServicioComponent {
   editando: boolean = false;
   id_servicio: number | null = null;
 
-  id_tipo_servicio: number = 0;
+
   fecha_servicio: string = '';
   id_activo: number = 0;
   activoSeleccionado: any = null;
@@ -88,12 +93,12 @@ export class ServicioComponent {
 
   // detalles: solo descripción
   detalles: { descripcion: string }[] = [];
-  total: number = 0;
-  iva: number = 0;
+  total: number | null = null;
+  comentarios: string = '';
 
   // fotos
   fotosNuevas: File[] = [];
-  fotosExistentes: string[] = [];
+  fotosExistentes: { nombreOriginal: string; nombreArchivo: string }[] = [];
   panelFotosAbierto: boolean = false;
   dragoverActivo: boolean = false;
 
@@ -108,10 +113,22 @@ export class ServicioComponent {
     'Gastos de salida'
   ];
 
+  onFocusTotal() {
+    if (this.total === 0) {
+      this.total = null;
+    }
+  }
   ngOnInit() {
     this.cargarServicios();
-    this.cargarTiposServicio();
     this.cargarActivos();
+  }
+
+  getSafeUrl(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  onComentariosChange(value: string) {
+    this.comentarios = value.toUpperCase();
   }
 
   cargarServicios() {
@@ -127,12 +144,6 @@ export class ServicioComponent {
     this.nuevoDetalle = '';
   }
 
-  cargarTiposServicio() {
-    this.tiposServicio = [
-      { id_tipo_servicio: 1, tipo_servicio: 'Preventivo' },
-      { id_tipo_servicio: 2, tipo_servicio: 'Correctivo' }
-    ];
-  }
 
   cargarActivos() {
     this.maquinariaService.getMaquinaria().subscribe((res: any) => {
@@ -140,13 +151,6 @@ export class ServicioComponent {
     });
   }
 
-  filtrarServicios() {
-    const f = this.filtroServicio.toLowerCase();
-    this.serviciosFiltrados = this.servicios.filter(s =>
-      (s.activo?.numero_serie ?? '').toLowerCase().includes(f) ||
-      (s.tipoServicio?.tipo_servicio ?? '').toLowerCase().includes(f)
-    );
-  }
 
   // ===== BUSCADOR DE ACTIVOS =====
   onBuscarActivoInput() {
@@ -171,14 +175,7 @@ export class ServicioComponent {
   }
 
   // ===== DETALLES =====
-  onTipoServicioChange() {
-    this.detalles = [];
-    if (Number(this.id_tipo_servicio) === 1) {
-      // Preventivo: carga los 6 conceptos fijos
-      this.detalles = this.CONCEPTOS_PREVENTIVO.map(d => ({ descripcion: d }));
-    }
-    // Correctivo: empieza vacío, el usuario agrega manualmente
-  }
+
 
   agregarDetalle() {
     this.detalles.push({ descripcion: '' });
@@ -220,21 +217,34 @@ export class ServicioComponent {
     input.value = '';
   }
   procesarFotos(files: FileList) {
-    const permitidos = ['image/jpeg', 'image/jpg', 'image/png'];
+    const permitidos = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       if (!permitidos.includes(f.type)) {
-        alert(`"${f.name}" no es válido. Solo JPG/PNG.`);
+        alert(`"${f.name}" no es válido. Solo JPG/PNG/PDF.`);
         continue;
       }
       const yaExiste = this.fotosNuevas.some(x => x.name === f.name && x.size === f.size)
-        || this.fotosExistentes.includes(f.name);
+        || this.fotosExistentes.some(x => x.nombreOriginal === f.name);
       if (!yaExiste) this.fotosNuevas.push(f);
     }
     this.panelFotosAbierto = true;
   }
-  quitarFotoExistente(nombre: string) {
-    this.fotosExistentes = this.fotosExistentes.filter(f => f !== nombre);
+
+  esPdf(file: File): boolean {
+    return file.type === 'application/pdf';
+  } 
+
+  esPdfNombre(nombre: string): boolean {
+    return nombre?.toLowerCase().endsWith('.pdf');
+  }
+
+  esPdfUrl(url: string): boolean {
+    return url?.toLowerCase().endsWith('.pdf');
+  }
+
+  quitarFotoExistente(nombreArchivo: string) {
+    this.fotosExistentes = this.fotosExistentes.filter(f => f.nombreArchivo !== nombreArchivo);
   }
 
   // ===== MODAL =====
@@ -249,7 +259,6 @@ export class ServicioComponent {
     this.resetForm();
   }
   resetForm() {
-    this.id_tipo_servicio = 0;
     this.fecha_servicio = '';
     this.id_activo = 0;
     this.activoSeleccionado = null;
@@ -258,7 +267,7 @@ export class ServicioComponent {
     this.mostrarDropdownActivos = false;
     this.detalles = [];
     this.total = 0;
-    this.iva = 0;
+    this.comentarios = '';
     this.fotosNuevas = [];
     this.fotosExistentes = [];
     this.panelFotosAbierto = false;
@@ -266,19 +275,14 @@ export class ServicioComponent {
 
   // ===== GUARDAR / EDITAR =====
   async saveServicio() {
-    if (!this.id_activo || !this.fecha_servicio || !this.id_tipo_servicio) {
-      alert('Completa tipo de servicio, fecha y activo.');
-      return;
-    }
 
     const formData = new FormData();
-    formData.append('id_tipo_servicio', this.id_tipo_servicio.toString());
     formData.append('id_activo', this.id_activo.toString());
     formData.append('fecha_servicio', this.fecha_servicio);
-    formData.append('total', this.total.toString());
-    formData.append('iva', this.iva.toString());
+    formData.append('total', (this.total ?? 0).toString());
+    formData.append('comentarios', this.comentarios.toString());
     formData.append('detalles', JSON.stringify(this.detalles));
-    formData.append('fotos_existentes', this.fotosExistentes.join(','));
+    formData.append('fotos_existentes', JSON.stringify(this.fotosExistentes));
 
     this.fotosNuevas.forEach(f => formData.append('fotos', f));
 
@@ -298,20 +302,18 @@ export class ServicioComponent {
     this.editando = true;
     this.id_servicio = s.id_servicio;
     this.codigo = s.codigo;
-    this.id_tipo_servicio = s.id_tipo_servicio;
     this.fecha_servicio = s.fecha_servicio ? s.fecha_servicio.toString().split('T')[0] : '';
     this.id_activo = s.id_activo;
 
-    // Usa la relación del backend o busca en el array local
     this.activoSeleccionado = s.activo ?? this.activos.find(a => a.id_maquinaria === s.id_activo);
     this.textoBusquedaActivo = this.activoSeleccionado
       ? `${this.activoSeleccionado.numero_serie} — ${this.activoSeleccionado.descripcion}`
       : '';
 
     this.total = s.total;
-    this.iva = s.iva;
+    this.comentarios = s.comentarios;
     this.detalles = s.detalles?.length ? s.detalles.map((d: any) => ({ descripcion: d.descripcion })) : [];
-    this.fotosExistentes = s.fotos ? s.fotos.split(',').filter((x: string) => x) : [];
+    this.fotosExistentes = s.fotos ?? [];
     this.fotosNuevas = [];
     this.showModal = true;
   }
@@ -322,14 +324,15 @@ export class ServicioComponent {
     this.cargarServicios();
   }
 
-  fotosDeServicio(s: any): string[] {
-    if (!s.fotos) return [];
-    return s.fotos.split(',').filter((x: string) => x);
+  fotosDeServicio(s: any): { nombreOriginal: string; nombreArchivo: string }[] {
+    return s.fotos ?? [];
   }
+
   contarFotos(s: any): number {
     return this.fotosDeServicio(s).length;
   }
-  verFoto(nombre: string, codigo: string) {
-    window.open(`http://localhost:3000/uploads/servicios/${codigo}/${nombre}`, '_blank');
+
+  verFoto(nombreArchivo: string, codigo: string) {
+    window.open(`http://localhost:3000/uploads/servicios/${codigo}/${nombreArchivo}`, '_blank');
   }
 }
