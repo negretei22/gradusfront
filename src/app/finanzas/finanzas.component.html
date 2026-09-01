@@ -34,7 +34,7 @@
       <h3>{{ prestamosCard | currency:'MXN' }}</h3>
     </div>
 
-    <div class="finance-card saldo-card"  *ngIf="tab === 'todos'">
+    <div class="finance-card saldo-card" *ngIf="tab === 'todos'">
       <h4>TOTAL</h4>
       <h3 [ngClass]="saldoCard < 0 ? 'saldo-negativo' : 'saldo-positivo'">
         {{ saldoCard | currency:'MXN' }}
@@ -43,7 +43,7 @@
 
   </div>
 
-<Br>
+  <Br>
 
   <div class="page-header">
 
@@ -74,6 +74,7 @@
     <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
     <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
     <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
+    <button (click)="metodoPagoFiltro=5" [class.active]="metodoPagoFiltro===5">💳 CRÉDITO</button>
   </div>
 
 
@@ -162,7 +163,7 @@
     </thead>
     <tbody cdkDropList (cdkDropListDropped)="drop($event)">
 
-      <tr *ngFor="let m of movimientosVisibles(); let i = index" cdkDrag
+      <tr *ngFor="let m of getListaActual(); let i = index;" cdkDrag
         [cdkDragDisabled]="tab !== 'todos' || metodoPagoFiltro !== 0" style="font-size: 11px;">
 
         <td style="text-align:center;" cdkDragHandle [class.drag-handle]="tab === 'todos' && metodoPagoFiltro === 0">
@@ -206,7 +207,9 @@
             {{
             m.metodo_pago_id == 1 ? '💵' :
             m.metodo_pago_id == 2 ? '🏦' :
-            m.metodo_pago_id == 3 ? '💳' : ''
+            m.metodo_pago_id == 3 ? '💳' :
+            m.metodo_pago_id == 5 ? '💳' :
+            ''
             }}
           </span>
         </td>

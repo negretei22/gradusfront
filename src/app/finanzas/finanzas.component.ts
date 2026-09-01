@@ -198,7 +198,6 @@ export class FinanzasComponent implements OnInit {
   }
 
   get egresosCard(): number {
-   
     if (!this.coincideTab('egreso')) return 0;
     return this.movimientos
       .filter(m => m.tipo_movimiento_id == 2 && m.categoria_id != 2 && this.coincideMetodoPago(m))
@@ -211,8 +210,11 @@ export class FinanzasComponent implements OnInit {
       .filter(m => m.tipo_movimiento_id == 3 && this.coincideMetodoPago(m))
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
   }
-
-   get prestamosCard(): number {
+  
+  getListaActual() {
+    return this.tab === 'todos' ? this.movimientos : this.movimientosVisibles();
+  }
+  get prestamosCard(): number {
     if (!this.coincideTab('prestamo')) return 0;
     return this.movimientos
       .filter(m => m.tipo_movimiento_id == 4 && this.coincideMetodoPago(m))
@@ -220,7 +222,7 @@ export class FinanzasComponent implements OnInit {
   }
 
   get saldoCard(): number {
-   
+
     return this.ingresosCard - this.egresosCard - this.nominaCard;
   }
 
@@ -289,13 +291,13 @@ export class FinanzasComponent implements OnInit {
 
     if (this.tab === 'inversion') {
       return this.movimientosFiltrados.filter(m =>
-         m.tipo_movimiento_id == 3
+        m.tipo_movimiento_id == 3
       );
     }
 
-     if (this.tab === 'prestamo') {
+    if (this.tab === 'prestamo') {
       return this.movimientosFiltrados.filter(m =>
-       m.tipo_movimiento_id == 4
+        m.tipo_movimiento_id == 4
       );
     }
 
