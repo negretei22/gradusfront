@@ -9,27 +9,32 @@
 
   <div class="finance-cards">
 
-    <div class="finance-card ingreso-card">
+    <div class="finance-card ingreso-card" *ngIf="tab === 'todos' || tab === 'ingreso'">
       <h4>INGRESOS</h4>
       <h3>{{ ingresosCard | currency:'MXN' }}</h3>
     </div>
 
-    <div class="finance-card egreso-card">
+    <div class="finance-card egreso-card" *ngIf="tab === 'todos' || tab === 'egreso'">
       <h4>EGRESOS</h4>
       <h3>{{ egresosCard | currency:'MXN' }}</h3>
     </div>
 
-    <div class="finance-card nomina-card">
+    <div class="finance-card nomina-card" *ngIf="tab === 'todos' || tab === 'nomina'">
       <h4>NÓMINA</h4>
       <h3>{{ nominaCard | currency:'MXN' }}</h3>
     </div>
 
-    <div class="finance-card inversiones-card">
+    <div class="finance-card inversiones-card" *ngIf="tab === 'todos' || tab === 'inversion'">
       <h4>INVERSIONES</h4>
       <h3>{{ inversionesCard | currency:'MXN' }}</h3>
     </div>
 
-    <div class="finance-card saldo-card">
+    <div class="finance-card prestamos-card" *ngIf="tab === 'todos' || tab === 'prestamo'">
+      <h4>PRÉSTAMOS</h4>
+      <h3>{{ prestamosCard | currency:'MXN' }}</h3>
+    </div>
+
+    <div class="finance-card saldo-card"  *ngIf="tab === 'todos'">
       <h4>TOTAL</h4>
       <h3 [ngClass]="saldoCard < 0 ? 'saldo-negativo' : 'saldo-positivo'">
         {{ saldoCard | currency:'MXN' }}
@@ -38,7 +43,7 @@
 
   </div>
 
-
+<Br>
 
   <div class="page-header">
 
@@ -62,6 +67,7 @@
     <button (click)="cambiarTab('egreso')" [class.active]="tab=='egreso'">EGRESOS</button>
     <button (click)="cambiarTab('nomina')" [class.active]="tab=='nomina'">NÓMINA</button>
     <button (click)="cambiarTab('inversion')" [class.active]="tab=='inversion'">INVERSIÓN</button>
+    <button (click)="cambiarTab('prestamo')" [class.active]="tab=='prestamo'">PRÉSTAMO</button>
   </div>
   <div class="filtros-metodo-pago">
     <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
@@ -176,12 +182,14 @@
           m.tipo_movimiento_id == 1 ? 'tag-ingreso' :
           m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'tag-nomina' :
           m.tipo_movimiento_id == 2 ? 'tag-egreso' :
+          m.tipo_movimiento_id == 4 ? 'tag-prestamo' :
           'tag-inversion'
           ">
             {{
             m.tipo_movimiento_id == 1 ? 'INGRESO' :
             m.tipo_movimiento_id == 2 && m.categoria_id == 2 ? 'NÓMINA' :
             m.tipo_movimiento_id == 2 ? 'EGRESO' :
+            m.tipo_movimiento_id == 4 ? 'PRÉSTAMO' :
             'INVERSION'
             }}
           </span>

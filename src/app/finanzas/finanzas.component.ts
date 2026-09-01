@@ -179,7 +179,7 @@ export class FinanzasComponent implements OnInit {
     return this.metodoPagoFiltro === 0 || m.metodo_pago_id == this.metodoPagoFiltro;
   }
 
-  private coincideTab(tipo: 'ingreso' | 'egreso' | 'nomina' | 'inversion'): boolean {
+  private coincideTab(tipo: 'ingreso' | 'egreso' | 'nomina' | 'inversion' | 'prestamo'): boolean {
     return this.tab === 'todos' || this.tab === tipo;
   }
 
@@ -198,6 +198,7 @@ export class FinanzasComponent implements OnInit {
   }
 
   get egresosCard(): number {
+   
     if (!this.coincideTab('egreso')) return 0;
     return this.movimientos
       .filter(m => m.tipo_movimiento_id == 2 && m.categoria_id != 2 && this.coincideMetodoPago(m))
@@ -207,11 +208,19 @@ export class FinanzasComponent implements OnInit {
   get inversionesCard(): number {
     if (!this.coincideTab('inversion')) return 0;
     return this.movimientos
-      .filter(m => m.tipo_movimiento_id != 1 && m.tipo_movimiento_id != 2 && this.coincideMetodoPago(m))
+      .filter(m => m.tipo_movimiento_id == 3 && this.coincideMetodoPago(m))
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+   get prestamosCard(): number {
+    if (!this.coincideTab('prestamo')) return 0;
+    return this.movimientos
+      .filter(m => m.tipo_movimiento_id == 4 && this.coincideMetodoPago(m))
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
   }
 
   get saldoCard(): number {
+   
     return this.ingresosCard - this.egresosCard - this.nominaCard;
   }
 
@@ -280,7 +289,13 @@ export class FinanzasComponent implements OnInit {
 
     if (this.tab === 'inversion') {
       return this.movimientosFiltrados.filter(m =>
-        m.tipo_movimiento_id != 1 && m.tipo_movimiento_id != 2
+         m.tipo_movimiento_id == 3
+      );
+    }
+
+     if (this.tab === 'prestamo') {
+      return this.movimientosFiltrados.filter(m =>
+       m.tipo_movimiento_id == 4
       );
     }
 
