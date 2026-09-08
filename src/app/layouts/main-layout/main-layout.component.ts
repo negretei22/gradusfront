@@ -78,29 +78,29 @@ export class MainLayoutComponent implements OnInit {
   menuOpen = false;
   modulos: Modulo[] = [];
 
+  private readonly SIDEBAR_KEY = 'sidebarOpen';
+
   constructor(
     public authService: AuthService,
     private router: Router,
     private http: HttpClient
   ) {
-    this.sidebarOpen = !this.isMobile();
+    this.sidebarOpen = this.getEstadoInicialSidebar();
+  }
+
+  private getEstadoInicialSidebar(): boolean {
+    // En móvil siempre arranca cerrado, sin importar lo guardado
+    if (this.isMobile()) return false;
+
+    const guardado = localStorage.getItem(this.SIDEBAR_KEY);
+    // Si nunca se ha guardado nada, usamos el comportamiento por defecto
+    if (guardado === null) return true;
+
+    return guardado === 'true';
   }
 
   ngOnInit() {
     this.cargarModulos();
-  }
-
-  cargarModulos() {
-    // Primero intentar cargar de localStorage
-    this.modulos = this.authService.getModulosGuardados();
-    
-    // Si no hay, pedir al backend
-    if (this.modulos.length === 0) {
-      this.authService.cargarModulos().subscribe({
-        next: (mods) => this.modulos = mods,
-        error: (err) => console.error('Error cargando módulos:', err)
-      });
-    }
   }
 
   @HostListener('window:resize')
@@ -116,7 +116,26 @@ export class MainLayoutComponent implements OnInit {
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+    localStorage.setItem(this.SIDEBAR_KEY, String(this.sidebarOpen));
   }
+
+ 
+
+  cargarModulos() {
+    // Primero intentar cargar de localStorage
+    this.modulos = this.authService.getModulosGuardados();
+    
+    // Si no hay, pedir al backend
+    if (this.modulos.length === 0) {
+      this.authService.cargarModulos().subscribe({
+        next: (mods) => this.modulos = mods,
+        error: (err) => console.error('Error cargando módulos:', err)
+      });
+    }
+  }
+
+  @HostListener('window:resize')
+ 
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;

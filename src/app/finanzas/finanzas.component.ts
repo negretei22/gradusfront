@@ -1174,61 +1174,76 @@ export class FinanzasComponent implements OnInit {
 
 
 
-  async saveMovimiento() {
+ async saveMovimiento() {
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    formData.append('id', String(this.id) ?? '');
-    formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
-    formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
-    const fecha = this.fecha_factura
-      ? this.fecha_factura
-      : await this.getPrimerDiaMes();
+  formData.append('id', String(this.id) ?? '');
+  formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
+  formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
+  const fecha = this.fecha_factura
+    ? this.fecha_factura
+    : await this.getPrimerDiaMes();
 
-    formData.append('fecha_factura', fecha);
-    formData.append('concepto', this.concepto.toUpperCase());
-    formData.append('rfc', this.rfc.toUpperCase());
-    formData.append('razon_social', this.razon_social.toUpperCase());
-    formData.append('importe_sin_iva', String(this.importe_sin_iva));
-    formData.append('iva', String(this.iva));
-    formData.append('iva_acreditable', String(this.iva_acreditable));
-    formData.append('iva_traslado', String(this.iva_traslado));
-    formData.append('isr_retenido', String(this.isr_retenido));
-    formData.append('iva_retenido', String(this.iva_retenido));
-    formData.append('gran_total', String(this.granTotal));
-    formData.append('categoria_id', this.categoria_id);
-    formData.append('metodo_pago_id', this.metodo_pago_id);
-    formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
+  formData.append('fecha_factura', fecha);
+  formData.append('concepto', this.concepto.toUpperCase());
+  formData.append('rfc', this.rfc.toUpperCase());
+  formData.append('razon_social', this.razon_social.toUpperCase());
+  formData.append('importe_sin_iva', String(this.importe_sin_iva));
+  formData.append('iva', String(this.iva));
+  formData.append('iva_acreditable', String(this.iva_acreditable));
+  formData.append('iva_traslado', String(this.iva_traslado));
+  formData.append('isr_retenido', String(this.isr_retenido));
+  formData.append('iva_retenido', String(this.iva_retenido));
+  formData.append('gran_total', String(this.granTotal));
+  formData.append('categoria_id', this.categoria_id);
+  formData.append('metodo_pago_id', this.metodo_pago_id);
+  formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
-    this.tiposArchivo.forEach(t => {
-      this.archivos[t.key].forEach(file => {
-        formData.append(`archivo_${t.key}`, file);
-      });
-
-      formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
+  this.tiposArchivo.forEach(t => {
+    this.archivos[t.key].forEach(file => {
+      formData.append(`archivo_${t.key}`, file);
     });
+    formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
+  });
 
-    try {
+  const idEditado = this.id; // lo guardamos ANTES de resetear el form
 
-      const res = this.editing
-        ? await this.finanzasService.updateMovimiento(this.id, formData)
-        : await this.finanzasService.saveMovimiento(formData);
+  try {
 
-      this.showModal = false;
+    const res: any = this.editing
+      ? await this.finanzasService.updateMovimiento(idEditado, formData)
+      : await this.finanzasService.saveMovimiento(formData);
 
-      await this.alert.AlertaVerde('', 'Se agregó el registro exitosamente.');
+    // Traemos el registro completo y actualizado del backend
+    // (importante porque el servidor procesa nombres de archivo, fechas, etc.)
+    const idFinal = this.editing ? idEditado : res.id;
+    const movimientoActualizado: any = await firstValueFrom(
+      this.finanzasService.getMovimientoById(idFinal)
+    );
 
-      this.getSaldo(this.filtroAnio, this.filtroMes);
-
-      this.cargarMovimientos();
-
-    } catch (err: any) {
-
-      console.log(err);
-
+    if (this.editing) {
+      const index = this.movimientos.findIndex(m => m.id === idFinal);
+      if (index !== -1) {
+        this.movimientos[index] = movimientoActualizado;
+      }
+    } else {
+      this.movimientos.push(movimientoActualizado);
     }
 
+    this.aplicarFiltros(); // refresca movimientosFiltrados sin volver a pedir todo
+
+    this.showModal = false;
+    this.resetForm(); // <-- clave: limpia editing/id para que "Nuevo" no reedite este registro
+
+    await this.alert.AlertaVerde('', 'Se agregó el registro exitosamente.');
+
+    this.getSaldo(this.filtroAnio, this.filtroMes); // esto sí conviene mantenerlo, son solo 4 números
+
+  } catch (err: any) {
+    console.log(err);
   }
+}
 
 
 }
