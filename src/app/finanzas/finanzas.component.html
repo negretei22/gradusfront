@@ -74,7 +74,7 @@
     <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
     <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
     <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
-    <button (click)="metodoPagoFiltro=5" [class.active]="metodoPagoFiltro===5">💳 CRÉDITO</button>
+    <button (click)="metodoPagoFiltro=5" [class.active]="metodoPagoFiltro===5">🥇 CRÉDITO</button>
   </div>
 
 
@@ -208,7 +208,7 @@
             m.metodo_pago_id == 1 ? '💵' :
             m.metodo_pago_id == 2 ? '🏦' :
             m.metodo_pago_id == 3 ? '💳' :
-            m.metodo_pago_id == 5 ? '💳' :
+            m.metodo_pago_id == 5 ? '🥇' :
             ''
             }}
           </span>

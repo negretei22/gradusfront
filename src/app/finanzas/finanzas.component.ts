@@ -212,7 +212,7 @@ export class FinanzasComponent implements OnInit {
   }
   
   getListaActual() {
-    return this.tab === 'todos' ? this.movimientos : this.movimientosVisibles();
+    return this.movimientosVisibles();
   }
   get prestamosCard(): number {
     if (!this.coincideTab('prestamo')) return 0;
