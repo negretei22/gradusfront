@@ -210,7 +210,7 @@ export class FinanzasComponent implements OnInit {
       .filter(m => m.tipo_movimiento_id == 3 && this.coincideMetodoPago(m))
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
   }
-  
+
   getListaActual() {
     return this.movimientosVisibles();
   }
@@ -808,7 +808,7 @@ export class FinanzasComponent implements OnInit {
     const headers = [
       "No.", "TIPO DE MOVIMIENTO", "FECHA DE PAGO", "FECHA DE FACTURA",
       "FOLIO FISCAL", "FOLIO COMPLEMENTO FISCAL", "RFC EMISOR", "NOMBRE O RAZÓN SOCIAL DEL EMISOR",
-      "CONCEPTO", "IMPORTE SIN IVA (BASE ISR)", "IVA Acreditable (Pagado)",
+      "CONCEPTO", "MONTO PAGADO", "IVA Acreditable (Pagado)",
       "IVA Trasladado (Cobrado)", "ISR Retenido", "IVA Retenido", "TOTAL", "MÉTODO DE PAGO"
     ];
 
@@ -829,18 +829,30 @@ export class FinanzasComponent implements OnInit {
       return metodos[Number(metodoId)] || '';
     };
 
+
+    const getIvaClasificado = (m: any) => {
+      const ivaAcredRaw = Number(m.iva_acreditable || 0);
+      const ivaTrasRaw = Number(m.iva_traslado || 0);
+
+      // INGRESO (1): lo que viene en iva_acreditable en realidad es IVA trasladado (cobrado)
+      if (Number(m.tipo_movimiento_id) === 1) {
+        return { ivaAcred: 0, ivaTras: ivaAcredRaw + ivaTrasRaw };
+      }
+
+      // EGRESO e INVERSIÓN: se queda igual que como viene
+      return { ivaAcred: ivaAcredRaw, ivaTras: ivaTrasRaw };
+    };
+
     const formatRow = (m: any, index: number) => {
       const importe = Number(m.importe_sin_iva || 0);
-      const ivaAcred = Number(m.iva_acreditable || 0);
-      const ivaTras = Number(m.iva_traslado || 0);
+      const { ivaAcred, ivaTras } = getIvaClasificado(m);
       const isr = Number(m.isr_retenido || 0);
       const ivaRet = Number(m.iva_retenido || 0);
       const total = importe + ivaAcred + ivaTras - isr - ivaRet;
 
       return [
         index + 1,
-        m.tipo_movimiento_id == 1 ? 'INGRESO' :
-          m.tipo_movimiento_id == 2 ? 'EGRESO' : 'INVERSIÓN',
+        getTipoMovimientoLabel(m.tipo_movimiento_id),
         m.fecha_pago?.split('T')[0],
         (!m.fecha_factura || m.fecha_factura.startsWith('1899')) ? '' : m.fecha_factura.split('T')[0],
         m.folio_fiscal,
@@ -881,8 +893,15 @@ export class FinanzasComponent implements OnInit {
 
     const calcTotales = (arr: any[]) => {
       const importe = sum(arr, 'importe_sin_iva');
-      const ivaAcred = sum(arr, 'iva_acreditable');
-      const ivaTras = sum(arr, 'iva_traslado');
+
+      let ivaAcred = 0;
+      let ivaTras = 0;
+      arr.forEach((m) => {
+        const c = getIvaClasificado(m);
+        ivaAcred += c.ivaAcred;
+        ivaTras += c.ivaTras;
+      });
+
       const isr = sum(arr, 'isr_retenido');
       const ivaRet = sum(arr, 'iva_retenido');
       const total = importe + ivaAcred + ivaTras - isr - ivaRet;
@@ -896,9 +915,13 @@ export class FinanzasComponent implements OnInit {
       .filter((m: any) => Number(m.iva_acreditable) > 0)
       .reduce((t, m) => t + Number(m.importe_sin_iva || 0), 0);
 
-    const ivaTrasladado = sum(ingresos, 'iva_traslado');
-    const ivaAcreditable = sum(egresos, 'iva_acreditable');
+    const sumIvaClasificado = (arr: any[], campo: 'ivaAcred' | 'ivaTras') =>
+      arr.reduce((t, m) => t + getIvaClasificado(m)[campo], 0);
+
+    const ivaTrasladado = sumIvaClasificado(ingresos, 'ivaTras');
+    const ivaAcreditable = sumIvaClasificado(egresos, 'ivaAcred');
     const ivaPorPagar = ivaTrasladado - ivaAcreditable;
+    
 
     const isrRetenido = sum(egresos, 'isr_retenido');
     const ivaRetenido = sum(egresos, 'iva_retenido');
@@ -1174,76 +1197,76 @@ export class FinanzasComponent implements OnInit {
 
 
 
- async saveMovimiento() {
+  async saveMovimiento() {
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append('id', String(this.id) ?? '');
-  formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
-  formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
-  const fecha = this.fecha_factura
-    ? this.fecha_factura
-    : await this.getPrimerDiaMes();
+    formData.append('id', String(this.id) ?? '');
+    formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));
+    formData.append('fecha_pago', this.fecha_pago ? this.fecha_pago : '0000-00-00');
+    const fecha = this.fecha_factura
+      ? this.fecha_factura
+      : await this.getPrimerDiaMes();
 
-  formData.append('fecha_factura', fecha);
-  formData.append('concepto', this.concepto.toUpperCase());
-  formData.append('rfc', this.rfc.toUpperCase());
-  formData.append('razon_social', this.razon_social.toUpperCase());
-  formData.append('importe_sin_iva', String(this.importe_sin_iva));
-  formData.append('iva', String(this.iva));
-  formData.append('iva_acreditable', String(this.iva_acreditable));
-  formData.append('iva_traslado', String(this.iva_traslado));
-  formData.append('isr_retenido', String(this.isr_retenido));
-  formData.append('iva_retenido', String(this.iva_retenido));
-  formData.append('gran_total', String(this.granTotal));
-  formData.append('categoria_id', this.categoria_id);
-  formData.append('metodo_pago_id', this.metodo_pago_id);
-  formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
+    formData.append('fecha_factura', fecha);
+    formData.append('concepto', this.concepto.toUpperCase());
+    formData.append('rfc', this.rfc.toUpperCase());
+    formData.append('razon_social', this.razon_social.toUpperCase());
+    formData.append('importe_sin_iva', String(this.importe_sin_iva));
+    formData.append('iva', String(this.iva));
+    formData.append('iva_acreditable', String(this.iva_acreditable));
+    formData.append('iva_traslado', String(this.iva_traslado));
+    formData.append('isr_retenido', String(this.isr_retenido));
+    formData.append('iva_retenido', String(this.iva_retenido));
+    formData.append('gran_total', String(this.granTotal));
+    formData.append('categoria_id', this.categoria_id);
+    formData.append('metodo_pago_id', this.metodo_pago_id);
+    formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
 
-  this.tiposArchivo.forEach(t => {
-    this.archivos[t.key].forEach(file => {
-      formData.append(`archivo_${t.key}`, file);
+    this.tiposArchivo.forEach(t => {
+      this.archivos[t.key].forEach(file => {
+        formData.append(`archivo_${t.key}`, file);
+      });
+      formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
     });
-    formData.append(`archivos_actuales_${t.key}`, JSON.stringify(this.archivosActuales[t.key]));
-  });
 
-  const idEditado = this.id; // lo guardamos ANTES de resetear el form
+    const idEditado = this.id; // lo guardamos ANTES de resetear el form
 
-  try {
+    try {
 
-    const res: any = this.editing
-      ? await this.finanzasService.updateMovimiento(idEditado, formData)
-      : await this.finanzasService.saveMovimiento(formData);
+      const res: any = this.editing
+        ? await this.finanzasService.updateMovimiento(idEditado, formData)
+        : await this.finanzasService.saveMovimiento(formData);
 
-    // Traemos el registro completo y actualizado del backend
-    // (importante porque el servidor procesa nombres de archivo, fechas, etc.)
-    const idFinal = this.editing ? idEditado : res.id;
-    const movimientoActualizado: any = await firstValueFrom(
-      this.finanzasService.getMovimientoById(idFinal)
-    );
+      // Traemos el registro completo y actualizado del backend
+      // (importante porque el servidor procesa nombres de archivo, fechas, etc.)
+      const idFinal = this.editing ? idEditado : res.id;
+      const movimientoActualizado: any = await firstValueFrom(
+        this.finanzasService.getMovimientoById(idFinal)
+      );
 
-    if (this.editing) {
-      const index = this.movimientos.findIndex(m => m.id === idFinal);
-      if (index !== -1) {
-        this.movimientos[index] = movimientoActualizado;
+      if (this.editing) {
+        const index = this.movimientos.findIndex(m => m.id === idFinal);
+        if (index !== -1) {
+          this.movimientos[index] = movimientoActualizado;
+        }
+      } else {
+        this.movimientos.push(movimientoActualizado);
       }
-    } else {
-      this.movimientos.push(movimientoActualizado);
+
+      this.aplicarFiltros(); // refresca movimientosFiltrados sin volver a pedir todo
+
+      this.showModal = false;
+      this.resetForm(); // <-- clave: limpia editing/id para que "Nuevo" no reedite este registro
+
+      await this.alert.AlertaVerde('', 'Se agregó el registro exitosamente.');
+
+      this.getSaldo(this.filtroAnio, this.filtroMes); // esto sí conviene mantenerlo, son solo 4 números
+
+    } catch (err: any) {
+      console.log(err);
     }
-
-    this.aplicarFiltros(); // refresca movimientosFiltrados sin volver a pedir todo
-
-    this.showModal = false;
-    this.resetForm(); // <-- clave: limpia editing/id para que "Nuevo" no reedite este registro
-
-    await this.alert.AlertaVerde('', 'Se agregó el registro exitosamente.');
-
-    this.getSaldo(this.filtroAnio, this.filtroMes); // esto sí conviene mantenerlo, son solo 4 números
-
-  } catch (err: any) {
-    console.log(err);
   }
-}
 
 
 }
