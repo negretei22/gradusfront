@@ -244,7 +244,7 @@ export class FinanzasComponent implements OnInit {
       m.orden = i + 1;
       return { id: m.id, orden: m.orden };
     });
-
+    this.aplicarFiltros();
     try {
       await this.finanzasService.updateOrdenMasivo(items);
     } catch (err) {
@@ -921,7 +921,7 @@ export class FinanzasComponent implements OnInit {
     const ivaTrasladado = sumIvaClasificado(ingresos, 'ivaTras');
     const ivaAcreditable = sumIvaClasificado(egresos, 'ivaAcred');
     const ivaPorPagar = ivaTrasladado - ivaAcreditable;
-    
+
 
     const isrRetenido = sum(egresos, 'isr_retenido');
     const ivaRetenido = sum(egresos, 'iva_retenido');
