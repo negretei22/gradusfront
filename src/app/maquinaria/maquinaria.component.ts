@@ -5,12 +5,23 @@ import { AlertsService } from '../core/alerts.service';
 import { MaquinariaService } from '../services/maquinaria.service';
 import { HostListener } from '@angular/core';
 import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
+
+@Pipe({ name: 'safeUrl' })
+export class SafeUrlPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
+  transform(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+}
 
 
 
 @Component({
   selector: 'app-maquinaria',
-  imports: [CommonModule, FormsModule, NgxMaskDirective],
+  imports: [CommonModule, FormsModule, NgxMaskDirective,SafeUrlPipe],
   templateUrl: './maquinaria.component.html',
   styleUrl: './maquinaria.component.css'
 })
@@ -61,11 +72,18 @@ export class MaquinariaComponent {
   dragoverActivo = false;
 
 
+  mostrarCarrousel = false;
+  documentosCarrousel: any[] = [];
+  indiceActual = 0;
+
+
   openModal() {
     this.showModal = true;
     this.loadMarcas();
 
   }
+
+
 
   mostrarMenuArchivos: number | null = null;
 
@@ -154,6 +172,46 @@ export class MaquinariaComponent {
       }
     }
     this.panelDocumentosAbierto = true;
+  }
+
+  abrirCarrousel(c: any) {
+    this.documentosCarrousel = this.documentosDeMaquinaria(c);
+    this.indiceActual = 0;
+    this.mostrarCarrousel = true;
+    this.mostrarMenuArchivos = null; // cierra el menú viejo
+  }
+
+  cerrarCarrousel() {
+    this.mostrarCarrousel = false;
+  }
+
+  anterior() {
+    this.indiceActual = (this.indiceActual - 1 + this.documentosCarrousel.length) % this.documentosCarrousel.length;
+  }
+
+  siguiente() {
+    this.indiceActual = (this.indiceActual + 1) % this.documentosCarrousel.length;
+  }
+
+  // Detecta el tipo de archivo por extensión
+  esImagen(url: string): boolean {
+    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url);
+  }
+
+  esPdf(url: string): boolean {
+    return /\.pdf$/i.test(url);
+  }
+
+  nombreArchivo(url: string): string {
+    return url.split('/').pop() || url;
+  }
+
+  descargar(url: string) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = this.nombreArchivo(url);
+    a.target = '_blank';
+    a.click();
   }
 
 

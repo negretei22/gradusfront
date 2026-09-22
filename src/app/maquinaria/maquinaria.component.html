@@ -62,17 +62,49 @@
 
                 <td class="actions">
                     <div class="archivos-indicador">
-                        <button *ngIf="contarArchivos(c) > 0" class="badge-archivos"
-                            (click)="toggleMenuArchivos(c.id_maquinaria)">
+                        <button *ngIf="contarArchivos(c) > 0" class="badge-archivos" (click)="abrirCarrousel(c)">
                             {{ contarArchivos(c) }}
                         </button>
+                    </div>
 
-                        <div *ngIf="mostrarMenuArchivos === c.id_maquinaria" class="menu-archivos">
-                            <div *ngFor="let doc of documentosDeMaquinaria(c); let i = index" class="menu-archivo-item"
-                                (click)="verArchivo(doc, c.numero_serie); toggleMenuArchivos(c.id_maquinaria)">
-                                <span>📄</span>
-                                {{ doc | slice:0:30 }}
+                    <!-- MODAL CARROUSEL -->
+                    <div class="carrousel-overlay" *ngIf="mostrarCarrousel" (click)="cerrarCarrousel()">
+                        <div class="carrousel-contenedor" (click)="$event.stopPropagation()">
+
+                            <button class="carrousel-cerrar" (click)="cerrarCarrousel()">✕</button>
+
+                            <div class="carrousel-contador">
+                                {{ indiceActual + 1 }} / {{ documentosCarrousel.length }}
                             </div>
+
+                            <div class="carrousel-visor">
+                                <button class="carrousel-nav prev" (click)="anterior()"
+                                    *ngIf="documentosCarrousel.length > 1">‹</button>
+
+                                <ng-container *ngIf="esImagen(documentosCarrousel[indiceActual])">
+                                    <img [src]="documentosCarrousel[indiceActual]" class="carrousel-imagen" />
+                                </ng-container>
+
+                                <ng-container *ngIf="esPdf(documentosCarrousel[indiceActual])">
+                                    <iframe [src]="documentosCarrousel[indiceActual] | safeUrl"
+                                        class="carrousel-pdf"></iframe>
+                                </ng-container>
+
+                                <ng-container
+                                    *ngIf="!esImagen(documentosCarrousel[indiceActual]) && !esPdf(documentosCarrousel[indiceActual])">
+                                    <div class="carrousel-generico">
+                                        <span>📄</span>
+                                        <p>{{ nombreArchivo(documentosCarrousel[indiceActual]) }}</p>
+                                    </div>
+                                </ng-container>
+
+                                <button class="carrousel-nav next" (click)="siguiente()"
+                                    *ngIf="documentosCarrousel.length > 1">›</button>
+                            </div>
+
+                            <button class="carrousel-descargar" (click)="descargar(documentosCarrousel[indiceActual])">
+                                ⬇ Descargar
+                            </button>
                         </div>
                     </div>
                     <button class="btn-edit" (click)="editMaquinaria(c)">✏️</button>
