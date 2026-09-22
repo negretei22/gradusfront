@@ -682,24 +682,17 @@ select {
 .carrousel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 15, 20, 0.85);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 15, 20, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .carrousel-contenedor {
   background: #1a1a1e;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 14px;
+  padding: 22px;
   max-width: 92vw;
   max-height: 92vh;
   display: flex;
@@ -707,21 +700,15 @@ select {
   align-items: center;
   gap: 16px;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.94); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 .carrousel-cerrar {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: none;
@@ -731,12 +718,11 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .carrousel-cerrar:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: rotate(90deg);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .carrousel-contador {
@@ -757,7 +743,6 @@ select {
   max-height: 68vh;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .carrousel-pdf {
@@ -766,7 +751,6 @@ select {
   border: none;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .carrousel-generico {
@@ -799,23 +783,19 @@ select {
   border: none;
   color: #fff;
   font-size: 22px;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease;
 }
 
 .carrousel-nav:hover {
   background: rgba(255, 255, 255, 0.16);
-}
-
-.carrousel-nav:active {
-  transform: scale(0.92);
 }
 
 .carrousel-descargar {
@@ -830,15 +810,11 @@ select {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease;
 }
 
 .carrousel-descargar:hover {
   background: #35946e;
-}
-
-.carrousel-descargar:active {
-  transform: scale(0.97);
 }
 
 /* ========== PANEL COMO ZONA DE DROP ========== */

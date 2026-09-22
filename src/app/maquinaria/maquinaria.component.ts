@@ -11,7 +11,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Pipe({ name: 'safeUrl' })
 export class SafeUrlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private sanitizer: DomSanitizer) { }
   transform(url: string): SafeResourceUrl {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
@@ -21,7 +21,7 @@ export class SafeUrlPipe implements PipeTransform {
 
 @Component({
   selector: 'app-maquinaria',
-  imports: [CommonModule, FormsModule, NgxMaskDirective,SafeUrlPipe],
+  imports: [CommonModule, FormsModule, NgxMaskDirective, SafeUrlPipe],
   templateUrl: './maquinaria.component.html',
   styleUrl: './maquinaria.component.css'
 })
@@ -75,6 +75,7 @@ export class MaquinariaComponent {
   mostrarCarrousel = false;
   documentosCarrousel: any[] = [];
   indiceActual = 0;
+  carrouselNumeroSerie = '';
 
 
   openModal() {
@@ -175,7 +176,10 @@ export class MaquinariaComponent {
   }
 
   abrirCarrousel(c: any) {
-    this.documentosCarrousel = this.documentosDeMaquinaria(c);
+    this.carrouselNumeroSerie = c.numero_serie;
+    this.documentosCarrousel = this.documentosDeMaquinaria(c).map(
+      (nombre: string) => `http://localhost:3000/uploads/activos/${c.numero_serie}/${nombre}`
+    );
     this.indiceActual = 0;
     this.mostrarCarrousel = true;
     this.mostrarMenuArchivos = null; // cierra el menú viejo
@@ -216,13 +220,25 @@ export class MaquinariaComponent {
 
 
   contarArchivos(m: any): number {
-    if (!m.documentos) return 0;
-    return m.documentos.split(',').filter((x: string) => x.trim()).length;
+    return this.parseDocumentosFrontend(m.documentos).length;
   }
 
   documentosDeMaquinaria(m: any): string[] {
-    if (!m.documentos) return [];
-    return m.documentos.split(',').filter((x: string) => x.trim());
+    return this.parseDocumentosFrontend(m.documentos);
+  }
+
+  private parseDocumentosFrontend(valor: any): string[] {
+    if (!valor) return [];
+    if (Array.isArray(valor)) return valor;
+
+    try {
+      const parsed = JSON.parse(valor);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // formato viejo, cae a comas
+    }
+
+    return valor.split(',').map((d: string) => d.trim()).filter(Boolean);
   }
 
   verArchivo(nombre: string, numero_serie: string) {
@@ -354,9 +370,7 @@ export class MaquinariaComponent {
     this.id_arrendador = c.id_arrendador;
     this.monto_renta_mensual = c.monto_renta_mensual;
 
-    this.documentosExistentes = c.documentos
-      ? c.documentos.split(',').filter((d: string) => d)
-      : [];
+    this.documentosExistentes = this.parseDocumentosFrontend(c.documentos);
     this.documentosNuevos = [];
 
     // 👇 clave: carga modelos y AL FINAL asigna id_modelo
@@ -396,7 +410,7 @@ export class MaquinariaComponent {
     formData.append('anio', this.anio.toString());
 
     // documentos que ya existían y no se quitaron (solo aplica en edición)
-    formData.append('documentos', this.documentosExistentes.join(','));
+    formData.append('documentos', JSON.stringify(this.documentosExistentes));
 
     // archivos nuevos
     this.documentosNuevos.forEach(file => {
