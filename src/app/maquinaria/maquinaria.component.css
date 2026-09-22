@@ -7,8 +7,9 @@
 
 .page-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;   
+  align-items: flex-start;  
+  gap: 10px;                
   margin-bottom: 15px;
 }
 
@@ -96,6 +97,15 @@
   z-index: 9999;
 }
 
+.gradus-carousel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .modal-card {
   background: white;
   padding: 20px 25px;
@@ -175,21 +185,7 @@
 
 
 
-/* Fondo del modal */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  overflow: auto;
-  /* permite scroll vertical solo */
-}
+
 
 /* Tarjeta del modal */
 .modal-card {
@@ -679,81 +675,56 @@ select {
   }
 }
 
-.carrousel-overlay {
+.modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 15, 20, 0.82);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
 }
 
-.carrousel-contenedor {
-  background: #1a1a1e;
-  border-radius: 14px;
-  padding: 22px;
-  max-width: 92vw;
-  max-height: 92vh;
+.carousel-container {
+  position: relative;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  position: relative;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  padding: 50px 20px 20px;
 }
 
-.carrousel-cerrar {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
+.carousel-image-wrapper {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease;
+  width: 100%;
+  min-height: 300px;
 }
 
-.carrousel-cerrar:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.carrousel-contador {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
-.carrousel-visor {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.carrousel-imagen {
-  max-width: 72vw;
-  max-height: 68vh;
+.carousel-image-wrapper img {
+  max-width: 100%;
+  max-height: 65vh;
   object-fit: contain;
   border-radius: 8px;
 }
 
-.carrousel-pdf {
-  width: 72vw;
-  height: 68vh;
+.carousel-pdf-viewer {
+  width: 100%;
+  max-width: 800px;
+  height: 65vh;
   border: none;
   border-radius: 8px;
   background: #fff;
 }
 
-.carrousel-generico {
+.carousel-generico {
   width: 320px;
   height: 200px;
   display: flex;
@@ -761,44 +732,113 @@ select {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.carrousel-generico span {
+.carousel-generico span {
   font-size: 32px;
 }
 
-.carrousel-generico p {
+.carousel-generico p {
   font-size: 13px;
   padding: 0 16px;
   text-align: center;
   word-break: break-word;
 }
 
-.carrousel-nav {
-  background: rgba(255, 255, 255, 0.06);
+.carousel-counter {
+  position: absolute;
+  top: 14px;
+  left: 20px;
+  color: #fff;
+  font-size: 14px;
+  background: rgba(0,0,0,0.5);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.carousel-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: rgba(255,255,255,0.15);
   border: none;
   color: #fff;
   font-size: 22px;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.carousel-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.carousel-nav:hover {
+  background: rgba(255,255,255,0.4);
+}
+.carousel-prev { left: 15px; }
+.carousel-next { right: 15px; }
+
+.carousel-thumbnails {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px 4px 0;
+  width: 100%;
+}
+
+.carousel-thumbnails img,
+.carousel-thumbnails .thumb-pdf {
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
-.carrousel-nav:hover {
-  background: rgba(255, 255, 255, 0.16);
+.thumb-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  font-size: 24px;
 }
 
-.carrousel-descargar {
+.carousel-thumbnails img.active,
+.carousel-thumbnails .thumb-pdf.active {
+  border-color: #c0116b;
+}
+
+.carousel-descargar {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -811,11 +851,13 @@ select {
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease;
+  margin-top: 12px;
 }
 
-.carrousel-descargar:hover {
+.carousel-descargar:hover {
   background: #35946e;
 }
+
 
 /* ========== PANEL COMO ZONA DE DROP ========== */
 .panel-documentos {
