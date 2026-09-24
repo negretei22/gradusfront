@@ -1,5 +1,5 @@
 <div class="page-container">
-    <div class="page-header">
+  <div class="page-header">
 
 
     <div class="contratos-header">
@@ -18,19 +18,20 @@
   <table class="gradus-table">
     <thead>
       <tr>
-        <th style="padding:10px;border-bottom:2px solid #ddd;position:sticky;top:0;text-transform:uppercase;">ID</th>
-        <th style="padding:10px;border-bottom:2px solid #ddd;position:sticky;top:0;text-transform:uppercase;">FECHA</th>
-        <th style="padding:10px;border-bottom:2px solid #ddd;position:sticky;top:0;text-transform:uppercase;">ACTIVO
-        </th>
-        <th style="padding:10px;border-bottom:2px solid #ddd;position:sticky;top:0;text-transform:uppercase;">TOTAL</th>
-        <th style="padding:10px;border-bottom:2px solid #ddd;position:sticky;top:0;text-transform:uppercase;"></th>
+        <th ...>FOLIO</th>
+        <th ...>FECHA</th>
+        <th ...>ACTIVO</th>
+        <th ...>RESPONSABLE</th>
+        <th ...>TOTAL</th>
+        <th ...></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let s of serviciosFiltrados; let i = index">
-        <td>{{ i + 1 }}</td>
+        <td>{{ s.codigo }}</td>
         <td>{{ s.fecha_servicio | date:'dd/MM/yyyy' }}</td>
-        <td>{{ s.activo?.descripcion }}</td> <!-- ahora sí trae el dato -->
+        <td>{{ s.activo?.descripcion }}</td>
+        <td>{{ s.responsable }}</td>
         <td>{{ s.total | currency:'MXN' }}</td>
         <td class="actions">
           <button *ngIf="contarFotos(s) > 0" class="badge-archivos" (click)="openCarousel(s)">
@@ -82,6 +83,35 @@
         <textarea [ngModel]="comentarios" (ngModelChange)="onComentariosChange($event)"
           placeholder="Escribe un comentario..." rows="3" class="uppercase-text">
   </textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Servicio programado</label>
+        <input type="number" [(ngModel)]="servicio_programado" placeholder="Ej. 250" />
+      </div>
+      <div class="form-group">
+        <label>Unidad</label>
+        <select [(ngModel)]="unidad_servicio">
+          <option value="HR">Horas</option>
+          <option value="KM">Kilómetros</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Horómetro al servicio</label>
+        <input type="number" [(ngModel)]="horometro_servicio" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label>Kilometraje</label>
+        <input type="number" [(ngModel)]="kilometraje" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label>Responsable</label>
+        <input type="text" [(ngModel)]="responsable" placeholder="Nombre del responsable" />
       </div>
     </div>
 
