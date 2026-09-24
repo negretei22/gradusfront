@@ -24,6 +24,11 @@ export class ServicioComponent {
   carouselImages: string[] = [];
   carouselIndex: number = 0;
   carouselCodigo: string = '';
+  servicio_programado: number | null = null;
+  unidad_servicio: string = 'HR';
+  horometro_servicio: number | null = null;
+  kilometraje: number | null = null;
+  responsable: string = '';
 
   openCarousel(s: any) {
     this.carouselCodigo = s.codigo;
@@ -233,7 +238,7 @@ export class ServicioComponent {
 
   esPdf(file: File): boolean {
     return file.type === 'application/pdf';
-  } 
+  }
 
   esPdfNombre(nombre: string): boolean {
     return nombre?.toLowerCase().endsWith('.pdf');
@@ -268,6 +273,11 @@ export class ServicioComponent {
     this.detalles = [];
     this.total = 0;
     this.comentarios = '';
+    this.servicio_programado = null;
+    this.unidad_servicio = 'HR';
+    this.horometro_servicio = null;
+    this.kilometraje = null;
+    this.responsable = '';
     this.fotosNuevas = [];
     this.fotosExistentes = [];
     this.panelFotosAbierto = false;
@@ -275,10 +285,14 @@ export class ServicioComponent {
 
   // ===== GUARDAR / EDITAR =====
   async saveServicio() {
-
     const formData = new FormData();
     formData.append('id_activo', this.id_activo.toString());
     formData.append('fecha_servicio', this.fecha_servicio);
+    formData.append('servicio_programado', (this.servicio_programado ?? '').toString());
+    formData.append('unidad_servicio', this.unidad_servicio);
+    formData.append('horometro_servicio', (this.horometro_servicio ?? '').toString());
+    formData.append('kilometraje', (this.kilometraje ?? '').toString());
+    formData.append('responsable', this.responsable);
     formData.append('total', (this.total ?? 0).toString());
     formData.append('comentarios', this.comentarios.toString());
     formData.append('detalles', JSON.stringify(this.detalles));
@@ -312,6 +326,11 @@ export class ServicioComponent {
 
     this.total = s.total;
     this.comentarios = s.comentarios;
+    this.servicio_programado = s.servicio_programado;
+    this.unidad_servicio = s.unidad_servicio ?? 'HR';
+    this.horometro_servicio = s.horometro_servicio;
+    this.kilometraje = s.kilometraje;
+    this.responsable = s.responsable ?? '';
     this.detalles = s.detalles?.length ? s.detalles.map((d: any) => ({ descripcion: d.descripcion })) : [];
     this.fotosExistentes = s.fotos ?? [];
     this.fotosNuevas = [];
