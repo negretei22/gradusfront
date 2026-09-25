@@ -257,7 +257,7 @@
     <div class="form-row">
       <div class="form-group form-row--espaciada">
         <label>Tipo</label>
-        <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id)">
+        <select [(ngModel)]="tipo_movimiento_id" (change)="cargaCategorias(tipo_movimiento_id); onCategoriaChange()">
           <option [ngValue]="0">SELECCIONE...</option>
           <option [ngValue]="2">EGRESO</option>
           <option [ngValue]="1">INGRESO</option>
@@ -276,6 +276,18 @@
       </div>
 
 
+
+    </div>
+    <div class="form-row">
+      <div class="form-group form-row--espaciada" *ngIf="mostrarDondeAplica">
+        <label>Dónde se aplica</label>
+        <select [(ngModel)]="donde_aplica">
+          <option [ngValue]="null">SELECCIONE...</option>
+          <option [ngValue]="1">PUERTO PEÑASCO</option>
+          <option [ngValue]="2">HERMOSILLO</option>
+        </select>
+      </div>
+  
     </div>
 
     <div class="form-row">
@@ -343,6 +355,7 @@
           <option *ngFor="let m of metodosPago" [value]="m.id">{{ m.nombre }}</option>
         </select>
       </div>
+
 
     </div>
     <br>

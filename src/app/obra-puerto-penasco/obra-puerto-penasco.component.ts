@@ -15,7 +15,7 @@ import { HostListener } from '@angular/core';
 export class ObraPuertoPenascoComponent implements OnInit {
 
   movimientos: any[] = [];
-  mostrarDetalle: boolean = false;
+  mostrarDetalle: 'general' | 'penasco' | 'hermosillo' | null = null;
   metodoPagoFiltro: number = 0;
 
   puedeVer = false;
@@ -53,7 +53,7 @@ export class ObraPuertoPenascoComponent implements OnInit {
   @HostListener('document:keydown.escape')
   onEscapePress() {
     this.mostrarMenuArchivos = null;
-    
+
   }
 
   @HostListener('document:click', ['$event'])
@@ -76,10 +76,10 @@ export class ObraPuertoPenascoComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarMovimientos();
-        this.authService.getPermisos('finanzas').subscribe({
+    this.authService.getPermisos('finanzas').subscribe({
       next: (permisos) => {
         this.puedeVer = permisos.puedeVer;
-        
+
       },
       error: () => {
         this.router.navigate(['/unauthorized']);
@@ -102,20 +102,44 @@ export class ObraPuertoPenascoComponent implements OnInit {
       });
   }
 
-  toggleDetalle(): void {
-    this.mostrarDetalle = !this.mostrarDetalle;
+  toggleDetalle(tipo: 'general' | 'penasco' | 'hermosillo'): void {
+    this.mostrarDetalle = this.mostrarDetalle === tipo ? null : tipo;
   }
 
-  movimientosVisibles(): any[] {
-    if (this.metodoPagoFiltro === 0) return this.movimientos;
-    return this.movimientos.filter(m => m.metodo_pago_id === this.metodoPagoFiltro);
+  get movimientosPenasco(): any[] {
+    return this.movimientos.filter(m => Number(m.donde_aplica) === 1);
   }
 
-  get gastoPenasco(): number {
+  get movimientosHermosillo(): any[] {
+    return this.movimientos.filter(m => Number(m.donde_aplica) === 2);
+  }
+
+  get gastoGeneral(): number {
     return this.movimientos
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
   }
 
+  get gastoPenasco(): number {
+    return this.movimientosPenasco
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  get gastoHermosillo(): number {
+    return this.movimientosHermosillo
+      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+  }
+
+  movimientosVisibles(): any[] {
+    const base =
+      this.mostrarDetalle === 'general' ? this.movimientos :
+        this.mostrarDetalle === 'penasco' ? this.movimientosPenasco :
+          this.mostrarDetalle === 'hermosillo' ? this.movimientosHermosillo :
+            [];
+
+    return this.metodoPagoFiltro === 0
+      ? base
+      : base.filter(m => m.metodo_pago_id === this.metodoPagoFiltro);
+  }
   private parseArchivosCampo(val: string): string[] {
     if (!val) return [];
     try {

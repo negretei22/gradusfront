@@ -6,13 +6,32 @@
 </div>
 
 <div class="finance-cards">
-    <div class="finance-card gasto-card" [class.abierta]="mostrarDetalle" (click)="toggleDetalle()">
-        <h4>GASTOS PEÑASCO</h4>
+    <div class="finance-card gasto-card" [class.abierta]="mostrarDetalle === 'general'"
+        (click)="toggleDetalle('general')">
+        <h4>GASTOS GENERAL OBRA PUERTO PEÑASCO</h4>
+        <h3>{{ gastoGeneral | currency:'MXN' }}</h3>
+    </div>
+
+    <div class="finance-card gasto-card" [class.abierta]="mostrarDetalle === 'penasco'"
+        (click)="toggleDetalle('penasco')">
+        <h4>GASTOS PUERTO PEÑASCO</h4>
         <h3>{{ gastoPenasco | currency:'MXN' }}</h3>
+    </div>
+
+    <div class="finance-card gasto-card" [class.abierta]="mostrarDetalle === 'hermosillo'"
+        (click)="toggleDetalle('hermosillo')">
+        <h4>GASTOS HERMOSILLO</h4>
+        <h3>{{ gastoHermosillo | currency:'MXN' }}</h3>
     </div>
 </div>
 
 <div class="detalle-tabla" *ngIf="mostrarDetalle">
+
+    <h3 style="margin-bottom:10px;">
+        {{ mostrarDetalle === 'general' ? 'DETALLE GENERAL OBRA PUERTO PEÑASCO' :
+        mostrarDetalle === 'penasco' ? 'DETALLE PUERTO PEÑASCO' :
+        'DETALLE HERMOSILLO' }}
+    </h3>
 
     <div class="filtros-metodo-pago">
         <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
@@ -20,7 +39,6 @@
         <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
         <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
     </div>
-
 
     <table class="gradus-table">
         <thead>

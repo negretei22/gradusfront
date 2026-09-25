@@ -115,6 +115,7 @@ export class FinanzasComponent implements OnInit {
   mesesVisibles: any[] = [];
   metodoPagoFiltro: number = 0;
   expandidoKey: string | null = null;
+  donde_aplica: number | null = null;
 
   // ===== FILTROS DE ENCABEZADO =====
   filtroAbierto: string | null = null;
@@ -134,6 +135,11 @@ export class FinanzasComponent implements OnInit {
     { key: 'factura', label: 'Factura' },
     { key: 'pago', label: 'Comprobante de Pago' },
   ];
+
+
+  get mostrarDondeAplica(): boolean {
+    return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
+  }
 
 
   archivos: { [key: string]: File[] } = {
@@ -265,7 +271,10 @@ export class FinanzasComponent implements OnInit {
 
   onCategoriaChange() {
     if (+this.categoria_id === 10) {
-      this.fecha_factura = '1900-01-01'; // fecha sentinela para "NO APLICA"
+      this.fecha_factura = '1900-01-01';
+    }
+    if (!this.mostrarDondeAplica) {
+      this.donde_aplica = null;
     }
   }
 
@@ -515,7 +524,7 @@ export class FinanzasComponent implements OnInit {
     this.editing = false;
     this.titulo = 'Nuevo Movimento Financiero';
     this.textoBoton = 'Guardar';
-
+    this.donde_aplica = null;
     this.folio_fiscal = '';
     this.rfc = '';
     this.razon_social = '';
@@ -720,6 +729,7 @@ export class FinanzasComponent implements OnInit {
     this.iva_acreditable = data.iva_acreditable;
     this.iva_traslado = Number(data.iva_traslado);
     this.granTotal = data.gran_total;
+    this.donde_aplica = data.donde_aplica ?? null;
 
     this.isr_retenido = data.isr_retenido;
     this.metodo_pago_id = data.metodo_pago_id;
@@ -1215,6 +1225,7 @@ export class FinanzasComponent implements OnInit {
     formData.append('importe_sin_iva', String(this.importe_sin_iva));
     formData.append('iva', String(this.iva));
     formData.append('iva_acreditable', String(this.iva_acreditable));
+    formData.append('donde_aplica', this.donde_aplica !== null ? String(this.donde_aplica) : '');
     formData.append('iva_traslado', String(this.iva_traslado));
     formData.append('isr_retenido', String(this.isr_retenido));
     formData.append('iva_retenido', String(this.iva_retenido));
