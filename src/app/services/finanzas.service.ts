@@ -88,6 +88,13 @@ export class FinanzasService {
 
   }
 
+  actualizarOrdenArchivos(id: number, campo: string, archivos: string[]) {
+    return this.http.patch(`${this.api}/finanzas/movimiento/${id}/orden-archivos`, {
+      campo,
+      archivos
+    });
+  }
+
 
 
 

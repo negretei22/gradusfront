@@ -214,7 +214,8 @@
 
 /* FORM GRID */
 .form-row--espaciada {
-  margin-bottom: 12px; /* ajusta el valor a tu gusto */
+  margin-bottom: 12px;
+  /* ajusta el valor a tu gusto */
 }
 
 .form-row {
@@ -409,117 +410,149 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  justify-content: flex-start; /* clave: no uses space-between ni space-around */
+  justify-content: flex-start;
+  /* clave: no uses space-between ni space-around */
+}
+
+
+.dz-handle {
+  cursor: grab;
+  padding: 0 6px;
+  color: #999;
+  user-select: none;
+}
+
+.dz-handle:active {
+  cursor: grabbing;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+  background: #fff;
+  border-radius: 4px;
+  opacity: .95;
+}
+
+.cdk-drag-placeholder {
+  opacity: .3;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, .2, 1);
+}
+
+.dz-lista.cdk-drop-list-dragging li:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, .2, 1);
 }
 
 .finance-card {
-    position: relative;
-    overflow: hidden;
-    background: #fff;
-    width: 220px;
-    border-radius: 18px;
-    padding: 22px 24px;
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.08),
-        0 2px 8px rgba(0,0,0,.05);
-    transition: all .25s ease;
-    border: 1px solid #ececec;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  width: 220px;
+  border-radius: 18px;
+  padding: 22px 24px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, .08),
+    0 2px 8px rgba(0, 0, 0, .05);
+  transition: all .25s ease;
+  border: 1px solid #ececec;
 }
 
 .finance-card:hover {
-    transform: translateY(-6px);
-    box-shadow:
-        0 18px 40px rgba(0,0,0,.15),
-        0 4px 12px rgba(0,0,0,.08);
+  transform: translateY(-6px);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, .15),
+    0 4px 12px rgba(0, 0, 0, .08);
 }
 
 /* Barra lateral de color */
-.finance-card::before{
-    content:"";
-    position:absolute;
-    left:0;
-    top:0;
-    width:8px;
-    height:100%;
-    border-radius:18px 0 0 18px;
+.finance-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  border-radius: 18px 0 0 18px;
 }
 
 /* Encabezado */
-.finance-card h4{
-    margin:0;
-    font-size:14px;
-    font-weight:700;
-    text-transform:uppercase;
-    color:#6c757d;
-    letter-spacing:.8px;
+.finance-card h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6c757d;
+  letter-spacing: .8px;
 }
 
 /* Cantidad */
-.finance-card h3{
-    margin:18px 0 0;
-    font-size:20px;
-    font-weight:800;
-    color:#111827;
-    line-height:1.2;
+.finance-card h3 {
+  margin: 18px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.2;
 }
 
 /* Colores */
-.ingreso-card::before{
-    background:#198754;
+.ingreso-card::before {
+  background: #198754;
 }
 
-.egreso-card::before{
-    background:#f8d7da;
+.egreso-card::before {
+  background: #f8d7da;
 }
 
-.nomina-card::before{
-    background:#ca88c9;
+.nomina-card::before {
+  background: #ca88c9;
 }
 
-.inversiones-card::before{
-    background:#7c9ec3;
+.inversiones-card::before {
+  background: #7c9ec3;
 }
 
-.prestamos-card::before{
-    background:#ffe5cc;
+.prestamos-card::before {
+  background: #ffe5cc;
 }
 
 
-.saldo-card::before{
-    background:#0d6efd;
+.saldo-card::before {
+  background: #0d6efd;
 }
 
 /* Marca de agua decorativa */
-.finance-card::after{
-    content:"";
-    position:absolute;
-    right:-45px;
-    bottom:-45px;
-    width:120px;
-    height:120px;
-    border-radius:50%;
-    background:rgba(0,0,0,.03);
+.finance-card::after {
+  content: "";
+  position: absolute;
+  right: -45px;
+  bottom: -45px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .03);
 }
 
 /* Total */
-.saldo-positivo{
-    color:#198754 !important;
+.saldo-positivo {
+  color: #198754 !important;
 }
 
-.saldo-negativo{
-    color:#dc3545 !important;
+.saldo-negativo {
+  color: #dc3545 !important;
 }
 
 /* Responsive */
-@media(max-width:768px){
+@media(max-width:768px) {
 
-    .finance-cards{
-        grid-template-columns:1fr;
-    }
+  .finance-cards {
+    grid-template-columns: 1fr;
+  }
 
-    .finance-card h3{
-        font-size:1.6rem;
-    }
+  .finance-card h3 {
+    font-size: 1.6rem;
+  }
 
 }
 
@@ -600,7 +633,7 @@ select {
   width: 30px;
   text-align: center;
   color: #888;
-  
+
 }
 
 .drag-handle:active {
@@ -709,7 +742,9 @@ tr.cdk-drag-preview td {
   border-bottom: 1px solid #f1f5f9;
 }
 
-.dz-icono { font-size: 18px; }
+.dz-icono {
+  font-size: 18px;
+}
 
 .dz-label {
   flex: 1;
@@ -918,11 +953,13 @@ tr.cdk-drag-preview td {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 /* ===== ARCHIVOS ACTUALES (caja de archivos ya subidos al editar) ===== */
 
 .archivos-actuales-box {
@@ -1138,7 +1175,7 @@ tr {
 }
 
 td.actions {
- /* display: flex;*/
+  /* display: flex;*/
   align-items: center;
   gap: 4px;
   overflow: visible !important;
@@ -1182,38 +1219,46 @@ td.actions {
   user-select: none;
   transition: background-color 0.2s;
 }
+
 .th-filter:hover {
   background-color: #e9ecef;
 }
+
 .th-filter.active-filter {
   color: #000814;
   background-color: #e7f1ff;
 }
+
 .filter-dot {
   color: #000814;
   font-size: 10px;
   margin-left: 4px;
   vertical-align: middle;
 }
+
 .filter-row {
   background-color: #f8f9fa;
 }
+
 .filter-row td {
   border-top: none;
   padding: 8px 12px;
 }
+
 .filter-panel {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
+
 .filter-title {
   font-size: 13px;
   color: #495057;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 .filter-panel label {
   font-size: 13px;
   color: #495057;
@@ -1221,6 +1266,7 @@ td.actions {
   align-items: center;
   gap: 6px;
 }
+
 .filter-panel input[type="date"],
 .filter-panel input[type="text"],
 .filter-panel input[type="number"] {
@@ -1230,10 +1276,12 @@ td.actions {
   font-size: 13px;
   outline: none;
 }
+
 .filter-panel input:focus {
   border-color: #86b7fe;
   box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
 }
+
 .btn-limpiar {
   padding: 5px 14px;
   background: #dc3545;
@@ -1245,6 +1293,7 @@ td.actions {
   font-weight: 500;
   transition: background 0.2s;
 }
+
 .btn-limpiar:hover {
   background: #bb2d3b;
 }

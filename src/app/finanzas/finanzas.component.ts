@@ -10,6 +10,7 @@ import JSZip from "jszip";
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+
 import {
   CdkDragDrop,
   moveItemInArray
@@ -136,6 +137,10 @@ export class FinanzasComponent implements OnInit {
     { key: 'pago', label: 'Comprobante de Pago' },
   ];
 
+  private mapaCampos: Record<string, string> = {
+    factura: 'archivo_factura',
+    pago: 'archivo_pago'
+  };
 
   get mostrarDondeAplica(): boolean {
     return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
@@ -157,7 +162,26 @@ export class FinanzasComponent implements OnInit {
 
 
 
+  reordenarArchivos(event: CdkDragDrop<string[]>, key: string) {
+    if (event.previousIndex === event.currentIndex) return;
 
+    moveItemInArray(this.archivosActuales[key], event.previousIndex, event.currentIndex);
+
+    // Opción A: no guardar aún, solo cuando el usuario presione "Guardar" del modal
+    // Opción B: guardar de inmediato (ver abajo)
+    this.guardarOrdenArchivos(key);
+  }
+
+
+  guardarOrdenArchivos(key: string) {
+    const campo = this.mapaCampos[key]; // ej: { factura: 'archivo_factura', pago: 'archivo_pago' }
+
+    this.finanzasService
+      .actualizarOrdenArchivos(this.id, campo, this.archivosActuales[key])
+      .subscribe({
+        error: () => alert('No se pudo guardar el nuevo orden')
+      });
+  }
 
   toggleExpandido(key: string, event: Event): void {
     event.stopPropagation();
@@ -1066,7 +1090,7 @@ export class FinanzasComponent implements OnInit {
 
     // Descarga un archivo y devuelve su blob (o null si falla)
     const descargarBlob = async (nombreOriginal: string): Promise<Blob | null> => {
-      const url = `http://anvotv.ddns.net:3000/uploads/movimientos/${nombreOriginal}`;
+      const url = `http://localhost:3000/uploads/movimientos/${nombreOriginal}`;
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -1119,7 +1143,12 @@ export class FinanzasComponent implements OnInit {
       const tipoLabel = getTipoMovimientoLabel(m.tipo_movimiento_id);
 
 
-      const baseNombre = `${idx + 1}. ${anioMes} - ${tipoLabel} - ${sanitizar(m.concepto)}${m.metodo_pago ? ' - ' + m.metodo_pago : ''}`;
+      const nombreCompleto =
+        `${idx + 1}. ${anioMes} - ${tipoLabel} - ` +
+        `${sanitizar(m.concepto)}` +
+        `${m.metodo_pago ? ' - ' + m.metodo_pago : ''}`;
+
+      const baseNombre = nombreCompleto.substring(0, 100);
 
       const facturas = parseArchivos(m.archivo_factura);
       const comprobantes = parseArchivos(m.archivo_pago);

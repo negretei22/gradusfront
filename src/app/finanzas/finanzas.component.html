@@ -287,7 +287,7 @@
           <option [ngValue]="2">HERMOSILLO</option>
         </select>
       </div>
-  
+
     </div>
 
     <div class="form-row">
@@ -395,13 +395,21 @@
                   <!-- Guardados -->
                   <div class="dz-grupo" *ngIf="archivosActuales[t.key]?.length">
                     <div class="dz-grupo-titulo">Guardados</div>
-                    <ul class="dz-lista">
-                      <li *ngFor="let nombre of archivosActuales[t.key]; let i = index">
+
+                    <ul class="dz-lista" cdkDropList [cdkDropListData]="archivosActuales[t.key]"
+                      (cdkDropListDropped)="reordenarArchivos($event, t.key)" (click)="$event.stopPropagation()">
+
+                      <li *ngFor="let nombre of archivosActuales[t.key]; let i = index" cdkDrag
+                        [cdkDragDisabled]="archivosActuales[t.key].length < 2">
+
+                        <span class="dz-handle" cdkDragHandle title="Arrastra para reordenar">⋮⋮</span>
+
                         <a class="dz-link" [href]="'http://anvotv.ddns.net:3000/uploads/movimientos/' + nombre"
                           target="_blank" [title]="nombre" (click)="$event.stopPropagation()">
                           <span class="dz-file-icono">{{ esPDF(nombre) ? '📄' : '🖼️' }}</span>
                           <span class="dz-file-nombre">{{ nombre }}</span>
                         </a>
+
                         <button type="button" class="dz-btn-quitar"
                           (click)="removeArchivoActual(t.key, i); $event.stopPropagation()" title="Eliminar">✕</button>
                       </li>
