@@ -117,7 +117,8 @@ export class FinanzasComponent implements OnInit {
   metodoPagoFiltro: number = 0;
   expandidoKey: string | null = null;
   donde_aplica: number | null = null;
-
+  pago_dividido = false;
+  pagos: { metodo_pago_id: number; importe: any }[] = [];
   // ===== FILTROS DE ENCABEZADO =====
   filtroAbierto: string | null = null;
 
@@ -144,6 +145,29 @@ export class FinanzasComponent implements OnInit {
 
   get mostrarDondeAplica(): boolean {
     return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
+  }
+
+  onTogglePagoDividido() {
+    if (this.pago_dividido && this.pagos.length === 0) {
+      this.pagos = [
+        { metodo_pago_id: Number(this.metodo_pago_id) || 0, importe: this.importe_sin_iva || '' },
+        { metodo_pago_id: 0, importe: '' },
+      ];
+    }
+  }
+
+get totalImporte(): number {
+  return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
+}
+
+  agregarPago() { this.pagos.push({ metodo_pago_id: 0, importe: '' }); }
+  quitarPago(i: number) { this.pagos.splice(i, 1); }
+
+  get sumaPagos(): number {
+    return this.pagos.reduce((s, p) => s + (Number(p.importe) || 0), 0);
+  }
+  get diferenciaPagos(): number {
+    return Math.round(((Number(this.importe_sin_iva) || 0) - this.sumaPagos) * 100) / 100;
   }
 
 
@@ -728,46 +752,77 @@ export class FinanzasComponent implements OnInit {
   async editMovimiento(id: number) {
 
     this.cargandoFormulario = true;
-    const data: any = await firstValueFrom(
-      this.finanzasService.getMovimientoById(id)
-    );
 
-    this.editing = true;
-    this.id = data.id;
-    this.titulo = 'Editar Movimiento Financiero';
-    this.textoBoton = 'Actualizar';
+    try {
+      const data: any = await firstValueFrom(
+        this.finanzasService.getMovimientoById(id)
+      );
 
-    this.getMetodosPago();
-    this.tipo_movimiento_id = +data.tipo_movimiento_id;
-    this.getCategorias(this.tipo_movimiento_id);
+      this.editing = true;
+      this.id = data.id;
+      this.titulo = 'Editar Movimiento Financiero';
+      this.textoBoton = 'Actualizar';
 
-    this.categoria_id = +data.categoria_id;
-    this.fecha_pago = data.fecha_pago.split('T')[0];
-    this.fecha_factura = data.fecha_factura.split('T')[0];
-    this.folio_fiscal = data.folio_fiscal;
-    this.rfc = data.rfc;
-    this.razon_social = data.razon_social;
-    this.concepto = data.concepto;
-    this.iva = data.iva;
-    this.importe_sin_iva = data.importe_sin_iva;
-    this.iva_acreditable = data.iva_acreditable;
-    this.iva_traslado = Number(data.iva_traslado);
-    this.granTotal = data.gran_total;
-    this.donde_aplica = data.donde_aplica ?? null;
+      this.getMetodosPago();
+      this.tipo_movimiento_id = +data.tipo_movimiento_id;
+      this.getCategorias(this.tipo_movimiento_id);
 
-    this.isr_retenido = data.isr_retenido;
-    this.metodo_pago_id = data.metodo_pago_id;
+      this.categoria_id = +data.categoria_id;
+      this.fecha_pago = data.fecha_pago ? data.fecha_pago.split('T')[0] : '';
+      this.fecha_factura = data.fecha_factura ? data.fecha_factura.split('T')[0] : '';
+      this.folio_fiscal = data.folio_fiscal;
+      this.rfc = data.rfc;
+      this.razon_social = data.razon_social;
+      this.concepto = data.concepto;
+      this.iva = data.iva;
+      this.importe_sin_iva = data.importe_sin_iva;
+      this.iva_acreditable = data.iva_acreditable;
+      this.iva_traslado = Number(data.iva_traslado);
+      this.granTotal = data.gran_total;
+      this.donde_aplica = data.donde_aplica ?? null;
 
-    this.tiposArchivo.forEach(t => {
-      const campo = `archivo_${t.key}`;
-      this.archivosActuales[t.key] = this.parseArchivosCampo(data[campo]);
-    });
+      this.isr_retenido = data.isr_retenido;
+      this.metodo_pago_id = data.metodo_pago_id;
 
-    setTimeout(() => {
-      this.cargandoFormulario = false;
-    });
+      // ===== PAGO DIVIDIDO =====
+      this.pago_dividido = Number(data.pago_dividido) === 1;
+      this.pagos = [];
 
-    this.showModal = true;
+      if (this.pago_dividido) {
+        const partes: any[] = await firstValueFrom(
+          this.finanzasService.getPagosMovimiento(id)
+        );
+        this.pagos = partes.map(p => ({
+          metodo_pago_id: Number(p.metodo_pago_id),
+          importe: Number(p.importe),
+        }));
+
+        // Por seguridad: si por algún motivo no hay partes, deja 2 filas vacías
+        if (this.pagos.length < 2) {
+          this.pagos = [
+            { metodo_pago_id: Number(data.metodo_pago_id) || 0, importe: Number(data.importe_sin_iva) || '' },
+            { metodo_pago_id: 0, importe: '' },
+          ];
+        }
+      }
+
+      // ===== ARCHIVOS =====
+      this.archivosNombre = {};
+      this.tiposArchivo.forEach(t => {
+        const campo = `archivo_${t.key}`;
+        this.archivosActuales[t.key] = this.parseArchivosCampo(data[campo]);
+      });
+
+      this.showModal = true;
+
+    } catch (err) {
+      console.error('Error cargando movimiento:', err);
+      alert('No se pudo cargar el movimiento');
+    } finally {
+      setTimeout(() => {
+        this.cargandoFormulario = false;
+      });
+    }
   }
 
 
@@ -1239,6 +1294,24 @@ export class FinanzasComponent implements OnInit {
   async saveMovimiento() {
 
     const formData = new FormData();
+
+    if (this.pago_dividido) {
+      if (this.pagos.length < 2 || this.pagos.some(p => !p.metodo_pago_id || !(Number(p.importe) > 0))) {
+        alert('Completa método e importe en cada parte del pago');
+        return;
+      }
+      if (this.diferenciaPagos !== 0) {
+        alert('La suma de los pagos debe ser igual al importe total');
+        return;
+      }
+    }
+
+    formData.append('pago_dividido', this.pago_dividido ? '1' : '0');
+    formData.append('pagos', JSON.stringify(
+      this.pago_dividido
+        ? this.pagos.map(p => ({ metodo_pago_id: p.metodo_pago_id, importe: Number(p.importe) }))
+        : []
+    ));
 
     formData.append('id', String(this.id) ?? '');
     formData.append('tipo_movimiento_id', String(this.tipo_movimiento_id));

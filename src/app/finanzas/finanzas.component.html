@@ -348,15 +348,54 @@
       </div>
 
     </div>
-    <div class="form-row">
-      <div class="form-group">
+    <div class="form-row fila-metodo">
+      <div class="form-group" *ngIf="!pago_dividido">
         <label>Método de pago</label>
         <select [(ngModel)]="metodo_pago_id">
           <option *ngFor="let m of metodosPago" [value]="m.id">{{ m.nombre }}</option>
         </select>
       </div>
 
+      <div class="form-group form-group--check">
+        <label class="check-pago">
+          <input type="checkbox" [(ngModel)]="pago_dividido" (change)="onTogglePagoDividido()">
+          <span>Pago dividido (varios métodos)</span>
+        </label>
+      </div>
+    </div>
 
+    <div class="pagos-divididos" *ngIf="pago_dividido">
+      <div class="pagos-titulo">Distribución del pago</div>
+
+      <div class="pago-fila" *ngFor="let p of pagos; let i = index">
+        <span class="pago-num">{{ i + 1 }}</span>
+
+        <div class="form-group pago-metodo">
+          <label>Método</label>
+          <select [(ngModel)]="p.metodo_pago_id">
+            <option [ngValue]="0">SELECCIONE...</option>
+            <option *ngFor="let m of metodosPago" [ngValue]="m.id">{{ m.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="form-group pago-importe">
+          <label>Importe</label>
+          <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="p.importe"
+            placeholder="0.00">
+        </div>
+
+        <button type="button" class="pago-quitar" *ngIf="pagos.length > 2" (click)="quitarPago(i)"
+          title="Quitar">✕</button>
+      </div>
+
+      <button type="button" class="pago-agregar" (click)="agregarPago()">+ Agregar método</button>
+
+      <div class="pagos-resumen" [class.ok]="diferenciaPagos === 0" [class.error]="diferenciaPagos !== 0">
+        <span>Suma: <strong>{{ sumaPagos | number:'1.2-2' }}</strong></span>
+        <span>Total: <strong>{{ totalImporte | number:'1.2-2' }}</strong></span>
+        <span *ngIf="diferenciaPagos !== 0">Diferencia: <strong>{{ diferenciaPagos | number:'1.2-2' }}</strong></span>
+        <span *ngIf="diferenciaPagos === 0">✔ Cuadra</span>
+      </div>
     </div>
     <br>
     <div class="form-row">

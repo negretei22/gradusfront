@@ -21,6 +21,10 @@ export class FinanzasService {
     return this.http.get<any[]>(`${this.api}/finanzas/`, { params });
 
   }
+
+  getPagosMovimiento(id: number) {
+  return this.http.get<any[]>(`${this.api}/finanzas/movimiento/${id}/pagos`);
+}
   getMovimientosPorCategoria(
     categoriaId: number,
     tipoMovimientoId: number,
