@@ -147,28 +147,18 @@ export class FinanzasComponent implements OnInit {
     return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
   }
 
-  onTogglePagoDividido() {
-    if (this.pago_dividido && this.pagos.length === 0) {
-      this.pagos = [
-        { metodo_pago_id: Number(this.metodo_pago_id) || 0, importe: this.importe_sin_iva || '' },
-        { metodo_pago_id: 0, importe: '' },
-      ];
-    }
+
+  get totalImporte(): number {
+    return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
   }
 
-get totalImporte(): number {
-  return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
-}
 
-  agregarPago() { this.pagos.push({ metodo_pago_id: 0, importe: '' }); }
-  quitarPago(i: number) { this.pagos.splice(i, 1); }
 
-  get sumaPagos(): number {
-    return this.pagos.reduce((s, p) => s + (Number(p.importe) || 0), 0);
-  }
+
   get diferenciaPagos(): number {
     return Math.round(((Number(this.importe_sin_iva) || 0) - this.sumaPagos) * 100) / 100;
   }
+
 
 
   archivos: { [key: string]: File[] } = {
@@ -807,7 +797,9 @@ get totalImporte(): number {
       }
 
       // ===== ARCHIVOS =====
-      this.archivosNombre = {};
+      this.tiposArchivo.forEach(t => {
+        this.archivosNombre[t.key] = [];
+      });
       this.tiposArchivo.forEach(t => {
         const campo = `archivo_${t.key}`;
         this.archivosActuales[t.key] = this.parseArchivosCampo(data[campo]);
@@ -1269,6 +1261,37 @@ get totalImporte(): number {
 
   }
 
+  private limpiaNumero(v: any): number {
+    return Number(String(v ?? '').replace(/[^0-9.-]/g, '')) || 0;
+  }
+
+  get sumaPagos(): number {
+    return this.pagos.reduce((s, p) => s + this.limpiaNumero(p.importe), 0);
+  }
+
+  // Llamar desde el HTML en (ngModelChange) de cada importe
+  recalcularTotal() {
+    if (!this.pago_dividido) return;
+    this.importe_sin_iva = Math.round(this.sumaPagos * 100) / 100 as any;
+  }
+
+  onTogglePagoDividido() {
+    if (this.pago_dividido && this.pagos.length === 0) {
+      this.pagos = [
+        { metodo_pago_id: Number(this.metodo_pago_id) || 0, importe: this.importe_sin_iva || '' },
+        { metodo_pago_id: 0, importe: '' },
+      ];
+    }
+    this.recalcularTotal();
+  }
+
+  agregarPago() { this.pagos.push({ metodo_pago_id: 0, importe: '' }); }
+
+  quitarPago(i: number) {
+    this.pagos.splice(i, 1);
+    this.recalcularTotal();
+  }
+
 
   closeModal() {
 
@@ -1296,14 +1319,11 @@ get totalImporte(): number {
     const formData = new FormData();
 
     if (this.pago_dividido) {
-      if (this.pagos.length < 2 || this.pagos.some(p => !p.metodo_pago_id || !(Number(p.importe) > 0))) {
+      if (this.pagos.length < 2 || this.pagos.some(p => !p.metodo_pago_id || !(this.limpiaNumero(p.importe) > 0))) {
         alert('Completa método e importe en cada parte del pago');
         return;
       }
-      if (this.diferenciaPagos !== 0) {
-        alert('La suma de los pagos debe ser igual al importe total');
-        return;
-      }
+      this.recalcularTotal();
     }
 
     formData.append('pago_dividido', this.pago_dividido ? '1' : '0');

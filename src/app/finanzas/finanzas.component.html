@@ -381,7 +381,7 @@
         <div class="form-group pago-importe">
           <label>Importe</label>
           <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="p.importe"
-            placeholder="0.00">
+            (ngModelChange)="recalcularTotal()" placeholder="0.00">
         </div>
 
         <button type="button" class="pago-quitar" *ngIf="pagos.length > 2" (click)="quitarPago(i)"
@@ -390,11 +390,8 @@
 
       <button type="button" class="pago-agregar" (click)="agregarPago()">+ Agregar método</button>
 
-      <div class="pagos-resumen" [class.ok]="diferenciaPagos === 0" [class.error]="diferenciaPagos !== 0">
-        <span>Suma: <strong>{{ sumaPagos | number:'1.2-2' }}</strong></span>
-        <span>Total: <strong>{{ totalImporte | number:'1.2-2' }}</strong></span>
-        <span *ngIf="diferenciaPagos !== 0">Diferencia: <strong>{{ diferenciaPagos | number:'1.2-2' }}</strong></span>
-        <span *ngIf="diferenciaPagos === 0">✔ Cuadra</span>
+      <div class="pagos-resumen ok">
+        <span>Total del pago: <strong>{{ sumaPagos | number:'1.2-2' }}</strong></span>
       </div>
     </div>
     <br>
@@ -494,7 +491,7 @@
       <div class="form-group">
         <label>Importe Total</label>
         <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="importe_sin_iva"
-          placeholder="0.00">
+          [readonly]="pago_dividido" placeholder="0.00">
       </div>
 
       <div class="form-group">
