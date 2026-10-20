@@ -33,11 +33,32 @@
         'DETALLE HERMOSILLO' }}
     </h3>
 
-    <div class="filtros-metodo-pago">
-        <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
-        <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
-        <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
-        <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
+    <div class="filtros-panel">
+
+        <div class="filtro-grupo" *ngIf="mostrarDetalle === 'general'">
+            <span class="filtro-label">ORIGEN</span>
+            <div class="filtros-metodo-pago filtros-origen">
+                <button (click)="origenFiltro = 'todos'" [class.active]="origenFiltro === 'todos'">TODOS</button>
+                <button (click)="origenFiltro = 'penasco'" [class.active]="origenFiltro === 'penasco'">PEÑASCO</button>
+                <button (click)="origenFiltro = 'hermosillo'"
+                    [class.active]="origenFiltro === 'hermosillo'">HERMOSILLO</button>
+            </div>
+        </div>
+
+        <div class="filtro-grupo">
+            <span class="filtro-label">MÉTODO DE PAGO</span>
+            <div class="filtros-metodo-pago">
+                <button (click)="metodoPagoFiltro=0" [class.active]="metodoPagoFiltro===0">TODOS</button>
+                <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
+                <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
+                <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
+            </div>
+        </div>
+
+        <button class="btn-exportar" (click)="exportarExcel()" [disabled]="movimientosVisibles().length === 0">
+            📥 EXPORTAR EXCEL
+        </button>
+
     </div>
 
     <table class="gradus-table">

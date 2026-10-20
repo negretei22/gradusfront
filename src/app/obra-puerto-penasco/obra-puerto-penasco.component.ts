@@ -1,9 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FinanzasService } from '../services/finanzas.service';
 import { AuthService } from '../core/services/auth.service';
 import { Router } from '@angular/router';
 import { HostListener } from '@angular/core';
+import * as XLSX from 'xlsx-js-style';
+
+
+interface Movimiento {
+  id: number;
+  fecha_pago: string;
+  fecha_factura: string;
+  razon_social: string;
+  concepto: string;
+  importe_sin_iva: number;
+  metodo_pago_id: number;
+  donde_aplica?: number | string;
+}
 
 @Component({
   selector: 'app-obra-puerto-penasco',
@@ -12,11 +25,16 @@ import { HostListener } from '@angular/core';
   templateUrl: './obra-puerto-penasco.component.html',
   styleUrl: './obra-puerto-penasco.component.css'
 })
+
+
 export class ObraPuertoPenascoComponent implements OnInit {
+
+
 
   movimientos: any[] = [];
   mostrarDetalle: 'general' | 'penasco' | 'hermosillo' | null = null;
   metodoPagoFiltro: number = 0;
+  donde_aplica?: number | string;
 
   puedeVer = false;
 
@@ -29,8 +47,10 @@ export class ObraPuertoPenascoComponent implements OnInit {
 
   filtroAnio: number = new Date().getFullYear();
   filtroMes: number = new Date().getMonth() + 1; // mes actual por defecto
+  origenFiltro: 'todos' | 'penasco' | 'hermosillo' = 'todos';
 
   meses = [
+    { value: 0, text: 'TODOS' },
     { value: 1, text: 'ENERO' },
     { value: 2, text: 'FEBRERO' },
     { value: 3, text: 'MARZO' },
@@ -104,6 +124,76 @@ export class ObraPuertoPenascoComponent implements OnInit {
 
   toggleDetalle(tipo: 'general' | 'penasco' | 'hermosillo'): void {
     this.mostrarDetalle = this.mostrarDetalle === tipo ? null : tipo;
+    this.origenFiltro = 'todos'; // reinicia el sub-filtro
+
+  }
+
+
+  exportarExcel(): void {
+    const datos = this.movimientosVisibles();
+
+    const filas = datos.map((m: Movimiento, i: number) => ({
+      '#': i + 1,
+      'Fecha Pago': this.formatearFecha(m.fecha_pago),
+      'Fecha Factura': this.formatearFecha(m.fecha_factura),
+      'Razón Social': m.razon_social,
+      'Concepto': m.concepto,
+      'Monto': Number(m.importe_sin_iva || 0),
+      'Método de Pago': this.nombreMetodoPago(m.metodo_pago_id),
+      'Ubicación': Number(m.donde_aplica) === 1 ? 'PUERTO PEÑASCO'
+        : Number(m.donde_aplica) === 2 ? 'HERMOSILLO' : ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(filas);
+
+    // Ancho de columnas
+    ws['!cols'] = [
+      { wch: 5 }, { wch: 12 }, { wch: 14 }, { wch: 30 },
+      { wch: 45 }, { wch: 14 }, { wch: 16 }, { wch: 18 }
+    ];
+
+    // Formato de moneda en la columna Monto (F)
+    for (let r = 2; r <= filas.length + 1; r++) {
+      const celda = ws[`F${r}`];
+      if (celda) celda.z = '"$"#,##0.00';
+    }
+
+    const rango = XLSX.utils.decode_range(ws['!ref']!);
+    for (let c = rango.s.c; c <= rango.e.c; c++) {
+      const celda = ws[XLSX.utils.encode_cell({ r: 0, c })];
+      if (celda) {
+        celda.s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '0B5D3B' } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
+
+    const mes = this.meses.find(x => x.value === this.filtroMes)?.text ?? '';
+    XLSX.writeFile(wb, `Gastos_Puerto_Penasco_${mes}_${this.filtroAnio}.xlsx`);
+  }
+
+  private formatearFecha(valor: string): string {
+    if (!valor) return '';
+    const anio = formatDate(valor, 'yyyy', 'en-US');
+    if (anio === '1899') return 'SIN FECHA';
+    if (anio === '1900') return 'NO APLICA';
+    return formatDate(valor, 'dd/MM/yyyy', 'en-US');
+  }
+
+  private nombreMetodoPago(id: number | string): string {
+    switch (Number(id)) {
+      case 1: return 'EFECTIVO';
+      case 2: return 'TRANSFERENCIA ELECTRÓNICA';
+      case 3: return 'TARJETA DE DÉBITO';
+      case 4: return 'CHEQUE';
+      case 5: return 'TARJETA DE CRÉDITO';
+      default: return '';
+    }
   }
 
   get movimientosPenasco(): any[] {
@@ -129,17 +219,26 @@ export class ObraPuertoPenascoComponent implements OnInit {
       .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
   }
 
-  movimientosVisibles(): any[] {
-    const base =
-      this.mostrarDetalle === 'general' ? this.movimientos :
-        this.mostrarDetalle === 'penasco' ? this.movimientosPenasco :
-          this.mostrarDetalle === 'hermosillo' ? this.movimientosHermosillo :
-            [];
+  movimientosVisibles(): Movimiento[] {
+    let lista: Movimiento[] = this.movimientos;
 
-    return this.metodoPagoFiltro === 0
-      ? base
-      : base.filter(m => m.metodo_pago_id === this.metodoPagoFiltro);
+    if (this.mostrarDetalle === 'general' && this.origenFiltro !== 'todos') {
+      lista = lista.filter((m: Movimiento) => this.esDeOrigen(m, this.origenFiltro));
+    }
+
+    if (this.metodoPagoFiltro !== 0) {
+      lista = lista.filter((m: Movimiento) => m.metodo_pago_id === this.metodoPagoFiltro);
+    }
+
+    return lista;
   }
+
+  esDeOrigen(m: Movimiento, origen: string): boolean {
+    const donde = Number(m.donde_aplica);
+    return origen === 'penasco' ? donde === 1 : donde === 2;
+  }
+
+
   private parseArchivosCampo(val: string): string[] {
     if (!val) return [];
     try {

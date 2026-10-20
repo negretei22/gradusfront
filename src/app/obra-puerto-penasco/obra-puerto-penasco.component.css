@@ -256,3 +256,40 @@ p {
   border-style: solid;
   border-color: #ffffff transparent transparent transparent;
 }
+
+.filtros-panel {
+    display: flex;
+    flex-wrap: wrap;          /* en pantallas chicas se acomodan una abajo de otra */
+    align-items: flex-end;
+    gap: 14px 32px;
+    margin-bottom: 16px;
+}
+
+.filtro-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.filtros-panel .filtros-metodo-pago {
+    margin-bottom: 0;         /* quita el espacio extra entre filas */
+}
+
+.btn-exportar {
+    margin-left: auto;        /* lo manda a la derecha */
+    padding: 8px 16px;
+    border: none;
+    border-radius: 999px;
+    background: #0b5d3b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-exportar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
