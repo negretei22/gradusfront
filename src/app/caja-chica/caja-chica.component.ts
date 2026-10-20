@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxMaskDirective } from 'ngx-mask';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -12,11 +12,11 @@ import { AlertsService } from '../core/alerts.service';
 @Component({
   selector: 'app-caja-chica',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgxMaskDirective, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './caja-chica.component.html',
   styleUrl: './caja-chica.component.css'
 })
-export class CajaChicaComponent {
+export class CajaChicaComponent implements OnInit {
 
   constructor(
     private cajaChicaService: CajaChicaService,
@@ -50,30 +50,80 @@ export class CajaChicaComponent {
   titulo = 'Nuevo Movimiento';
   textoBoton = 'Guardar';
 
+  showDetalle = false;
+  detalle: any = null;
+  cargandoDetalle = false;
+
   id: number = 0;
   fecha: string = '';
   concepto: string = '';
   tipo_movimiento: 'gasto' | 'ingreso' = 'gasto';
   monto: number | null = null;
   capturo: string = '';
+  readonly urlArchivos = 'http://localhost:3000/uploads/movimientos/';
 
   @HostListener('document:keydown.escape')
   onEscapePress() {
-    if (this.showModal) this.closeModal();
+    if (this.showDetalle) this.cerrarDetalle();
   }
 
-  ngAfterViewInit() {
+  ngOnInit() {
     const hoy = new Date();
     this.filtroAnio = hoy.getFullYear();
     this.filtroMes = hoy.getMonth() + 1;
+    this.mesesVisibles = this.meses.filter(m => m.value <= this.filtroMes);
 
-    const mesActual = hoy.getMonth() + 1;
-    this.mesesVisibles = this.meses.filter(m => m.value <= mesActual);
+    this.cargarMovimientos();
+    this.cargarTotales();
+  }
 
-    setTimeout(() => {
-      this.cargarMovimientos();
-      this.cargarTotales();
+  abrirDetalle(id: number) {
+    this.detalle = null;
+    this.cargandoDetalle = true;
+    this.showDetalle = true;
+
+    this.cajaChicaService.getMovimientoFinanciero(id).subscribe({
+      next: res => { this.detalle = res; this.cargandoDetalle = false; },
+      error: () => { this.cargandoDetalle = false; }
     });
+  }
+
+
+  obtenerArchivos(valor: string | null | undefined): string[] {
+    if (!valor || valor === 'null') {
+      return [];
+    }
+
+    try {
+      const archivos = typeof valor === 'string'
+        ? JSON.parse(valor)
+        : valor;
+
+      if (Array.isArray(archivos)) {
+        return archivos.filter(
+          (archivo): archivo is string =>
+            typeof archivo === 'string' && archivo.trim() !== ''
+        );
+      }
+
+      // Por si la API devuelve un solo nombre en lugar de un arreglo
+      return typeof archivos === 'string' && archivos.trim()
+        ? [archivos]
+        : [];
+    } catch {
+      // Si el campo contiene un nombre sin formato JSON
+      return [valor];
+    }
+  }
+
+  // Construye la URL del archivo
+  urlArchivo(nombre: string): string {
+    return this.urlArchivos + encodeURIComponent(nombre);
+  }
+
+  cerrarDetalle() {
+    this.showDetalle = false;
+    this.detalle = null;
   }
 
   seleccionarMes(mes: number) {
@@ -84,6 +134,11 @@ export class CajaChicaComponent {
 
   cambiarTab(nuevoTab: 'todos' | 'gasto' | 'ingreso') {
     this.tab = nuevoTab;
+  }
+
+  refrescar() {
+    this.cargarMovimientos();
+    this.cargarTotales();
   }
 
   movimientosVisibles(): any[] {
@@ -109,23 +164,9 @@ export class CajaChicaComponent {
       });
   }
 
-  async drop(event: CdkDragDrop<any[]>) {
-    moveItemInArray(this.movimientos, event.previousIndex, event.currentIndex);
-    for (let i = 0; i < this.movimientos.length; i++) {
-      const m = this.movimientos[i];
-      m.orden = i + 1;
-      await this.cajaChicaService.updateOrden(m.id!, m.orden).toPromise();
-    }
-    this.cargarMovimientos();
-  }
 
-  // ===== MODAL =====
-  openModal() {
-    this.resetForm();
-    this.fecha = this.formatearFecha(new Date());
-    this.showModal = true;
-  }
 
+  
   formatearFecha(fecha: Date): string {
     const y = fecha.getFullYear();
     const m = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -148,83 +189,10 @@ export class CajaChicaComponent {
     this.showModal = true;
   }
 
-  deleteMovimiento(id: number) {
-    Swal.fire({
-      title: '¿Eliminar movimiento?',
-      text: 'Esta acción no se puede deshacer.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc3545'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.cajaChicaService.deleteMovimiento(id).subscribe(() => {
-          Swal.fire({
-            title: 'Eliminado',
-            text: 'El movimiento fue eliminado correctamente.',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
-          });
-          this.cargarMovimientos();
-          this.cargarTotales();
-        });
-      }
-    });
-  }
 
-  resetForm() {
-    this.id = 0;
-    this.editing = false;
-    this.titulo = 'Nuevo Movimiento';
-    this.textoBoton = 'Guardar';
-    this.fecha = '';
-    this.concepto = '';
-    this.tipo_movimiento = 'gasto';
-    this.monto = null;
-    this.capturo = '';
-  }
 
-  closeModal() {
-    this.showModal = false;
-    this.resetForm();
-  }
 
-  async saveMovimiento() {
-
-    if (!this.fecha || !this.concepto || !this.monto || !this.capturo) {
-      this.alert.AlertaRoja
-        ? this.alert.AlertaRoja('', 'Completa todos los campos.')
-        : Swal.fire('Faltan datos', 'Completa todos los campos.', 'warning');
-      return;
-    }
-
-    const data: any = {
-      fecha: this.fecha,
-      concepto: this.concepto.toUpperCase(),
-      gasto: this.tipo_movimiento === 'gasto' ? Number(this.monto) : 0,
-      ingreso: this.tipo_movimiento === 'ingreso' ? Number(this.monto) : 0,
-      capturo: this.capturo.toUpperCase()
-    };
-
-    try {
-      if (this.editing) {
-        await this.cajaChicaService.updateMovimiento(this.id, data).toPromise();
-      } else {
-        await this.cajaChicaService.saveMovimiento(data).toPromise();
-      }
-
-      this.showModal = false;
-      await this.alert.AlertaVerde('', 'Movimiento guardado exitosamente.');
-
-      this.cargarMovimientos();
-      this.cargarTotales();
-
-    } catch (err) {
-      console.log(err);
-    }
-  }
+ 
 
   // ===== EXPORTAR EXCEL (igual formato a tu hoja) =====
   exportarExcel() {

@@ -70,6 +70,11 @@ export class ObraPuertoPenascoComponent implements OnInit {
     return this.meses.filter(m => m.value === 0 || m.value <= mesActual);
   }
 
+  private get movimientosFiltradosPorPago(): any[] {
+  if (this.metodoPagoFiltro === 0) return this.movimientos;
+  return this.movimientos.filter(m => Number(m.metodo_pago_id) === this.metodoPagoFiltro);
+}
+
   @HostListener('document:keydown.escape')
   onEscapePress() {
     this.mostrarMenuArchivos = null;
@@ -197,27 +202,33 @@ export class ObraPuertoPenascoComponent implements OnInit {
   }
 
   get movimientosPenasco(): any[] {
-    return this.movimientos.filter(m => Number(m.donde_aplica) === 1);
+  return this.movimientosFiltradosPorPago.filter(m => Number(m.donde_aplica) === 1);
+}
+
+get movimientosHermosillo(): any[] {
+  return this.movimientosFiltradosPorPago.filter(m => Number(m.donde_aplica) === 2);
+}
+
+get gastoGeneral(): number {
+  let lista = this.movimientosFiltradosPorPago;
+
+  // Si estás en la tarjeta general y filtraste por origen, también se aplica
+  if (this.mostrarDetalle === 'general' && this.origenFiltro !== 'todos') {
+    lista = lista.filter(m => this.esDeOrigen(m, this.origenFiltro));
   }
 
-  get movimientosHermosillo(): any[] {
-    return this.movimientos.filter(m => Number(m.donde_aplica) === 2);
-  }
+  return lista.reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+}
 
-  get gastoGeneral(): number {
-    return this.movimientos
-      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
-  }
+get gastoPenasco(): number {
+  return this.movimientosPenasco
+    .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+}
 
-  get gastoPenasco(): number {
-    return this.movimientosPenasco
-      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
-  }
-
-  get gastoHermosillo(): number {
-    return this.movimientosHermosillo
-      .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
-  }
+get gastoHermosillo(): number {
+  return this.movimientosHermosillo
+    .reduce((sum, m) => sum + Number(m.importe_sin_iva || 0), 0);
+}
 
   movimientosVisibles(): Movimiento[] {
     let lista: Movimiento[] = this.movimientos;

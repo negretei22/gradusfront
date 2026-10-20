@@ -24,6 +24,10 @@ export class CajaChicaService {
     return this.http.get<any>(`${API_URL}/movimiento/${id}`);
   }
 
+  getMovimientoFinanciero(id: number): Observable<any> {
+    return this.http.get<any>(`${API_URL}/movimiento-financiero/${id}`);
+  }
+
   // Totales para las cards: total_gasto y total_ingreso del periodo, saldo_actual global
   getSaldo(anio: number, mes: number): Observable<{ total_gasto: number; total_ingreso: number; saldo_actual: number }> {
     return this.http.get<{ total_gasto: number; total_ingreso: number; saldo_actual: number }>(
@@ -31,19 +35,10 @@ export class CajaChicaService {
     );
   }
 
-  saveMovimiento(data: any): Observable<any> {
-    return this.http.post(`${API_URL}/save`, data);
-  }
 
-  updateMovimiento(id: number, data: any): Observable<any> {
-    return this.http.post(`${API_URL}/update/${id}`, data);
-  }
 
-  deleteMovimiento(id: number): Observable<any> {
-    return this.http.delete(`${API_URL}/${id}`);
-  }
 
-  updateOrden(id: number, orden: number): Observable<any> {
-    return this.http.post(`${API_URL}/update_orden`, { id, orden });
-  }
+
+
+
 }
