@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, switchMap, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, switchMap, map, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { LoginResponse, User, UserRole } from '../../shared/models/user.model';
 
@@ -59,15 +59,27 @@ export class AuthService {
   }
 
   cargarModulos(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/modulos`).pipe(
-      tap(modulos => {
-        localStorage.setItem('modulos', JSON.stringify(modulos));
-      })
+    return forkJoin({
+      todos: this.http.get<any[]>(`${this.baseUrl}/modulos`),
+      menu: this.http.get<any[]>(`${this.baseUrl}/modulos/menu`),
+    }).pipe(
+      tap(({ todos, menu }) => {
+        localStorage.setItem('modulos', JSON.stringify(todos));        // guard: acceso a rutas
+        localStorage.setItem('modulos_menu', JSON.stringify(menu));    // sidebar: solo con "menu"
+      }),
+      map(({ todos }) => todos)   // sigue devolviendo lo mismo que antes
     );
   }
 
+
+
   getModulosGuardados(): any[] {
     const modulos = localStorage.getItem('modulos');
+    return modulos ? JSON.parse(modulos) : [];
+  }
+
+  getModulosMenu(): any[] {
+    const modulos = localStorage.getItem('modulos_menu');
     return modulos ? JSON.parse(modulos) : [];
   }
 

@@ -12,6 +12,7 @@ import { MaquinariaComponent } from './maquinaria/maquinaria.component';
 import { FinanzasComponent } from './finanzas/finanzas.component';
 import { MonitorProcedimientosComponent } from './monitor-procedimientos/monitor-procedimientos.component';
 import { CajaChicaComponent } from './caja-chica/caja-chica.component';
+import { BancosCajaChicaComponent } from './bancos-caja-chica/bancos-caja-chica.compenent';
 import { ObraPuertoPenascoComponent } from './obra-puerto-penasco/obra-puerto-penasco.component';
 import { ServicioComponent } from './servicios/servicio.component';
 
@@ -38,6 +39,11 @@ export const routes: Route[] = [
       {
         path: 'caja-chica',
         component: CajaChicaComponent,
+        canActivate: [moduloGuard],
+      },
+      {
+        path: 'bancos-caja-chica',
+        component: BancosCajaChicaComponent,
         canActivate: [moduloGuard],
       },
       {

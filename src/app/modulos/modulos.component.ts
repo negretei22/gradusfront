@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ModulosService,Modulo } from '../services/modulos.service';
+import { ModulosService, Modulo } from '../services/modulos.service';
 import { RolesService, Role } from '../core/services/roles.service';
-
-const ACCIONES = ['ver', 'editar', 'eliminar'];
+import { AuthService } from '../core/services/auth.service';
+const ACCIONES = ['ver', 'editar', 'eliminar', 'menu'];
 
 @Component({
   selector: 'app-modulos',
@@ -31,7 +31,8 @@ export class ModulosComponent implements OnInit {
 
   constructor(
     private modulosService: ModulosService,
-    private rolesService: RolesService  // 👈 Inyectado
+    private rolesService: RolesService,  // 👈 Inyectado
+    private authService: AuthService   // 👈 Inyectado
   ) { }
 
   ngOnInit() {
@@ -99,7 +100,8 @@ export class ModulosComponent implements OnInit {
       ruta: ruta,
       icono: this.nuevoIcono.trim() || '📦',
       permisos: {
-        superadmin: ['ver', 'editar', 'eliminar']
+        superadmin: ['ver', 'editar', 'eliminar', 'menu'
+        ]
       }
     };
 
@@ -141,13 +143,17 @@ export class ModulosComponent implements OnInit {
     }
   }
 
-  guardarPermisos(modulo: Modulo) {
-    this.modulosService.updatePermisos(modulo.id, modulo.permisos).then(() => {
-      this.mensaje = `Permisos de "${modulo.nombre}" guardados`;
-      setTimeout(() => this.mensaje = '', 3000);
-    }).catch((err) => {
+guardarPermisos(modulo: Modulo) {
+  this.modulosService.updatePermisos(modulo.id, modulo.permisos)
+    .then(() => {
+      this.authService.cargarModulos().subscribe(() => {
+        this.mensaje = `Permisos de "${modulo.nombre}" guardados`;
+        setTimeout(() => this.mensaje = '', 3000);
+      });
+    })
+    .catch((err: any) => {
       this.mensaje = `Error: ${err.message}`;
       setTimeout(() => this.mensaje = '', 3000);
     });
-  }
+}
 }

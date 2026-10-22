@@ -10,6 +10,7 @@ export interface Modulo {
 export const MODULOS_CONFIG: Modulo[] = [
   { nombre: 'Activos', ruta: '/maquinaria', icono: '🚜', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.USUARIO, UserRole.CONTADOR] },
   { nombre: 'Caja Chica', ruta: '/caja-chica', icono: '💵', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.CONTADOR] },
+  { nombre: 'Bancos-Caja Chica', ruta: '/bancos-caja-chica', icono: '💵', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.CONTADOR] },
   { nombre: 'Contratos', ruta: '/contratos', icono: '📑', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.USUARIO, UserRole.CONTADOR] },
   { nombre: 'Finanzas', ruta: '/finanzas', icono: '💰', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.CONTADOR] },
   { nombre: 'Puerto Peñasco', ruta: '/obra-puerto-penasco', icono: '🏗️', roles: [UserRole.ADMIN, UserRole.GERENTE, UserRole.USUARIO, UserRole.CONTADOR] },

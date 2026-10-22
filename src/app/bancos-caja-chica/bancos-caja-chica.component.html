@@ -1,0 +1,195 @@
+<div class="page-container">
+
+    <div class="meses-cards">
+        <div *ngFor="let mes of mesesVisibles" class="mes-card" [class.activo]="mes.value === filtroMes"
+            (click)="seleccionarMes(mes.value)">
+            {{ mes.text }}
+        </div>
+    </div>
+
+    <div class="page-header" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <h2>Bancos y Caja Chica — {{ nombreMes }}</h2>
+        <div class="contratos-header">
+            <button class="btn-primary" (click)="cargar()">🔄 Actualizar</button>
+            <button class="btn-primary" (click)="cerrarMes()">🔒 Cerrar mes</button>
+            <button class="btn-primary" (click)="showExportar = true">📥 Exportar Excel</button>
+        </div>
+    </div>
+
+    <p *ngIf="cargando">Cargando...</p>
+
+    <table class="gradus-table" *ngIf="data">
+        <thead>
+            <tr>
+                <th colspan="3"></th>
+                <th colspan="3" class="grupo-banco">🏦 BANORTE</th>
+                <th colspan="3" class="grupo-caja">💵 CAJA CHICA</th>
+                <th></th>
+            </tr>
+            <tr>
+                <th width="40px">No.</th>
+                <th width="100px">Fecha</th>
+                <th>Concepto</th>
+                <th class="col-monto sep-izq">Gasto (-)</th>
+                <th class="col-monto">Ingreso (+)</th>
+                <th class="col-monto">Saldo</th>
+                <th class="col-monto sep-izq">Gasto (-)</th>
+                <th class="col-monto">Ingreso (+)</th>
+                <th class="col-monto">Saldo</th>
+                <th class="col-pago">Forma de pago</th>
+            </tr>
+        </thead>
+
+        <tbody style="font-size: 11px;">
+
+            <!-- TOTALES -->
+            <tr class="fila-totales">
+                <td colspan="3" style="text-align:right;">TOTALES:</td>
+                <td class="col-monto sep-izq monto-gasto">{{ data.totales.banco_gasto | currency:'MXN':'$':'1.0-0' }}
+                </td>
+                <td class="col-monto monto-ingreso">{{ data.totales.banco_ingreso | currency:'MXN':'$':'1.0-0' }}</td>
+                <td class="col-monto"></td>
+                <td class="col-monto sep-izq monto-gasto">{{ data.totales.caja_gasto | currency:'MXN':'$':'1.0-0' }}
+                </td>
+                <td class="col-monto monto-ingreso">{{ data.totales.caja_ingreso | currency:'MXN':'$':'1.0-0' }}</td>
+                <td class="col-monto"></td>
+                <td class="col-pago"></td>
+            </tr>
+
+            <!-- SALDO ANTERIOR -->
+            <tr class="fila-saldo-ant" (click)="abrirSaldo()" title="Clic para editar el saldo anterior">
+                <td></td>
+                <td></td>
+                <td>SALDO ANTERIOR <span *ngIf="!data.saldo_anterior_guardado" style="opacity:.5;">(calculado)</span> ✏️
+                </td>
+                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.banco_gasto | currency:'MXN':'$' }}
+                </td>
+                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.banco_ingreso | currency:'MXN':'$' }}</td>
+                <td class="col-monto"></td>
+                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.caja_gasto | currency:'MXN':'$' }}</td>
+                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.caja_ingreso | currency:'MXN':'$' }}</td>
+                <td class="col-monto"></td>
+                <td class="col-pago"></td>
+            </tr>
+
+            <!-- MOVIMIENTOS -->
+            <tr *ngFor="let m of data.movimientos" [class.fila-ambos]="m.origen === 'ambos'">
+                <td style="text-align:center;">{{ m.no }}</td>
+                <td>{{ m.fecha | date:'dd-MMM-yyyy' }}</td>
+                <td>
+                    {{ m.concepto }}
+                    <span *ngIf="m.concepto_caja" class="chip-union">
+                        🔗 Banco + Caja
+                        <span class="tip">
+                            <small>Concepto en caja chica</small>
+                            {{ m.concepto_caja }}
+                        </span>
+                    </span>
+                </td>
+
+                <td class="col-monto sep-izq" [ngClass]="{'monto-gasto': m.banco_gasto > 0}">
+                    {{ m.banco_gasto > 0 ? (m.banco_gasto | currency:'MXN':'$':'1.0-0') : '' }}
+                </td>
+                <td class="col-monto" [ngClass]="{'monto-ingreso': m.banco_ingreso > 0}">
+                    {{ m.banco_ingreso > 0 ? (m.banco_ingreso | currency:'MXN':'$':'1.0-0') : '' }}
+                </td>
+                <td class="col-monto" [ngClass]="{'monto-gasto': m.saldo_banco < 0}" style="font-weight:600;">
+                    {{ m.saldo_banco | currency:'MXN':'$':'1.0-0' }}
+                </td>
+
+                <td class="col-monto sep-izq" [ngClass]="{'monto-gasto': m.caja_gasto > 0}">
+                    {{ m.caja_gasto > 0 ? (m.caja_gasto | currency:'MXN':'$':'1.0-0') : '' }}
+                </td>
+                <td class="col-monto" [ngClass]="{'monto-ingreso': m.caja_ingreso > 0}">
+                    {{ m.caja_ingreso > 0 ? (m.caja_ingreso | currency:'MXN':'$':'1.0-0') : '' }}
+                </td>
+                <td class="col-monto" [ngClass]="{'monto-gasto': m.saldo_caja < 0}" style="font-weight:600;">
+                    {{ m.saldo_caja | currency:'MXN':'$':'1.0-0' }}
+                </td>
+
+                <td class="col-pago">
+                    <span *ngFor="let p of m.forma_pago.split(' + ')" class="pill-pago"
+                        [class.pill-efectivo]="p === 'Efectivo'">
+                        {{ p }}
+                    </span>
+                </td>
+            </tr>
+
+            <tr *ngIf="data.movimientos.length === 0">
+                <td colspan="10" style="text-align:center;padding:30px;">Sin resultados</td>
+            </tr>
+
+            <!-- SALDO FINAL -->
+            <tr class="fila-saldo-final">
+                <td colspan="3" style="text-align:right;">SALDO FINAL:</td>
+                <td class="sep-izq"></td>
+                <td></td>
+                <td class="col-monto" [ngClass]="data.saldo_final.banco < 0 ? 'monto-gasto' : 'monto-ingreso'">
+                    {{ data.saldo_final.banco | currency:'MXN':'$' }}
+                </td>
+                <td class="sep-izq"></td>
+                <td></td>
+                <td class="col-monto" [ngClass]="data.saldo_final.caja < 0 ? 'monto-gasto' : 'monto-ingreso'">
+                    {{ data.saldo_final.caja | currency:'MXN':'$' }}
+                </td>
+                <td class="col-pago"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal-backdrop" *ngIf="showSaldo" (click)="showSaldo = false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <h3>Saldo anterior — {{ nombreMes }}</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>🏦 Banorte gasto</label>
+                <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="form.banco_gasto"
+                    placeholder="$ 0.00" style="text-align:right;">
+            </div>
+            <div class="form-group">
+                <label>🏦 Banorte ingreso</label>
+                <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="form.banco_ingreso"
+                    placeholder="$ 0.00" style="text-align:right;">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>💵 Caja gasto</label>
+                <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="form.caja_gasto"
+                    placeholder="$ 0.00" style="text-align:right;">
+            </div>
+            <div class="form-group">
+                <label>💵 Caja ingreso</label>
+                <input type="text" mask="separator.2" thousandSeparator="," prefix="$ " [(ngModel)]="form.caja_ingreso"
+                    placeholder="$ 0.00" style="text-align:right;">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="showSaldo = false">Cancelar</button>
+            <button class="btn-primary" (click)="guardarSaldo()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showExportar" (click)="showExportar = false">
+  <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px;">
+    <h3>Exportar a Excel</h3>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin:16px 0; font-size:13px;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" checked disabled> 🏦 Banorte (siempre incluido)
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" [(ngModel)]="exportarConCaja"> 💵 Incluir Caja Chica
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showExportar = false">Cancelar</button>
+      <button class="btn-primary" (click)="confirmarExportar()">Exportar</button>
+    </div>
+  </div>
+</div>

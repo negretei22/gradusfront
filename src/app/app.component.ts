@@ -26,21 +26,26 @@ export class AppComponent {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.isLogin = event.url === '/login' || event.urlAfterRedirects === '/login';
-        
+
         if (!this.isLogin && this.authService.isAuthenticated()) {
           this.cargarModulos();
         }
-        
+
         if (window.innerWidth <= 768) {
           this.sidebarOpen = false;
         }
       });
   }
+  ngOnInit() {
+    if (!this.isLogin && this.authService.isAuthenticated()) {      // usa el método que tengas para saber si hay sesión
+      this.authService.cargarModulos().subscribe();
+    }
+  }
 
   cargarModulos() {
     // Primero intentar cargar de localStorage
     this.modulos = this.authService.getModulosGuardados();
-    
+
     // Si no hay, pedir al backend
     if (this.modulos.length === 0) {
       this.authService.cargarModulos().subscribe({

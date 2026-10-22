@@ -123,7 +123,7 @@ export class MainLayoutComponent implements OnInit {
 
   cargarModulos() {
     // Primero intentar cargar de localStorage
-    this.modulos = this.authService.getModulosGuardados();
+    this.modulos = this.authService.getModulosMenu();
     
     // Si no hay, pedir al backend
     if (this.modulos.length === 0) {

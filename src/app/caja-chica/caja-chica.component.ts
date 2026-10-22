@@ -8,11 +8,12 @@ import { saveAs } from 'file-saver';
 import Swal from 'sweetalert2';
 import { CajaChicaService } from '../services/caja-chica.service';
 import { AlertsService } from '../core/alerts.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-caja-chica',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule,RouterLink],
   templateUrl: './caja-chica.component.html',
   styleUrl: './caja-chica.component.css'
 })
