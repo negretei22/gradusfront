@@ -10,6 +10,7 @@ import JSZip from "jszip";
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { ConciliacionService } from '../services/conciliacion.service';
 
 import {
   CdkDragDrop,
@@ -75,6 +76,7 @@ export class FinanzasComponent implements OnInit {
     private finanzasService: FinanzasService,
     private alert: AlertsService,
     private authService: AuthService,
+    private conciliacionService: ConciliacionService,
     private router: Router
   ) { }
 
@@ -129,6 +131,18 @@ export class FinanzasComponent implements OnInit {
   filtroRazonSocial: string = '';
   filtroConcepto: string = '';
   filtroMonto: string = '';
+  showConciliar = false;
+  archivoPdf: File | null = null;
+  conciliando = false;
+  conciliacion: any = null;
+  errorConciliar = '';
+
+  filtroTipoConciliacion: 'todos' | 'ingreso' | 'egreso' = 'todos';
+
+  filtroEstadoConciliacion: 'todos' | 'ok' | 'pendiente' = 'todos';
+
+  filtroDiferenciaConciliacion: 'todos' | 'centavos' = 'todos';
+
 
 
 
@@ -152,7 +166,84 @@ export class FinanzasComponent implements OnInit {
     return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
   }
 
+  detallesExpandidos = new Set<string>();
 
+  toggleDetalle(key: string): void {
+    if (this.detallesExpandidos.has(key)) {
+      this.detallesExpandidos.delete(key);
+    } else {
+      this.detallesExpandidos.add(key);
+    }
+  }
+
+
+  getGruposConciliacion(): any[] {
+    const grupos = this.conciliacion?.grupos || [];
+
+    return grupos.filter((g: any) => {
+
+      const coincideTipo =
+        this.filtroTipoConciliacion === 'todos' ||
+        g.tipo === this.filtroTipoConciliacion;
+
+      const coincideEstado =
+        this.filtroEstadoConciliacion === 'todos' ||
+        (this.filtroEstadoConciliacion === 'ok'
+          ? g.estado === 'ok'
+          : g.estado !== 'ok');
+
+      const coincideDiferencia =
+        this.filtroDiferenciaConciliacion === 'todos' ||
+        (g.estado === 'ok' && g.tolerancia === true);
+
+      return coincideTipo && coincideEstado && coincideDiferencia;
+    });
+  }
+
+
+  limpiarFiltrosConciliacion(): void {
+    this.filtroTipoConciliacion = 'todos';
+    this.filtroEstadoConciliacion = 'todos';
+    this.filtroDiferenciaConciliacion = 'todos';
+  }
+
+  estaExpandido(key: string): boolean {
+    return this.detallesExpandidos.has(key);
+  }
+
+  limpiarDescripcionConciliacion(texto: string): string {
+    return (texto || '')
+      .replace(
+        /^\s*(?:\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}|\d{2}-[A-Z]{3}-\d{2,4})\s*[·:|\-]\s*/i,
+        ''
+      )
+      .trim();
+  }
+
+  abrirConciliar() {
+    this.archivoPdf = null;
+    this.conciliacion = null;
+    this.errorConciliar = '';
+    this.showConciliar = true;
+  }
+
+  onPdfSeleccionado(ev: any) {
+    this.archivoPdf = ev.target.files?.[0] ?? null;
+    this.conciliacion = null;
+  }
+
+  conciliar() {
+    if (!this.archivoPdf) return;
+    this.conciliando = true;
+    this.errorConciliar = '';
+    this.conciliacionService.conciliar(this.archivoPdf).subscribe({
+      next: (res: any) => { this.conciliacion = res; this.conciliando = false; },
+      error: (err: any) => {
+        this.errorConciliar = err.error?.message || 'No se pudo conciliar el PDF';
+        this.conciliando = false;
+      }
+    });
+  }
 
 
   get diferenciaPagos(): number {

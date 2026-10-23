@@ -73,7 +73,9 @@
             </tr>
 
             <!-- MOVIMIENTOS -->
-            <tr *ngFor="let m of data.movimientos" [class.fila-ambos]="m.origen === 'ambos'">
+            <tr *ngFor="let m of data.movimientos" [class.fila-ambos]="m.origen === 'ambos'" [class.fila-ingreso-caja]="
+        (m.concepto || '').toUpperCase().includes('INGRESO FONDO CAJA CHICA')
+    ">
                 <td style="text-align:center;">{{ m.no }}</td>
                 <td>{{ m.fecha | date:'dd-MMM-yyyy' }}</td>
                 <td>
@@ -175,21 +177,21 @@
 </div>
 
 <div class="modal-backdrop" *ngIf="showExportar" (click)="showExportar = false">
-  <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px;">
-    <h3>Exportar a Excel</h3>
+    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px;">
+        <h3>Exportar a Excel</h3>
 
-    <div style="display:flex; flex-direction:column; gap:12px; margin:16px 0; font-size:13px;">
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <input type="checkbox" checked disabled> 🏦 Banorte (siempre incluido)
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <input type="checkbox" [(ngModel)]="exportarConCaja"> 💵 Incluir Caja Chica
-      </label>
-    </div>
+        <div style="display:flex; flex-direction:column; gap:12px; margin:16px 0; font-size:13px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" checked disabled> 🏦 Banorte (siempre incluido)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" [(ngModel)]="exportarConCaja"> 💵 Incluir Caja Chica
+            </label>
+        </div>
 
-    <div class="modal-actions">
-      <button class="btn-cancel" (click)="showExportar = false">Cancelar</button>
-      <button class="btn-primary" (click)="confirmarExportar()">Exportar</button>
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="showExportar = false">Cancelar</button>
+            <button class="btn-primary" (click)="confirmarExportar()">Exportar</button>
+        </div>
     </div>
-  </div>
 </div>

@@ -48,14 +48,10 @@
   <div class="page-header">
 
 
-    <div class="contratos-header">
-      <button class="btn-primary" (click)="openModal()">
-        + Nuevo movimiento
-      </button>
-
-      <button class="btn-primary" (click)="exportarExcel()">
-        📥 Exportar Excel
-      </button>
+    <div class="contratos-header botones-juntos">
+      <button class="btn-primary" (click)="openModal()">+ Nuevo movimiento</button>
+      <button class="btn-primary" (click)="exportarExcel()">📥 Exportar Excel</button>
+      <button class="btn-primary" (click)="abrirConciliar()">🧾 Conciliar</button>
     </div>
     <h2>Finanzas</h2>
   </div>
@@ -74,6 +70,8 @@
     <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
     <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
     <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
+    <button (click)="metodoPagoFiltro=4" [class.active]="metodoPagoFiltro===4">🧾 CHEQUE</button>
+    <button (click)="metodoPagoFiltro=6" [class.active]="metodoPagoFiltro===6">💳 DÉBITO BANORTE</button>
     <button (click)="metodoPagoFiltro=5" [class.active]="metodoPagoFiltro===5">🥇 CRÉDITO</button>
   </div>
 
@@ -517,5 +515,260 @@
       <button class="btn-primary" (click)="saveMovimiento()">{{textoBoton}}</button>
     </div>
 
+  </div>
+</div>
+
+
+<div class="modal-backdrop" *ngIf="showConciliar" (click)="showConciliar = false">
+  <div class="modal-card" (click)="$event.stopPropagation()"
+    style="width:95vw; max-width:1200px; height:90vh; max-height:90vh; overflow-y:auto;">
+
+    <div class="conciliacion-header">
+      <h3>Conciliación bancaria</h3>
+
+      <div class="conciliacion-upload">
+        <input type="file" accept=".pdf" (change)="onPdfSeleccionado($event)">
+
+        <button class="btn-primary" [disabled]="!archivoPdf || conciliando" (click)="conciliar()">
+          {{ conciliando ? 'Analizando...' : 'Conciliar' }}
+        </button>
+      </div>
+    </div>
+
+
+    <p *ngIf="errorConciliar" style="color:#b85c57;">{{ errorConciliar }}</p>
+
+    <ng-container *ngIf="conciliacion">
+
+      <p class="conciliacion-periodo">
+        Período del PDF:
+        {{ conciliacion.periodo.desde | date:'dd/MM/yyyy' }} –
+        {{ conciliacion.periodo.hasta | date:'dd/MM/yyyy' }}
+      </p>
+
+      <div class="conciliacion-resumen">
+        <span>🏦 <strong>BANORTE</strong> · {{ conciliacion.resumen.movs_banco }} movs ·
+          <span style="color:#3f8f66;">Ingresos {{ conciliacion.resumen.ingresos_banco | currency:'MXN':'$' }}</span> ·
+          <span style="color:#b85c57;">Egresos {{ conciliacion.resumen.egresos_banco | currency:'MXN':'$'
+            }}</span></span>
+        <span>🧾 <strong>SISTEMA</strong> · {{ conciliacion.resumen.movs_sistema }} movs ·
+          <span style="color:#3f8f66;">Ingresos {{ conciliacion.resumen.ingresos_sistema | currency:'MXN':'$' }}</span>
+          ·
+          <span style="color:#b85c57;">Egresos {{ conciliacion.resumen.egresos_sistema | currency:'MXN':'$'
+            }}</span></span>
+        <span style="color:#198754; font-weight:600;">✅ {{ conciliacion.resumen.grupos_ok }} cuadran</span>
+        <span style="color:#c05621; font-weight:600;">⚠️ {{ conciliacion.resumen.grupos_revisar }} por revisar</span>
+      </div>
+
+
+      <div class="filtros-conciliacion">
+
+        <div class="grupo-filtro">
+          <span class="filtro-titulo">TIPO DE MOVIMIENTO</span>
+
+          <div class="filtro-opciones">
+            <button [class.activo]="filtroTipoConciliacion === 'todos'" (click)="filtroTipoConciliacion = 'todos'">
+              Todos
+            </button>
+
+            <button [class.activo]="filtroTipoConciliacion === 'ingreso'" (click)="filtroTipoConciliacion = 'ingreso'">
+              ↑ Ingresos
+            </button>
+
+            <button [class.activo]="filtroTipoConciliacion === 'egreso'" (click)="filtroTipoConciliacion = 'egreso'">
+              ↓ Egresos
+            </button>
+          </div>
+        </div>
+
+        <div class="grupo-filtro">
+          <span class="filtro-titulo">RESULTADO</span>
+
+          <div class="filtro-opciones">
+            <button [class.activo]="filtroEstadoConciliacion === 'todos'" (click)="filtroEstadoConciliacion = 'todos'">
+              Todos
+            </button>
+
+            <button [class.activo]="filtroEstadoConciliacion === 'ok'" (click)="filtroEstadoConciliacion = 'ok'">
+              ✓ Coinciden
+            </button>
+
+            <button [class.activo]="filtroEstadoConciliacion === 'pendiente'"
+              (click)="filtroEstadoConciliacion = 'pendiente'">
+              ⚠ Pendientes
+            </button>
+          </div>
+        </div>
+        <div class="grupo-filtro">
+          <span class="filtro-titulo">DIFERENCIA</span>
+
+          <div class="filtro-opciones">
+
+            <button [class.activo]="filtroDiferenciaConciliacion === 'todos'"
+              (click)="filtroDiferenciaConciliacion = 'todos'">
+              Todos
+            </button>
+
+            <button [class.activo]="filtroDiferenciaConciliacion === 'centavos'"
+              (click)="filtroDiferenciaConciliacion = 'centavos'">
+              ≈ Centavos
+            </button>
+
+          </div>
+        </div>
+
+        <button class="btn-reset-filtros" (click)="limpiarFiltrosConciliacion()">
+          ↻ Limpiar
+        </button>
+
+      </div>
+
+
+      <div class="conciliacion-contador">
+        Mostrando {{ getGruposConciliacion().length }}
+        de {{ conciliacion.grupos.length }} grupos
+      </div>
+
+
+      <table class="gradus-table tabla-conciliacion">
+        <thead>
+          <tr>
+            <th class="col-estado"></th>
+            <th class="col-fecha">FECHA</th>
+            <th class="col-tipo">TIPO</th>
+            <th class="col-monto">MONTO</th>
+            <th class="col-cantidad">PDF</th>
+            <th class="col-cantidad">SIST.</th>
+            <th class="col-detalle">🏦 BANORTE / 🧾 SISTEMA</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let g of getGruposConciliacion(); let gi = index"
+            [class.conciliacion-pendiente]="g.estado !== 'ok'">
+
+            <td class="col-estado">
+              {{ g.estado === 'ok' ? '✅' : '⚠️' }}
+              <span *ngIf="g.tolerancia" title="Coincidencia con diferencia de centavos"
+                style="display:block; font-size:10px; color:#b7791f;">
+                ≈
+              </span>
+            </td>
+
+
+            <td class="col-fecha">
+              {{ g.fecha | date:'dd/MM/yyyy':'UTC' }}
+            </td>
+
+            <td class="col-tipo">
+              <span [class.tipo-ingreso]="g.tipo === 'ingreso'" [class.tipo-egreso]="g.tipo !== 'ingreso'">
+                {{ g.tipo === 'ingreso' ? '▲ INGRESO' : '▼ EGRESO' }}
+              </span>
+            </td>
+
+            <td class="col-monto">
+
+              <div class="monto-detalle">
+                <span>🏦 Banco</span>
+                <strong>{{ g.suma_banco | currency:'MXN':'$' }}</strong>
+              </div>
+
+              <div class="monto-detalle">
+                <span>🧾 Sistema</span>
+                <strong>{{ g.suma_sistema | currency:'MXN':'$' }}</strong>
+              </div>
+
+             
+            </td>
+
+            <td class="col-cantidad">{{ g.n_banco }}</td>
+            <td class="col-cantidad">{{ g.n_sistema }}</td>
+
+            <td class="col-detalle">
+
+              <div class="conciliacion-aviso" *ngIf="g.estado === 'falta_sistema'">
+                Falta capturar {{ g.diferencia }} en el sistema
+              </div>
+
+              <div class="conciliacion-aviso" *ngIf="g.estado === 'sobran_sistema'">
+                Hay {{ g.diferencia }} de más en el sistema
+              </div>
+
+              <div class="conciliacion-par" *ngFor="let b of g.banco; let i = index">
+
+                <div class="conciliacion-lado">
+                  <div class="descripcion" [class.expandida]="estaExpandido(gi + '-b-' + i)">
+                    {{ limpiarDescripcionConciliacion(b.descripcion) }}
+                  </div>
+
+                  <button type="button" class="btn-ver-detalle"
+                    *ngIf="limpiarDescripcionConciliacion(b.descripcion).length > 100"
+                    (click)="toggleDetalle(gi + '-b-' + i)">
+                    {{ estaExpandido(gi + '-b-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                  </button>
+                </div>
+
+                <div class="conciliacion-lado">
+                  <ng-container *ngIf="g.sistema[i] as s; else sinPar">
+
+                    <div class="descripcion" [class.expandida]="estaExpandido(gi + '-s-' + i)">
+                      {{ s.razon_social }} · {{ s.concepto }}
+                    </div>
+
+                    <button type="button" class="btn-ver-detalle"
+                      *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
+                      (click)="toggleDetalle(gi + '-s-' + i)">
+                      {{ estaExpandido(gi + '-s-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                    </button>
+
+                  </ng-container>
+
+                  <ng-template #sinPar>
+                    <span class="conciliacion-sin-par">
+                      — sin movimiento en el sistema —
+                    </span>
+                  </ng-template>
+                </div>
+
+              </div>
+
+              <ng-container *ngIf="g.sistema.length > g.banco.length">
+                <div class="conciliacion-par" *ngFor="let s of g.sistema.slice(g.banco.length); let i = index">
+
+                  <div class="conciliacion-lado conciliacion-sin-par">
+                    — sin movimiento en el PDF —
+                  </div>
+
+                  <div class="conciliacion-lado">
+                    <div class="descripcion" [class.expandida]="estaExpandido(gi + '-extra-' + i)">
+                      {{ s.razon_social }} · {{ s.concepto }}
+                    </div>
+
+                    <button type="button" class="btn-ver-detalle"
+                      *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
+                      (click)="toggleDetalle(gi + '-extra-' + i)">
+                      {{ estaExpandido(gi + '-extra-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                    </button>
+                  </div>
+
+                </div>
+              </ng-container>
+
+            </td>
+          </tr>
+
+          <tr *ngIf="getGruposConciliacion().length === 0">
+            <td colspan="7" style="text-align:center;">
+              Sin datos.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </ng-container>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showConciliar = false">Cerrar</button>
+    </div>
   </div>
 </div>

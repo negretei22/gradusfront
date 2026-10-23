@@ -130,3 +130,10 @@ th.grupo-caja {
   padding-right: 0;
   padding-left: 0;
 }
+
+.gradus-table tbody tr.fila-ingreso-caja td {
+    background-color: #e8f5e9 !important;
+    color: #2e7d32;
+    font-weight: 600;
+}
+
