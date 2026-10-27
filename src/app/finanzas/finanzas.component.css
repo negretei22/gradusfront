@@ -1842,6 +1842,50 @@ td.actions {
   }
 }
 
+.tag-tipo-conciliacion {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-right: 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.tag-tipo-conciliacion.tag-ingreso {
+  background: #e0f5eb;
+  color: #168454;
+}
+
+.tag-tipo-conciliacion.tag-egreso {
+  background: #fce8e6;
+  color: #c0392b;
+}
+
+.tag-tipo-conciliacion.tag-prestamo {
+  background: #fff0dc;
+  color: #a65b00;
+}
+
+.sin-movimiento {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #fff4e8;
+  color: #ad672d;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sin-movimiento span {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 
 .tabla-conciliacion .col-monto {
   width: 190px;

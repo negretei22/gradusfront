@@ -252,4 +252,14 @@ export class BancosCajaChicaComponent implements OnInit {
         saveAs(new Blob([buffer], { type: 'application/octet-stream' }),
             `Bancos y Caja Chica ${this.nombreMes} ${this.filtroAnio}.xlsx`);
     }
+
+
+    obtenerTipoMovimiento(tipo: number | string): string {
+        switch (Number(tipo)) {
+            case 1: return 'INGRESO';
+            case 2: return 'EGRESO';
+            case 4: return 'PRÉSTAMO';
+            default: return 'OTRO';
+        }
+    }
 }

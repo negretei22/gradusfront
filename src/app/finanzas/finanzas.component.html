@@ -70,8 +70,8 @@
     <button (click)="metodoPagoFiltro=1" [class.active]="metodoPagoFiltro===1">💵 EFECTIVO</button>
     <button (click)="metodoPagoFiltro=2" [class.active]="metodoPagoFiltro===2">🏦 TRANSFERENCIA</button>
     <button (click)="metodoPagoFiltro=3" [class.active]="metodoPagoFiltro===3">💳 DÉBITO</button>
-    <button (click)="metodoPagoFiltro=4" [class.active]="metodoPagoFiltro===4">🧾 CHEQUE</button>
     <button (click)="metodoPagoFiltro=6" [class.active]="metodoPagoFiltro===6">💳 DÉBITO BANORTE</button>
+    <button (click)="metodoPagoFiltro=4" [class.active]="metodoPagoFiltro===4">🧾 CHEQUE</button>
     <button (click)="metodoPagoFiltro=5" [class.active]="metodoPagoFiltro===5">🥇 CRÉDITO</button>
   </div>
 
@@ -670,15 +670,18 @@
 
               <div class="monto-detalle">
                 <span>🏦 Banco</span>
-                <strong>{{ g.suma_banco | currency:'MXN':'$' }}</strong>
+                <strong>
+                  {{ (g.n_banco > 0 ? g.monto : 0) | currency:'MXN':'$' }}
+                </strong>
               </div>
 
               <div class="monto-detalle">
                 <span>🧾 Sistema</span>
-                <strong>{{ g.suma_sistema | currency:'MXN':'$' }}</strong>
+                <strong>
+                  {{ (g.n_sistema > 0 ? g.suma_sistema / g.n_sistema : 0) | currency:'MXN':'$' }}
+                </strong>
               </div>
 
-             
             </td>
 
             <td class="col-cantidad">{{ g.n_banco }}</td>
@@ -712,7 +715,21 @@
                   <ng-container *ngIf="g.sistema[i] as s; else sinPar">
 
                     <div class="descripcion" [class.expandida]="estaExpandido(gi + '-s-' + i)">
+
+                      <span class="tag-tipo-conciliacion" [ngClass]="{
+        'tag-ingreso': +s.tipo_movimiento_id === 1,
+        'tag-egreso': +s.tipo_movimiento_id === 2,
+        'tag-prestamo': +s.tipo_movimiento_id === 4
+    }">
+                        {{
+                        +s.tipo_movimiento_id === 1 ? 'INGRESO' :
+                        +s.tipo_movimiento_id === 2 ? 'EGRESO' :
+                        +s.tipo_movimiento_id === 4 ? 'PRÉSTAMO' : 'OTRO'
+                        }}
+                      </span>
+
                       {{ s.razon_social }} · {{ s.concepto }}
+
                     </div>
 
                     <button type="button" class="btn-ver-detalle"
@@ -724,8 +741,8 @@
                   </ng-container>
 
                   <ng-template #sinPar>
-                    <span class="conciliacion-sin-par">
-                      — sin movimiento en el sistema —
+                    <span class="sin-movimiento">
+                      <span>⊘</span> Sin registro en el sistema
                     </span>
                   </ng-template>
                 </div>
@@ -735,9 +752,9 @@
               <ng-container *ngIf="g.sistema.length > g.banco.length">
                 <div class="conciliacion-par" *ngFor="let s of g.sistema.slice(g.banco.length); let i = index">
 
-                  <div class="conciliacion-lado conciliacion-sin-par">
-                    — sin movimiento en el PDF —
-                  </div>
+                  <span class="sin-movimiento">
+                    <span>⊘</span> Sin registro en el PDF
+                  </span>
 
                   <div class="conciliacion-lado">
                     <div class="descripcion" [class.expandida]="estaExpandido(gi + '-extra-' + i)">
