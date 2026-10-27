@@ -526,13 +526,33 @@
     <div class="conciliacion-header">
       <h3>Conciliación bancaria</h3>
 
-      <div class="conciliacion-upload">
+      <!-- Subir PDF: solo si no hay guardada o si pidió cargar otro -->
+      <div class="conciliacion-upload" *ngIf="mostrarSubida && !cargandoConciliacion">
         <input type="file" accept=".pdf" (change)="onPdfSeleccionado($event)">
 
         <button class="btn-primary" [disabled]="!archivoPdf || conciliando" (click)="conciliar()">
           {{ conciliando ? 'Analizando...' : 'Conciliar' }}
         </button>
+
+        <button class="btn-cancel" *ngIf="conciliacion?.conciliacion" (click)="mostrarSubida = false">
+          Cancelar
+        </button>
       </div>
+    </div>
+
+    <p *ngIf="cargandoConciliacion">Cargando...</p>
+
+    <!-- Barra de conciliación guardada -->
+    <div *ngIf="conciliacion?.conciliacion && !mostrarSubida" style="display:flex; gap:12px; align-items:center; margin:12px 0; padding:10px 14px;
+            background:#f2f6fa; border-radius:8px; font-size:12px;">
+      <span>💾 Conciliación guardada ·
+        <strong>{{ conciliacion.conciliacion.archivo_nombre }}</strong> ·
+        {{ conciliacion.conciliacion.created_at | date:'dd/MM/yyyy HH:mm' }}
+        <ng-container *ngIf="conciliacion.conciliacion.creado_por"> · {{ conciliacion.conciliacion.creado_por
+          }}</ng-container>
+      </span>
+      <button class="btn-primary" style="margin-left:auto;" (click)="mostrarSubida = true">Cargar otro estado de
+        cuenta</button>
     </div>
 
 
@@ -541,7 +561,7 @@
     <ng-container *ngIf="conciliacion">
 
       <p class="conciliacion-periodo">
-        Período del PDF:
+        Período del estado de cuenta:
         {{ conciliacion.periodo.desde | date:'dd/MM/yyyy' }} –
         {{ conciliacion.periodo.hasta | date:'dd/MM/yyyy' }}
       </p>
@@ -617,10 +637,45 @@
           </div>
         </div>
 
+        <div class="grupo-filtro">
+          <span class="filtro-titulo">MOVIDOS</span>
+
+          <div class="filtro-opciones">
+            <button [class.activo]="filtroMovimientoConciliacion === 'todos'"
+              (click)="filtroMovimientoConciliacion = 'todos'">
+              Todos
+            </button>
+
+            <button [class.activo]="filtroMovimientoConciliacion === 'comentario'"
+              (click)="filtroMovimientoConciliacion = 'comentario'">
+              💬 Con comentario
+            </button>
+
+
+          </div>
+        </div>
+
         <button class="btn-reset-filtros" (click)="limpiarFiltrosConciliacion()">
           ↻ Limpiar
         </button>
 
+      </div>
+
+
+      <div *ngIf="selBanco.size || selSistema.size" style="position:sticky; top:0; z-index:5; display:flex; gap:16px; align-items:center;
+            flex-wrap:wrap; margin:10px 0; padding:10px 14px; background:#eef4fb;
+            border:1px solid #cfe0f1; border-radius:8px; font-size:12px;">
+        <span>🏦 Estado de cuenta ({{ selBanco.size }}): <strong>{{ seleccion.sumB | currency:'MXN':'$'
+            }}</strong></span>
+        <span>🧾 Sistema ({{ selSistema.size }}):
+          <strong>{{ seleccion.sumSin | currency:'MXN':'$' }}</strong> sin IVA</span>
+        <span [style.color]="seleccion.cuadra ? '#198754' : '#c05621'" style="font-weight:600;">
+          {{ seleccion.cuadra ? '✅ Cuadra' : '⚠️ No cuadra' }}
+        </span>
+
+        <button class="btn-primary" style="margin-left:auto;" [disabled]="!seleccion.cuadra"
+          (click)="unirSeleccion()">🔗 Unir</button>
+        <button class="btn-cancel" (click)="limpiarSeleccion()">Limpiar</button>
       </div>
 
 
@@ -637,7 +692,7 @@
             <th class="col-fecha">FECHA</th>
             <th class="col-tipo">TIPO</th>
             <th class="col-monto">MONTO</th>
-            <th class="col-cantidad">PDF</th>
+            <th class="col-cantidad">EDO DE CTA</th>
             <th class="col-cantidad">SIST.</th>
             <th class="col-detalle">🏦 BANORTE / 🧾 SISTEMA</th>
           </tr>
@@ -671,14 +726,15 @@
               <div class="monto-detalle">
                 <span>🏦 Banco</span>
                 <strong>
-                  {{ (g.n_banco > 0 ? g.monto : 0) | currency:'MXN':'$' }}
+                  {{ (g.n_banco > 0 ? (g.manual ? g.suma_banco : g.suma_banco / g.n_banco) : 0) | currency:'MXN':'$' }}
                 </strong>
               </div>
 
               <div class="monto-detalle">
                 <span>🧾 Sistema</span>
                 <strong>
-                  {{ (g.n_sistema > 0 ? g.suma_sistema / g.n_sistema : 0) | currency:'MXN':'$' }}
+                  {{ (g.n_sistema > 0 ? (g.manual ? g.suma_sistema : g.suma_sistema / g.n_sistema) : 0) |
+                  currency:'MXN':'$' }}
                 </strong>
               </div>
 
@@ -689,86 +745,237 @@
 
             <td class="col-detalle">
 
-              <div class="conciliacion-aviso" *ngIf="g.estado === 'falta_sistema'">
-                Falta capturar {{ g.diferencia }} en el sistema
-              </div>
+              <!-- ===== UNIÓN MANUAL ===== -->
+              <ng-container *ngIf="g.manual">
 
-              <div class="conciliacion-aviso" *ngIf="g.estado === 'sobran_sistema'">
-                Hay {{ g.diferencia }} de más en el sistema
-              </div>
+                <div class="union-manual">
 
-              <div class="conciliacion-par" *ngFor="let b of g.banco; let i = index">
+                  <!-- ENCABEZADO -->
+                  <div class="union-header">
 
-                <div class="conciliacion-lado">
-                  <div class="descripcion" [class.expandida]="estaExpandido(gi + '-b-' + i)">
-                    {{ limpiarDescripcionConciliacion(b.descripcion) }}
+                    <div class="union-titulo">
+                      <span class="union-icono">🔗</span>
+                      <strong>Unión manual</strong>
+
+                      <span class="union-contador">
+                        {{ g.n_banco }} banco ↔ {{ g.n_sistema }} sistema
+                      </span>
+                    </div>
+
+                    <button *ngIf="g.creado_por === usuarioActual" type="button" class="union-deshacer"
+                      (click)="quitarUnion(g.grupo_id)">
+                      <span>↶</span> Deshacer
+                    </button>
+
                   </div>
 
-                  <button type="button" class="btn-ver-detalle"
-                    *ngIf="limpiarDescripcionConciliacion(b.descripcion).length > 100"
-                    (click)="toggleDetalle(gi + '-b-' + i)">
-                    {{ estaExpandido(gi + '-b-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
-                  </button>
-                </div>
+                  <!-- COMENTARIO -->
+                  <div class="union-comentario" *ngIf="g.comentario">
+                    <span>💬</span>
+                    <span>{{ g.comentario }}</span>
+                  </div>
 
-                <div class="conciliacion-lado">
-                  <ng-container *ngIf="g.sistema[i] as s; else sinPar">
+                  <!-- MOVIMIENTOS DEL BANCO -->
+                  <div class="union-seccion">
 
-                    <div class="descripcion" [class.expandida]="estaExpandido(gi + '-s-' + i)">
+                    <div class="union-seccion-titulo">
+                      <span>🏦 Banco</span>
+                      <span>{{ g.n_banco }} movimientos</span>
+                    </div>
 
-                      <span class="tag-tipo-conciliacion" [ngClass]="{
-        'tag-ingreso': +s.tipo_movimiento_id === 1,
-        'tag-egreso': +s.tipo_movimiento_id === 2,
-        'tag-prestamo': +s.tipo_movimiento_id === 4
-    }">
-                        {{
-                        +s.tipo_movimiento_id === 1 ? 'INGRESO' :
-                        +s.tipo_movimiento_id === 2 ? 'EGRESO' :
-                        +s.tipo_movimiento_id === 4 ? 'PRÉSTAMO' : 'OTRO'
-                        }}
+                    <div class="union-movimiento" *ngFor="let b of g.banco">
+
+                      <span class="union-fecha">
+                        {{ b.fecha | date:'dd/MM' }}
                       </span>
 
-                      {{ s.razon_social }} · {{ s.concepto }}
+                      <span class="union-descripcion" [title]="limpiarDescripcionConciliacion(b.descripcion)">
+                        {{ limpiarDescripcionConciliacion(b.descripcion) }}
+                      </span>
+
+                      <strong class="union-importe">
+                        {{ b.monto | currency:'MXN':'$' }}
+                      </strong>
 
                     </div>
 
-                    <button type="button" class="btn-ver-detalle"
-                      *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
-                      (click)="toggleDetalle(gi + '-s-' + i)">
-                      {{ estaExpandido(gi + '-s-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
-                    </button>
+                  </div>
 
-                  </ng-container>
+                  <!-- MOVIMIENTOS DEL SISTEMA -->
+                  <div class="union-seccion">
 
-                  <ng-template #sinPar>
-                    <span class="sin-movimiento">
-                      <span>⊘</span> Sin registro en el sistema
-                    </span>
-                  </ng-template>
-                </div>
-
-              </div>
-
-              <ng-container *ngIf="g.sistema.length > g.banco.length">
-                <div class="conciliacion-par" *ngFor="let s of g.sistema.slice(g.banco.length); let i = index">
-
-                  <span class="sin-movimiento">
-                    <span>⊘</span> Sin registro en el PDF
-                  </span>
-
-                  <div class="conciliacion-lado">
-                    <div class="descripcion" [class.expandida]="estaExpandido(gi + '-extra-' + i)">
-                      {{ s.razon_social }} · {{ s.concepto }}
+                    <div class="union-seccion-titulo">
+                      <span>🧾 Sistema</span>
+                      <span>{{ g.n_sistema }} movimientos</span>
                     </div>
 
-                    <button type="button" class="btn-ver-detalle"
-                      *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
-                      (click)="toggleDetalle(gi + '-extra-' + i)">
-                      {{ estaExpandido(gi + '-extra-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
-                    </button>
+                    <div class="union-movimiento" *ngFor="let s of g.sistema">
+
+                      <span class="union-fecha">
+                        {{ s.fecha | date:'dd/MM' }}
+                      </span>
+
+                      <span class="union-descripcion" [title]="s.razon_social + ' · ' + s.concepto">
+                        <strong>{{ s.razon_social }}</strong>
+                        <span class="union-concepto"> · {{ s.concepto }}</span>
+                      </span>
+
+                      <strong class="union-importe">
+                        {{ s.monto | currency:'MXN':'$' }}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                  <!-- PIE -->
+                  <div class="union-footer" *ngIf="g.creado_por">
+                    <span>Unido por {{ g.creado_por }}</span>
                   </div>
 
                 </div>
+
+              </ng-container>
+
+              <!-- ===== EMPAREJAMIENTO AUTOMÁTICO ===== -->
+              <ng-container *ngIf="!g.manual">
+
+                <div class="conciliacion-aviso" *ngIf="g.estado === 'falta_sistema'">
+                  Falta capturar {{ g.diferencia }} en el sistema
+                </div>
+
+                <div class="conciliacion-aviso" *ngIf="g.estado === 'sobran_sistema'">
+                  Hay {{ g.diferencia }} de más en el sistema
+                </div>
+
+                <div class="conciliacion-par" *ngFor="let b of g.banco; let i = index">
+
+                  <!-- LADO BANCO -->
+                  <div class="conciliacion-lado">
+
+                    <div class="acciones-renglon" *ngIf="g.estado !== 'ok' && b.id">
+                      <label class="chk-seleccionar">
+                        <input type="checkbox" [checked]="selBanco.has(b.id)" (change)="toggleBanco(b.id)">
+                        Seleccionar
+                      </label>
+                      <button type="button" class="btn-ver-detalle" (click)="comentar('banco', b.id)">💬
+                        Comentar</button>
+                    </div>
+
+
+
+                    <div class="descripcion" [class.expandida]="estaExpandido(gi + '-b-' + i)">
+                      {{ limpiarDescripcionConciliacion(b.descripcion) }}
+                    </div>
+
+                    <button type="button" class="btn-ver-detalle"
+                      *ngIf="limpiarDescripcionConciliacion(b.descripcion).length > 100"
+                      (click)="toggleDetalle(gi + '-b-' + i)">
+                      {{ estaExpandido(gi + '-b-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                    </button>
+
+                    <div *ngFor="let n of b.notas"
+                      style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-top:3px; border-radius:4px;">
+                      💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
+                      <button type="button" (click)="quitarNota(n.id)" title="Quitar"
+                        style="border:none; background:none; cursor:pointer;">✕</button>
+                    </div>
+                  </div>
+
+                  <!-- LADO SISTEMA -->
+                  <div class="conciliacion-lado">
+                    <ng-container *ngIf="g.sistema[i] as s; else sinPar">
+
+                      <div class="acciones-renglon" *ngIf="g.estado !== 'ok'">
+                        <label class="chk-seleccionar">
+                          <input type="checkbox" [checked]="selSistema.has(+s.id)" (change)="toggleSistema(+s.id)">
+                          Seleccionar
+                        </label>
+                        <button type="button" class="btn-ver-detalle" (click)="comentar('sistema', +s.id)">💬
+                          Comentar</button>
+                      </div>
+
+                      <div *ngFor="let n of s.notas"
+                        style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-bottom:3px; border-radius:4px;">
+                        💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
+                        <button type="button" (click)="quitarNota(n.id)" title="Quitar"
+                          style="border:none; background:none; cursor:pointer;">✕</button>
+                      </div>
+
+                      <div class="descripcion" [class.expandida]="estaExpandido(gi + '-s-' + i)">
+
+                        <span class="tag-tipo-conciliacion" [ngClass]="{
+              'tag-ingreso': +s.tipo_movimiento_id === 1,
+              'tag-egreso': +s.tipo_movimiento_id === 2,
+              'tag-prestamo': +s.tipo_movimiento_id === 4
+            }">
+                          {{
+                          +s.tipo_movimiento_id === 1 ? 'INGRESO' :
+                          +s.tipo_movimiento_id === 2 ? 'EGRESO' :
+                          +s.tipo_movimiento_id === 4 ? 'PRÉSTAMO' : 'OTRO'
+                          }}
+                        </span>
+
+                        {{ s.razon_social }} · {{ s.concepto }}
+                      </div>
+
+                      <button type="button" class="btn-ver-detalle"
+                        *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
+                        (click)="toggleDetalle(gi + '-s-' + i)">
+                        {{ estaExpandido(gi + '-s-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                      </button>
+
+                    </ng-container>
+
+                    <ng-template #sinPar>
+                      <span class="sin-movimiento">
+                        <span>⊘</span> Sin registro en el sistema
+                      </span>
+                    </ng-template>
+                  </div>
+
+                </div>
+
+                <!-- Movimientos del sistema que sobran (sin renglón en el PDF) -->
+                <ng-container *ngIf="g.sistema.length > g.banco.length">
+                  <div class="conciliacion-par" *ngFor="let s of g.sistema.slice(g.banco.length); let i = index">
+
+                    <span class="sin-movimiento">
+                      <span>⊘</span> Sin registro en el estado de cuenta
+                    </span>
+
+                    <div class="conciliacion-lado">
+
+                      <div class="acciones-renglon" *ngIf="g.estado !== 'ok'">
+                        <label class="chk-seleccionar">
+                          <input type="checkbox" [checked]="selSistema.has(+s.id)" (change)="toggleSistema(+s.id)">
+                          Seleccionar
+                        </label>
+                        <button type="button" class="btn-ver-detalle" (click)="comentar('sistema', +s.id)">💬
+                          Comentar</button>
+                      </div>
+
+                      <div *ngFor="let n of s.notas"
+                        style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-bottom:3px; border-radius:4px;">
+                        💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
+                        <button type="button" (click)="quitarNota(n.id)" title="Quitar"
+                          style="border:none; background:none; cursor:pointer;">✕</button>
+                      </div>
+
+                      <div class="descripcion" [class.expandida]="estaExpandido(gi + '-extra-' + i)">
+                        {{ s.razon_social }} · {{ s.concepto }}
+                      </div>
+
+                      <button type="button" class="btn-ver-detalle"
+                        *ngIf="((s.razon_social || '') + ' · ' + (s.concepto || '')).length > 100"
+                        (click)="toggleDetalle(gi + '-extra-' + i)">
+                        {{ estaExpandido(gi + '-extra-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
+                      </button>
+                    </div>
+
+                  </div>
+                </ng-container>
+
               </ng-container>
 
             </td>

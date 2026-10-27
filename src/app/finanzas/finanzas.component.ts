@@ -40,6 +40,8 @@ export class FinanzasComponent implements OnInit {
   puedeVer = false;
   puedeEditar = false;
   puedeEliminar = false;
+  cargandoConciliacion = false;
+  mostrarSubida = false;
 
 
   private busquedaRazonSocial$ = new Subject<string>();
@@ -123,6 +125,7 @@ export class FinanzasComponent implements OnInit {
   pagos: { metodo_pago_id: number; importe: any }[] = [];
   // ===== FILTROS DE ENCABEZADO =====
   filtroAbierto: string | null = null;
+  filtroMovimientoConciliacion: 'todos' | 'comentario' | 'unido' = 'todos';
 
   filtroFechaPagoDesde: string = '';
   filtroFechaPagoHasta: string = '';
@@ -136,12 +139,17 @@ export class FinanzasComponent implements OnInit {
   conciliando = false;
   conciliacion: any = null;
   errorConciliar = '';
+  usuarioActual: string = '';
 
   filtroTipoConciliacion: 'todos' | 'ingreso' | 'egreso' = 'todos';
 
   filtroEstadoConciliacion: 'todos' | 'ok' | 'pendiente' = 'todos';
 
   filtroDiferenciaConciliacion: 'todos' | 'centavos' = 'todos';
+
+  selBanco = new Set<number>();
+  selSistema = new Set<number>();
+  seleccion = { sumB: 0, sumSin: 0, sumCon: 0, cuadra: false };
 
 
 
@@ -166,6 +174,12 @@ export class FinanzasComponent implements OnInit {
     return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
   }
 
+  private grupoTieneComentario(g: any): boolean {
+    if (g.manual && g.comentario) return true;
+    const hayNota = (arr: any[]) => (arr || []).some(x => x.notas?.length);
+    return hayNota(g.banco) || hayNota(g.sistema);
+  }
+
   detallesExpandidos = new Set<string>();
 
   toggleDetalle(key: string): void {
@@ -174,6 +188,127 @@ export class FinanzasComponent implements OnInit {
     } else {
       this.detallesExpandidos.add(key);
     }
+  }
+
+  toggleBanco(id: number) {
+    this.selBanco.has(id) ? this.selBanco.delete(id) : this.selBanco.add(id);
+    this.recalcSeleccion();
+  }
+
+  toggleSistema(id: number) {
+    this.selSistema.has(id) ? this.selSistema.delete(id) : this.selSistema.add(id);
+    this.recalcSeleccion();
+  }
+
+  limpiarSeleccion() {
+    this.selBanco.clear();
+    this.selSistema.clear();
+    this.recalcSeleccion();
+  }
+
+  recalcSeleccion() {
+    let sumB = 0, sumSin = 0, sumCon = 0;
+
+    for (const g of (this.conciliacion?.grupos ?? [])) {
+      if (g.manual) continue;
+      for (const b of g.banco) if (this.selBanco.has(b.id)) sumB += Number(b.monto);
+      for (const s of g.sistema) {
+        if (this.selSistema.has(Number(s.id))) {
+          sumSin += Number(s.monto);
+          sumCon += Number(s.monto_con_iva);
+        }
+      }
+    }
+
+    const r = (n: number) => Math.round(n * 100);
+    this.seleccion = {
+      sumB, sumSin, sumCon,
+      cuadra: this.selBanco.size > 0 && this.selSistema.size > 0 &&
+        (Math.abs(r(sumB) - r(sumSin)) <= 5 || Math.abs(r(sumB) - r(sumCon)) <= 5)
+    };
+  }
+
+  private actualizarConciliacion(res: any) {
+    this.conciliacion = res;
+    this.limpiarSeleccion();
+  }
+
+  async unirSeleccion() {
+    if (!this.seleccion.cuadra) return;
+
+    const r = await Swal.fire({
+      title: 'Unir registros',
+      text: `${this.selBanco.size} del PDF ↔ ${this.selSistema.size} del sistema`,
+      input: 'textarea',
+      inputLabel: 'Comentario (opcional)',
+      showCancelButton: true,
+      confirmButtonText: 'Unir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#0f7a5c',
+      cancelButtonColor: '#8a959e',
+      customClass: {
+        title: 'swal-titulo-sistema',
+        input: 'swal-input-sistema'
+      }
+    });
+    if (!r.isConfirmed) return;
+
+    this.conciliacionService.unir(
+      this.conciliacion.conciliacion.id,
+      Array.from(this.selBanco),
+      Array.from(this.selSistema),
+      r.value || ''
+    ).subscribe({
+      next: (res: any) => this.actualizarConciliacion(res),
+      error: (err: any) => Swal.fire('No se pudo unir', err.error?.message || 'Error', 'error')
+    });
+  }
+
+  quitarUnion(grupoId: number) {
+    Swal.fire({
+      title: '¿Deshacer la unión?',
+      text: 'Los renglones volverán a emparejarse automáticamente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, deshacer',
+      cancelButtonText: 'Cancelar'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      this.conciliacionService.quitarUnion(grupoId).subscribe({
+        next: (res: any) => this.actualizarConciliacion(res)
+      });
+    });
+  }
+
+  async comentar(lado: 'banco' | 'sistema', refId: number) {
+    const r = await Swal.fire({
+      title: 'Agregar comentario',
+      input: 'textarea',
+      inputPlaceholder: 'Ej: Pago pendiente de reflejar, se captura el lunes...',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#0f7a5c',
+      cancelButtonColor: '#8a959e',
+      customClass: {
+        title: 'swal-titulo-sistema',
+        input: 'swal-input-sistema'
+      },
+      inputValidator: v => (!v?.trim() ? 'Escribe un comentario' : null)
+    });
+    if (!r.isConfirmed) return;
+
+    this.conciliacionService.agregarNota(
+      this.conciliacion.conciliacion.id, lado, refId, r.value
+    ).subscribe({
+      next: (res: any) => this.actualizarConciliacion(res)
+    });
+  }
+
+  quitarNota(notaId: number) {
+    this.conciliacionService.quitarNota(notaId).subscribe({
+      next: (res: any) => this.actualizarConciliacion(res)
+    });
   }
 
 
@@ -196,6 +331,9 @@ export class FinanzasComponent implements OnInit {
         this.filtroDiferenciaConciliacion === 'todos' ||
         (g.estado === 'ok' && g.tolerancia === true);
 
+      if (this.filtroMovimientoConciliacion === 'comentario' && !this.grupoTieneComentario(g)) return false;
+      if (this.filtroMovimientoConciliacion === 'unido' && !g.manual) return false;
+
       return coincideTipo && coincideEstado && coincideDiferencia;
     });
   }
@@ -205,6 +343,7 @@ export class FinanzasComponent implements OnInit {
     this.filtroTipoConciliacion = 'todos';
     this.filtroEstadoConciliacion = 'todos';
     this.filtroDiferenciaConciliacion = 'todos';
+    this.filtroMovimientoConciliacion = 'todos';
   }
 
   estaExpandido(key: string): boolean {
@@ -220,27 +359,60 @@ export class FinanzasComponent implements OnInit {
       .trim();
   }
 
-  abrirConciliar() {
-    this.archivoPdf = null;
-    this.conciliacion = null;
-    this.errorConciliar = '';
-    this.showConciliar = true;
-  }
-
   onPdfSeleccionado(ev: any) {
     this.archivoPdf = ev.target.files?.[0] ?? null;
     this.conciliacion = null;
   }
+  abrirConciliar() {
+    this.archivoPdf = null;
+    this.conciliacion = null;
+    this.errorConciliar = '';
+    this.mostrarSubida = false;
+    this.showConciliar = true;
+    this.cargandoConciliacion = true;
 
-  conciliar() {
+    this.conciliacionService.cargar(this.filtroAnio, this.filtroMes).subscribe({
+      next: (res: any) => {
+        this.conciliacion = res;
+        this.mostrarSubida = !res;       // si no hay guardada, pide el PDF
+        this.cargandoConciliacion = false;
+      },
+      error: () => {
+        this.mostrarSubida = true;
+        this.cargandoConciliacion = false;
+      }
+    });
+  }
+
+  conciliar(reemplazar = false) {
     if (!this.archivoPdf) return;
     this.conciliando = true;
     this.errorConciliar = '';
-    this.conciliacionService.conciliar(this.archivoPdf).subscribe({
-      next: (res: any) => { this.conciliacion = res; this.conciliando = false; },
-      error: (err: any) => {
-        this.errorConciliar = err.error?.message || 'No se pudo conciliar el PDF';
+
+    this.conciliacionService.conciliar(this.archivoPdf, reemplazar).subscribe({
+      next: (res: any) => {
+        this.conciliacion = res;
         this.conciliando = false;
+        this.mostrarSubida = false;
+        this.archivoPdf = null;
+      },
+      error: (err: any) => {
+        this.conciliando = false;
+
+        if (err.status === 409) {
+          Swal.fire({
+            title: 'Ya existe una conciliación',
+            text: 'Si cargas este PDF se reemplazarán los renglones del banco y se perderán los comentarios y uniones de ese mes.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reemplazar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc3545'
+          }).then(r => { if (r.isConfirmed) this.conciliar(true); });
+          return;
+        }
+
+        this.errorConciliar = err.error?.message || 'No se pudo conciliar el PDF';
       }
     });
   }
@@ -686,6 +858,10 @@ export class FinanzasComponent implements OnInit {
 
 
   ngOnInit() {
+
+    const usuario = this.authService.getCurrentUser();
+
+    this.usuarioActual = usuario?.email ?? '';
 
     this.authService.getPermisos('finanzas').subscribe({
       next: (permisos) => {

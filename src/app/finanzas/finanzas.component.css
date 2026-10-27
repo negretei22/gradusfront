@@ -1886,6 +1886,289 @@ td.actions {
   font-weight: 600;
 }
 
+/* Barra de acciones por renglón: Seleccionar + Comentar */
+.acciones-renglon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* ===== SweetAlert con los colores del sistema ===== */
+.swal2-popup {
+  font-family: inherit;
+  border-radius: 14px;
+}
+
+.swal2-title {
+  color: #0f7a5c;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.swal2-html-container,
+.swal2-input-label {
+  color: #4a5560;
+  font-size: 14px;
+}
+
+/* Botón principal */
+.swal2-styled.swal2-confirm {
+  background-color: #0f7a5c !important;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+  background-color: #0b6049 !important;
+}
+
+/* Botón cancelar */
+.swal2-styled.swal2-cancel {
+  background-color: #eef1f3 !important;
+  color: #4a5560 !important;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+  background-color: #dfe4e8 !important;
+}
+
+/* Botón de peligro (eliminar, reemplazar) */
+.swal2-styled.swal2-deny {
+  background-color: #dc3545 !important;
+  border-radius: 8px;
+}
+
+/* Campos de texto */
+.swal2-textarea:focus,
+.swal2-input:focus {
+  border-color: #0f7a5c !important;
+  box-shadow: 0 0 0 3px rgba(15, 122, 92, 0.15) !important;
+}
+
+/* Barra de tiempo del éxito */
+.swal2-timer-progress-bar {
+  background: #0f7a5c;
+}
+
+/* Íconos */
+.swal2-icon.swal2-success {
+  border-color: #0f7a5c;
+  color: #0f7a5c;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #0f7a5c;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(15, 122, 92, 0.3);
+}
+
+.swal-titulo-sistema {
+  color: #0f7a5c !important;
+}
+
+/* CONTENEDOR */
+.union-manual {
+  border: 1px solid #dce6ef;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  margin: 3px 0;
+  font-size: 12px;
+  color: #334155;
+}
+
+/* ENCABEZADO */
+.union-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 11px;
+  background: #f0f6fc;
+  border-bottom: 1px solid #dce6ef;
+}
+
+.union-titulo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #245b89;
+}
+
+.union-icono {
+  font-size: 14px;
+}
+
+.union-contador {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #dce6ef;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+/* DESHACER */
+.union-deshacer {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.union-deshacer:hover {
+  background: #fef2f2;
+}
+
+/* COMENTARIO */
+.union-comentario {
+  display: flex;
+  gap: 7px;
+  padding: 7px 11px;
+  background: #fffdf5;
+  border-bottom: 1px solid #f0ead8;
+  color: #665b42;
+  font-size: 11px;
+}
+
+/* SECCIONES */
+.union-seccion {
+  padding: 5px 11px;
+}
+
+.union-seccion+.union-seccion {
+  border-top: 1px dashed #dce6ef;
+}
+
+.union-seccion-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 0 5px;
+}
+
+/* MOVIMIENTOS */
+.union-movimiento {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 95px;
+  align-items: start;
+  gap: 9px;
+  padding: 5px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.union-fecha {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.union-descripcion {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #334155;
+}
+
+.union-concepto {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.union-importe {
+  color: #0f172a;
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* PIE */
+.union-footer {
+  padding: 5px 11px;
+  border-top: 1px solid #e9eff5;
+  background: #fafcfe;
+  color: #94a3b8;
+  font-size: 10px;
+  text-align: right;
+}
+
+@media (max-width: 650px) {
+  .union-movimiento {
+    grid-template-columns: 44px minmax(0, 1fr) 82px;
+    gap: 5px;
+  }
+
+  .union-importe {
+    font-size: 10px;
+  }
+}
+
+.swal-input-sistema:focus {
+  border-color: #0f7a5c !important;
+  box-shadow: 0 0 0 3px rgba(15, 122, 92, 0.18) !important;
+  outline: none !important;
+}
+
+.acciones-renglon .chk-seleccionar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid #d5dde3;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4a5560;
+  cursor: pointer;
+  white-space: nowrap;
+  width: auto;
+}
+
+.acciones-renglon .chk-seleccionar:hover {
+  background: #f2f6fa;
+}
+
+.acciones-renglon .chk-seleccionar input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  accent-color: #0f7a5c;
+  cursor: pointer;
+}
+
+/* Resalta la píldora cuando está marcada */
+.acciones-renglon .chk-seleccionar:has(input:checked) {
+  background: #e3f3ec;
+  border-color: #0f7a5c;
+  color: #0f7a5c;
+}
+
 
 .tabla-conciliacion .col-monto {
   width: 190px;
