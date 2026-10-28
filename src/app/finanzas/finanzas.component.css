@@ -56,9 +56,262 @@
 
 .filtros-metodo-pago {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin: 10px 0;
   flex-wrap: wrap;
+}
+
+
+/* Animación base */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e9edf1;
+  border-radius: 6px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.75),
+      transparent);
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Meses */
+.skeleton-meses {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+
+.skeleton-mes {
+  flex: 1;
+  min-width: 55px;
+  height: 42px;
+  border-radius: 9px;
+}
+
+/* Tarjetas */
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 26px;
+}
+
+.skeleton-card {
+  padding: 20px;
+  border: 1px solid #edf0f2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.skeleton-titulo {
+  width: 65%;
+  height: 13px;
+  margin-bottom: 18px;
+}
+
+.skeleton-monto {
+  width: 90%;
+  height: 25px;
+}
+
+/* Encabezado */
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 25px 0 18px;
+}
+
+.skeleton-heading {
+  width: 140px;
+  height: 27px;
+  margin-right: auto;
+}
+
+.skeleton-boton {
+  width: 145px;
+  height: 38px;
+  border-radius: 7px;
+}
+
+/* Pestañas */
+.skeleton-tabs,
+.skeleton-pagos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.skeleton-tab {
+  width: 105px;
+  height: 36px;
+  border-radius: 7px;
+}
+
+.skeleton-pago {
+  width: 115px;
+  height: 32px;
+  border-radius: 6px;
+}
+
+/* Tabla */
+.skeleton-tabla {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #e9edf1;
+  border-radius: 9px;
+}
+
+.skeleton-fila {
+  display: grid;
+  grid-template-columns: 3% 8% 8% 8% 22% 34% 10% 10%;
+  gap: 8px;
+  align-items: center;
+  padding: 15px 10px;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.skeleton-fila>div {
+  height: 14px;
+}
+
+.skeleton-fila-header {
+  background: #f6f8fa;
+}
+
+.skeleton-fila-header>div {
+  height: 17px;
+}
+
+@media (max-width: 1100px) {
+  .skeleton-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .skeleton-tabla {
+    overflow-x: auto;
+  }
+
+  .skeleton-fila {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 600px) {
+  .skeleton-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.conciliacion-loading {
+  padding: 28px 20px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e8edf0;
+  border-radius: 12px;
+  margin: 18px 0;
+}
+
+.loading-icono {
+  font-size: 36px;
+  margin-bottom: 10px;
+  animation: loading-pulse 1.4s ease-in-out infinite;
+}
+
+.conciliacion-loading h3 {
+  margin: 0 0 8px;
+  color: #263746;
+  font-size: 19px;
+}
+
+.conciliacion-loading p {
+  color: #778391;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.loading-progreso {
+  width: min(100%, 400px);
+  height: 5px;
+  margin: 0 auto 28px;
+  background: #e8f1eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.loading-progreso-barra {
+  width: 35%;
+  height: 100%;
+  border-radius: inherit;
+  background: #27ae60;
+  animation: progreso-indeterminado 1.5s ease-in-out infinite;
+}
+
+.conciliacion-skeleton-tabla {
+  text-align: left;
+  border: 1px solid #edf0f2;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.conciliacion-skeleton-header,
+.conciliacion-skeleton-fila {
+  display: grid;
+  grid-template-columns: 12% 18% 22% 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.conciliacion-skeleton-header {
+  background: #f6f8fa;
+}
+
+.conciliacion-skeleton-header .skeleton {
+  height: 15px;
+}
+
+.conciliacion-skeleton-fila .skeleton {
+  height: 13px;
+}
+
+.conciliacion-skeleton-fila .skeleton:last-child {
+  width: 75%;
+}
+
+@keyframes progreso-indeterminado {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@keyframes loading-pulse {
+  50% {
+    opacity: .45;
+    transform: scale(.94);
+  }
 }
 
 .filtros-metodo-pago button {

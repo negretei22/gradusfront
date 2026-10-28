@@ -11,6 +11,7 @@ import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ConciliacionService } from '../services/conciliacion.service';
+import { finalize } from 'rxjs/operators';
 
 import {
   CdkDragDrop,
@@ -140,6 +141,7 @@ export class FinanzasComponent implements OnInit {
   conciliacion: any = null;
   errorConciliar = '';
   usuarioActual: string = '';
+  cargandoFinanzas = true;
 
   filtroTipoConciliacion: 'todos' | 'ingreso' | 'egreso' = 'todos';
 
@@ -240,7 +242,8 @@ export class FinanzasComponent implements OnInit {
       title: 'Unir registros',
       text: `${this.selBanco.size} del PDF ↔ ${this.selSistema.size} del sistema`,
       input: 'textarea',
-      inputLabel: 'Comentario (opcional)',
+      inputLabel: 'Comentario (puedes editarlo)',
+      inputValue: this.textoUnionAutomatico(this.selBanco.size, this.selSistema.size),
       showCancelButton: true,
       confirmButtonText: 'Unir',
       cancelButtonText: 'Cancelar',
@@ -257,7 +260,7 @@ export class FinanzasComponent implements OnInit {
       this.conciliacion.conciliacion.id,
       Array.from(this.selBanco),
       Array.from(this.selSistema),
-      r.value || ''
+      (r.value || '').trim()
     ).subscribe({
       next: (res: any) => this.actualizarConciliacion(res),
       error: (err: any) => Swal.fire('No se pudo unir', err.error?.message || 'Error', 'error')
@@ -389,32 +392,38 @@ export class FinanzasComponent implements OnInit {
     this.conciliando = true;
     this.errorConciliar = '';
 
-    this.conciliacionService.conciliar(this.archivoPdf, reemplazar).subscribe({
-      next: (res: any) => {
-        this.conciliacion = res;
-        this.conciliando = false;
-        this.mostrarSubida = false;
-        this.archivoPdf = null;
-      },
-      error: (err: any) => {
-        this.conciliando = false;
+    this.conciliacionService.conciliar(this.archivoPdf, reemplazar)
+      .pipe(
+        finalize(() => {
+          this.conciliando = false;
+        })
+      )
+      .subscribe({
+        next: (res: any) => {
+          this.conciliacion = res;
+          this.conciliando = false;
+          this.mostrarSubida = false;
+          this.archivoPdf = null;
+        },
+        error: (err: any) => {
+          this.conciliando = false;
 
-        if (err.status === 409) {
-          Swal.fire({
-            title: 'Ya existe una conciliación',
-            text: 'Si cargas este PDF se reemplazarán los renglones del banco y se perderán los comentarios y uniones de ese mes.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, reemplazar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#dc3545'
-          }).then(r => { if (r.isConfirmed) this.conciliar(true); });
-          return;
+          if (err.status === 409) {
+            Swal.fire({
+              title: 'Ya existe una conciliación',
+              text: 'Si cargas este PDF se reemplazarán los renglones del banco y se perderán los comentarios y uniones de ese mes.',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: 'Sí, reemplazar',
+              cancelButtonText: 'Cancelar',
+              confirmButtonColor: '#dc3545'
+            }).then(r => { if (r.isConfirmed) this.conciliar(true); });
+            return;
+          }
+
+          this.errorConciliar = err.error?.message || 'No se pudo conciliar el PDF';
         }
-
-        this.errorConciliar = err.error?.message || 'No se pudo conciliar el PDF';
-      }
-    });
+      });
   }
 
 
@@ -472,6 +481,23 @@ export class FinanzasComponent implements OnInit {
 
   toggleFiltro(campo: string): void {
     this.filtroAbierto = this.filtroAbierto === campo ? null : campo;
+  }
+
+  private textoUnionAutomatico(nBanco: number, nSistema: number): string {
+    const num = (n: number, uno: string, plural: string) => {
+      const nombres = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+      return n === 1 ? uno : `${nombres[n] ?? n} ${plural}`;
+    };
+
+    const transferencias = nBanco === 1
+      ? 'Se hizo un solo pago'
+      : `Se hicieron ${num(nBanco, 'una', 'pagos')}`;
+
+    const facturas = nSistema === 1
+      ? 'se generó una sola factura'
+      : `se generaron ${num(nSistema, 'una', 'facturas')}`;
+
+    return `${transferencias}, pero ${facturas}.`;
   }
 
   // ===== FILTRO COMBINADO PARA LA TABLA (tab + método de pago) =====
@@ -775,12 +801,20 @@ export class FinanzasComponent implements OnInit {
     this.getCategorias(id_categoria)
   }
 
-
   cargarMovimientos() {
+    this.cargandoFinanzas = true;
+
     this.finanzasService.getMovimientos(this.filtroAnio, this.filtroMes)
-      .subscribe(res => {
-        this.movimientos = res as any[];
-        this.aplicarFiltros();  // <-- antes era: this.movimientosFiltrados = [...this.movimientos];
+      .subscribe({
+        next: (res) => {
+          this.movimientos = res as any[];
+          this.aplicarFiltros();
+          this.cargandoFinanzas = false;
+        },
+        error: (err) => {
+          console.error('Error cargando movimientos:', err);
+          this.cargandoFinanzas = false;
+        }
       });
   }
 
