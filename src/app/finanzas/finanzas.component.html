@@ -821,7 +821,9 @@
                 <div class="monto-detalle">
                   <span>🏦 Banco</span>
                   <strong>
-                    {{ (g.n_banco > 0 ? (g.manual ? g.suma_banco : g.suma_banco / g.n_banco) : 0) | currency:'MXN':'$'
+                    {{
+                    (g.n_banco > 0 ? g.suma_banco / g.n_banco : 0)
+                    | currency:'MXN':'$':'1.2-2'
                     }}
                   </strong>
                 </div>
@@ -829,10 +831,23 @@
                 <div class="monto-detalle">
                   <span>🧾 Sistema</span>
                   <strong>
-                    {{ (g.n_sistema > 0 ? (g.manual ? g.suma_sistema : g.suma_sistema / g.n_sistema) : 0) |
-                    currency:'MXN':'$' }}
+                    {{
+                    (g.n_sistema > 0 ? g.suma_sistema / g.n_sistema : 0)
+                    | currency:'MXN':'$':'1.2-2'
+                    }}
                   </strong>
                 </div>
+
+                
+                <!-- Un solo total para todos los movimientos del Sistema -->
+                <div class="monto-total-detalle" *ngIf="g.n_sistema > 1 || g.n_banco > 1">
+                  <span>Total:</span>
+                  <strong>
+                    {{ g.suma_sistema | currency:'MXN':'$':'1.2-2' }}
+                  </strong>
+                </div>
+
+
 
               </td>
 
@@ -872,6 +887,7 @@
                     </div>
 
                     <!-- MOVIMIENTOS DEL BANCO -->
+                    <!-- MOVIMIENTOS DEL BANCO -->
                     <div class="union-seccion">
 
                       <div class="union-seccion-titulo">
@@ -893,6 +909,14 @@
                           {{ b.monto | currency:'MXN':'$' }}
                         </strong>
 
+                      </div>
+
+                      <!-- SUMA DE TODOS LOS MOVIMIENTOS DEL BANCO -->
+                      <div class="union-total">
+                        <span>TOTAL BANCO</span>
+                        <strong>
+                          {{ g.suma_banco | currency:'MXN':'$':'1.2-2' }}
+                        </strong>
                       </div>
 
                     </div>
@@ -920,6 +944,12 @@
                           {{ s.monto | currency:'MXN':'$' }}
                         </strong>
 
+                      </div>
+                      <div class="union-total">
+                        <span>TOTAL SISTEMA</span>
+                        <strong>
+                          {{ g.suma_sistema | currency:'MXN':'$':'1.2-2' }}
+                        </strong>
                       </div>
 
                     </div>
@@ -1002,12 +1032,13 @@
 
                           <span class="tag-tipo-conciliacion" [ngClass]="{
               'tag-ingreso': +s.tipo_movimiento_id === 1,
-              'tag-egreso': +s.tipo_movimiento_id === 2,
+              'tag-egreso': [+s.tipo_movimiento_id === 2 || +s.tipo_movimiento_id === 3],
               'tag-prestamo': +s.tipo_movimiento_id === 4
             }">
                             {{
                             +s.tipo_movimiento_id === 1 ? 'INGRESO' :
                             +s.tipo_movimiento_id === 2 ? 'EGRESO' :
+                            +s.tipo_movimiento_id === 3 ? 'AJUSTE' :
                             +s.tipo_movimiento_id === 4 ? 'PRÉSTAMO' : 'OTRO'
                             }}
                           </span>

@@ -314,6 +314,46 @@
   }
 }
 
+
+.union-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  border-top: 2px solid #dbe4ec;
+  background: #f4f8fb;
+  border-radius: 0 0 8px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.union-total strong {
+  color: #237469;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+
+.monto-total-detalle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px 24px;
+  padding: 6px 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.monto-total-detalle strong {
+  color: #237469;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .filtros-metodo-pago button {
   padding: 6px 14px;
   border: 1px solid #ccc;
