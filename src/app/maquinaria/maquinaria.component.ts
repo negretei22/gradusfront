@@ -9,6 +9,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FinanzasService } from '../services/finanzas.service';
 import { firstValueFrom } from 'rxjs';
+import * as XLSX from 'xlsx-js-style';
+import { saveAs } from 'file-saver';
 
 
 @Pipe({ name: 'safeUrl' })
@@ -54,6 +56,7 @@ export class MaquinariaComponent {
   numero_de_contrato = '';
   aseguradora = '';
   numero_poliza = '';
+  costo_poliza = '';
   fecha_inicio_poliza = '';
   fecha_fin_poliza = '';
   documento_poliza = '';
@@ -63,6 +66,7 @@ export class MaquinariaComponent {
   numero_activo = '';
   numero_serie = '';
   descripcion = '';
+  nombre = '';
   anio = '';
   id_marca = 0;
   id_modelo = 0;
@@ -453,6 +457,7 @@ onClickFueraMenuPago() {
     this.numero_de_contrato = '';
     this.aseguradora = '';
     this.numero_poliza = '';
+    this.costo_poliza = '';
     this.fecha_inicio_poliza = '';
     this.fecha_fin_poliza = '';
     this.documento_poliza = '';
@@ -460,6 +465,7 @@ onClickFueraMenuPago() {
     this.numero_activo = '';
     this.numero_serie = '';
     this.descripcion = '';
+    this.nombre = '';
     this.anio = '';
     this.id_marca = 0;
     this.id_modelo = 0;
@@ -505,6 +511,7 @@ onClickFueraMenuPago() {
     this.numero_activo = c.numero_activo;
     this.numero_serie = c.numero_serie;
     this.descripcion = c.descripcion;
+    this.nombre = c.nombre ?? '';
     this.id_marca = c.id_marca;
     this.anio = c.anio;
     this.numero_de_contrato = c.numero_de_contrato ?? '';
@@ -554,6 +561,7 @@ onClickFueraMenuPago() {
     this.activoPoliza = c;
     this.aseguradora = c.aseguradora ?? '';
     this.numero_poliza = c.numero_poliza ?? '';
+    this.costo_poliza = c.costo_poliza ?? '';
     this.fecha_inicio_poliza = c.fecha_inicio_poliza
       ? c.fecha_inicio_poliza.toString().split('T')[0]
       : '';
@@ -572,6 +580,7 @@ onClickFueraMenuPago() {
     this.dragoverPoliza = false;
     this.aseguradora = '';
     this.numero_poliza = '';
+    this.costo_poliza = '';
     this.fecha_inicio_poliza = '';
     this.fecha_fin_poliza = '';
     this.documento_poliza = '';
@@ -586,6 +595,7 @@ onClickFueraMenuPago() {
     formData.append('numero_serie', this.activoPoliza.numero_serie);
     formData.append('aseguradora', (this.aseguradora || '').trim().toUpperCase());
     formData.append('numero_poliza', (this.numero_poliza || '').trim().toUpperCase());
+    formData.append('costo_poliza', (this.costo_poliza || '').trim());
     formData.append('fecha_inicio_poliza', this.fecha_inicio_poliza || '');
     formData.append('fecha_fin_poliza', this.fecha_fin_poliza || '');
     formData.append('documento_poliza', this.documento_poliza || '');
@@ -653,6 +663,53 @@ onClickFueraMenuPago() {
     window.open(`http://localhost:3000/uploads/activos/${serie}/${this.documento_poliza}`, '_blank');
   }
 
+  // ===== EXPORTAR EXCEL (pólizas de maquinaria, igual formato a la hoja) =====
+  exportarExcel() {
+    const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const fmtFecha = (f: any): string => {
+      if (!f) return '-';
+      const soloFecha = f.toString().split('T')[0].split(' ')[0];
+      const partes = soloFecha.split('-');
+      if (partes.length !== 3) return soloFecha;
+      const [y, m, d] = partes;
+      return `${d}-${MESES_ABR[Number(m) - 1] || m}-${y.slice(2)}`;
+    };
+
+    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)', 'ASEGURADORA', 'NO. PÓLIZA', 'FECHA DE INICIO', 'FECHA DE TÉRMINO'];
+
+    const rows = this.maquinariaFiltrada.map((c: any, i: number) => [
+      i + 1,
+      c.descripcion || '',
+      c.nombre || '',
+      c.b_marca || '',
+      c.m_modelo || '',
+      c.numero_serie || '',
+      c.anio || '',
+      c.costo_poliza || (this.tienePoliza(c) ? '' : 'No asegurado'),
+      c.aseguradora || '-',
+      c.numero_poliza || '-',
+      fmtFecha(c.fecha_inicio_poliza),
+      fmtFecha(c.fecha_fin_poliza)
+    ]);
+
+    const sheetData = [headers, ...rows];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    worksheet['!cols'] = [
+      { wch: 5 }, { wch: 28 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
+      { wch: 20 }, { wch: 8 }, { wch: 24 }, { wch: 14 }, { wch: 16 },
+      { wch: 14 }, { wch: 14 }
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pólizas');
+
+    const hoy = new Date();
+    const fechaArchivo = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
+    saveAs(blob, `Pólizas maquinaria ${fechaArchivo}.xlsx`);
+  }
+
   // ===== ELIMINAR =====
   async deleteMaquinaria(id: any) {
     const confirmado = confirm('¿Seguro que deseas eliminar esta maquinaria?');
@@ -674,6 +731,7 @@ onClickFueraMenuPago() {
     formData.append('numero_activo', this.numero_activo);
     formData.append('numero_serie', this.numero_serie.toUpperCase());
     formData.append('descripcion', this.descripcion.toUpperCase());
+    formData.append('nombre', (this.nombre || '').trim().toUpperCase());
     formData.append('id_marca', this.id_marca.toString());
     formData.append('id_modelo', this.id_modelo.toString());
     formData.append('anio', this.anio.toString());
