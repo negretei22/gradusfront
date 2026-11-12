@@ -4,6 +4,9 @@
         <h2>Maquinaria</h2>
         <div class="contratos-header">
 
+            <button class="btn-primary" (click)="exportarExcel()">
+                📥 Exportar Excel
+            </button>
             <button class="btn-primary" (click)="openModal()">
                 + Nueva maquinaria
             </button>
@@ -171,6 +174,14 @@
             <div class="form-group full-width">
                 <label>Descripción</label>
                 <textarea [(ngModel)]="descripcion" style="text-transform: uppercase;"></textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Nombre</label>
+                <input type="text" [(ngModel)]="nombre" style="text-transform: uppercase;"
+                    placeholder="Ej. POER, TOTO, JITOMATA">
             </div>
         </div>
 
@@ -398,6 +409,14 @@
             <div class="form-group">
                 <label>Fin de vigencia</label>
                 <input type="date" [(ngModel)]="fecha_fin_poliza">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Costo de la póliza (precios incluyen IVA)</label>
+                <input type="text" [(ngModel)]="costo_poliza"
+                    placeholder="Ej. $16,928.72, Financiado en letra o Gratis 1er. año">
             </div>
         </div>
 
