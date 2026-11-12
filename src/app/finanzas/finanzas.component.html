@@ -340,6 +340,26 @@
 
       </div>
 
+      <div class="form-row" *ngIf="mostrarActivo">
+        <div class="form-group" style="position: relative;">
+          <label>Activo (maquinaria)</label>
+          <input type="text" [(ngModel)]="textoActivo" autocomplete="off"
+            placeholder="Busca por descripción, marca, serie, contrato o # activo" (input)="onActivoInput($event)"
+            (blur)="onActivoBlur()">
+          <ul class="autocomplete-popup" *ngIf="resultadosActivos.length > 0">
+            <li *ngFor="let a of resultadosActivos" (mousedown)="seleccionarActivo(a)">
+              {{ etiquetaActivo(a) }} — {{ a.tipo_adquisicion }}
+              <ng-container *ngIf="a.numero_de_contrato"> · {{ a.numero_de_contrato }}</ng-container>
+            </li>
+          </ul>
+        </div>
+
+        <div class="form-group" *ngIf="activo_maquinaria_id">
+          <label>No. de pago<span *ngIf="activoSel?.plazo"> (de {{ activoSel.plazo }})</span></label>
+          <input type="number" min="1" [(ngModel)]="numero_pago" (ngModelChange)="generarConcepto()">
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label>Fecha de pago</label>
@@ -795,16 +815,12 @@
 
           <tbody>
             <tr *ngFor="let g of getGruposConciliacion(); let gi = index"
-              [class.conciliacion-pendiente]="g.estado !== 'ok'">
+              [class.conciliacion-pendiente]="g.estado !== 'ok'" [class.conciliado-comentario]="g.por_comentario">
 
               <td class="col-estado">
-                {{ g.estado === 'ok' ? '✅' : '⚠️' }}
-                <span *ngIf="g.tolerancia" title="Coincidencia con diferencia de centavos"
-                  style="display:block; font-size:10px; color:#b7791f;">
-                  ≈
-                </span>
+                {{ g.por_comentario ? '💬' : (g.estado === 'ok' ? '✅' : '⚠️') }}
+                <span *ngIf="g.tolerancia" ...>≈</span>
               </td>
-
 
               <td class="col-fecha">
                 {{ g.fecha | date:'dd/MM/yyyy':'UTC' }}
@@ -838,7 +854,7 @@
                   </strong>
                 </div>
 
-                
+
                 <!-- Un solo total para todos los movimientos del Sistema -->
                 <div class="monto-total-detalle" *ngIf="g.n_sistema > 1 || g.n_banco > 1">
                   <span>Total:</span>
@@ -973,13 +989,16 @@
                   <div class="conciliacion-aviso" *ngIf="g.estado === 'sobran_sistema'">
                     Hay {{ g.diferencia }} de más en el sistema
                   </div>
+                  <div class="conciliacion-aviso aviso-comentado" *ngIf="g.por_comentario">
+                    ✔ Conciliado por comentario
+                  </div>
 
                   <div class="conciliacion-par" *ngFor="let b of g.banco; let i = index">
 
                     <!-- LADO BANCO -->
                     <div class="conciliacion-lado">
 
-                      <div class="acciones-renglon" *ngIf="g.estado !== 'ok' && b.id">
+                      <div class="acciones-renglon" *ngIf="(g.estado !== 'ok' || g.por_comentario) && b.id">
                         <label class="chk-seleccionar">
                           <input type="checkbox" [checked]="selBanco.has(b.id)" (change)="toggleBanco(b.id)">
                           Seleccionar
@@ -1000,11 +1019,14 @@
                         {{ estaExpandido(gi + '-b-' + i) ? 'Ver menos ▲' : 'Ver más ▼' }}
                       </button>
 
-                      <div *ngFor="let n of b.notas"
-                        style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-top:3px; border-radius:4px;">
-                        💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
-                        <button type="button" (click)="quitarNota(n.id)" title="Quitar"
-                          style="border:none; background:none; cursor:pointer;">✕</button>
+                      <div class="nota-conciliacion" *ngFor="let n of b.notas">
+                        <span class="nota-icono">💬</span>
+                        <div class="nota-cuerpo">
+                          <p class="nota-texto">{{ n.comentario }}</p>
+                          <span class="nota-autor">👤 {{ n.creado_por }}</span>
+                        </div>
+                        <button type="button" class="nota-quitar" (click)="quitarNota(n.id)"
+                          title="Quitar comentario">✕</button>
                       </div>
                     </div>
 
@@ -1012,7 +1034,7 @@
                     <div class="conciliacion-lado">
                       <ng-container *ngIf="g.sistema[i] as s; else sinPar">
 
-                        <div class="acciones-renglon" *ngIf="g.estado !== 'ok'">
+                        <div class="acciones-renglon" *ngIf="g.estado !== 'ok' || g.por_comentario">
                           <label class="chk-seleccionar">
                             <input type="checkbox" [checked]="selSistema.has(+s.id)" (change)="toggleSistema(+s.id)">
                             Seleccionar
@@ -1021,11 +1043,14 @@
                             Comentar</button>
                         </div>
 
-                        <div *ngFor="let n of s.notas"
-                          style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-bottom:3px; border-radius:4px;">
-                          💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
-                          <button type="button" (click)="quitarNota(n.id)" title="Quitar"
-                            style="border:none; background:none; cursor:pointer;">✕</button>
+                        <div class="nota-conciliacion" *ngFor="let n of s.notas">
+                          <span class="nota-icono">💬</span>
+                          <div class="nota-cuerpo">
+                            <p class="nota-texto">{{ n.comentario }}</p>
+                            <span class="nota-autor">👤 {{ n.creado_por }}</span>
+                          </div>
+                          <button type="button" class="nota-quitar" (click)="quitarNota(n.id)"
+                            title="Quitar comentario">✕</button>
                         </div>
 
                         <div class="descripcion" [class.expandida]="estaExpandido(gi + '-s-' + i)">
@@ -1073,7 +1098,7 @@
 
                       <div class="conciliacion-lado">
 
-                        <div class="acciones-renglon" *ngIf="g.estado !== 'ok'">
+                        <div class="acciones-renglon" *ngIf="g.estado !== 'ok' || g.por_comentario">
                           <label class="chk-seleccionar">
                             <input type="checkbox" [checked]="selSistema.has(+s.id)" (change)="toggleSistema(+s.id)">
                             Seleccionar
@@ -1082,11 +1107,14 @@
                             Comentar</button>
                         </div>
 
-                        <div *ngFor="let n of s.notas"
-                          style="font-size:11px; color:#555; background:#fffbe6; padding:3px 6px; margin-bottom:3px; border-radius:4px;">
-                          💬 {{ n.comentario }} <small>— {{ n.creado_por }}</small>
-                          <button type="button" (click)="quitarNota(n.id)" title="Quitar"
-                            style="border:none; background:none; cursor:pointer;">✕</button>
+                        <div class="nota-conciliacion" *ngFor="let n of s.notas">
+                          <span class="nota-icono">💬</span>
+                          <div class="nota-cuerpo">
+                            <p class="nota-texto">{{ n.comentario }}</p>
+                            <span class="nota-autor">👤 {{ n.creado_por }}</span>
+                          </div>
+                          <button type="button" class="nota-quitar" (click)="quitarNota(n.id)"
+                            title="Quitar comentario">✕</button>
                         </div>
 
                         <div class="descripcion" [class.expandida]="estaExpandido(gi + '-extra-' + i)">

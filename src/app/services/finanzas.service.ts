@@ -22,9 +22,13 @@ export class FinanzasService {
 
   }
 
+  buscarActivos(texto: string) { return this.http.get<any[]>(`${this.api}/finanzas/activos/buscar`, { params: { texto } }); }
+  getActivo(id: number) { return this.http.get<any>(`${this.api}/finanzas/activos/${id}`); }
+  getPagosActivo(id: number) { return this.http.get<any[]>(`${this.api}/finanzas/activos/${id}/pagos`); }
+
   getPagosMovimiento(id: number) {
-  return this.http.get<any[]>(`${this.api}/finanzas/movimiento/${id}/pagos`);
-}
+    return this.http.get<any[]>(`${this.api}/finanzas/movimiento/${id}/pagos`);
+  }
   getMovimientosPorCategoria(
     categoriaId: number,
     tipoMovimientoId: number,

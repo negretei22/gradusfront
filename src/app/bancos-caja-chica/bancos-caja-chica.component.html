@@ -45,7 +45,7 @@
             <!-- TOTALES -->
             <tr class="fila-totales">
                 <td colspan="3" style="text-align:right;">TOTALES:</td>
-                <td class="col-monto sep-izq monto-gasto">{{ data.totales.banco_gasto | currency:'MXN':'$':'1.0-0' }}
+                <td class="col-monto sep-izq monto-gasto">{{ data.totales.banco_gasto | currency:'MXN':'$':'1.0-0' }}a
                 </td>
                 <td class="col-monto monto-ingreso">{{ data.totales.banco_ingreso | currency:'MXN':'$':'1.0-0' }}</td>
                 <td class="col-monto"></td>
@@ -90,7 +90,16 @@
                 </td>
 
                 <td class="col-monto sep-izq" [ngClass]="{'monto-gasto': m.banco_gasto > 0}">
-                    {{ m.banco_gasto > 0 ? (m.banco_gasto | currency:'MXN':'$':'1.0-0') : '' }}
+                    <div class="celda-gasto-banco">
+                        <span>{{ m.banco_gasto > 0 ? (m.banco_gasto | currency:'MXN':'$':'1.0-0') : '' }}</span>
+
+                        <span *ngIf="m.banco_gasto > 0 && m.movimiento_financiero_id" class="icono-mov"
+                            style="cursor:pointer;" title="Ver movimiento financiero #{{ m.movimiento_financiero_id }}"
+                            (click)="abrirDetalle(m.movimiento_financiero_id)">✅</span>
+
+                        <span *ngIf="m.banco_gasto > 0 && !m.movimiento_financiero_id" class="icono-mov"
+                            title="Sin movimiento financiero" style="opacity:.4;">⚠️</span>
+                    </div>
                 </td>
                 <td class="col-monto" [ngClass]="{'monto-ingreso': m.banco_ingreso > 0}">
                     {{ m.banco_ingreso > 0 ? (m.banco_ingreso | currency:'MXN':'$':'1.0-0') : '' }}
@@ -192,6 +201,223 @@
         <div class="modal-actions">
             <button class="btn-cancel" (click)="showExportar = false">Cancelar</button>
             <button class="btn-primary" (click)="confirmarExportar()">Exportar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showDetalle" (click)="cerrarDetalle()">
+    <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+        aria-labelledby="tituloDetalle">
+        <!-- Encabezado -->
+        <div class="modal-header">
+            <div>
+                <span class="modal-eyebrow">FINANZAS</span>
+                <h3 id="tituloDetalle">
+                    Detalle del movimiento financiero
+                </h3>
+            </div>
+
+            <button type="button" class="btn-close-icon" aria-label="Cerrar modal" (click)="cerrarDetalle()">
+                &times;
+            </button>
+        </div>
+
+        <!-- Cargando -->
+        <div class="modal-loading" *ngIf="cargandoDetalle">
+            <span class="spinner"></span>
+            <p>Cargando información...</p>
+        </div>
+
+        <!-- Sin información -->
+        <div class="modal-empty" *ngIf="!cargandoDetalle && !detalle">
+            No se encontró el movimiento.
+        </div>
+
+        <!-- Información -->
+        <div class="modal-body" *ngIf="!cargandoDetalle && detalle">
+
+            <!-- Concepto -->
+            <section class="detalle-concepto">
+                <span class="section-label">CONCEPTO</span>
+                <h4>{{ detalle.concepto || 'Sin concepto' }}</h4>
+            </section>
+
+            <!-- Datos del proveedor -->
+            <section class="detalle-section">
+                <h5 class="section-title">
+                    <span class="section-icon">▤</span>
+                    Datos del proveedor
+                </h5>
+
+                <div class="detalle-grid">
+                    <div class="dato">
+                        <span class="dato-label">Razón social</span>
+                        <span class="dato-value">
+                            {{ detalle.razon_social || '—' }}
+                        </span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="dato-label">RFC</span>
+                        <span class="dato-value">
+                            {{ detalle.rfc || '—' }}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fechas y factura -->
+            <section class="detalle-section">
+                <h5 class="section-title">
+                    <span class="section-icon">▦</span>
+                    Datos de facturación
+                </h5>
+
+                <div class="detalle-grid">
+                    <div class="dato">
+                        <span class="dato-label">Fecha de pago</span>
+                        <span class="dato-value">
+                            {{
+                            detalle.fecha_pago_txt
+                            ? (detalle.fecha_pago_txt | date:'dd/MM/yyyy')
+                            : '—'
+                            }}
+                        </span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="dato-label">Fecha de factura</span>
+                        <span class="dato-value">
+                            {{
+                            detalle.fecha_factura_txt
+                            ? (detalle.fecha_factura_txt | date:'dd/MM/yyyy')
+                            : '—'
+                            }}
+                        </span>
+                    </div>
+
+
+                </div>
+            </section>
+
+            <!-- Importes -->
+            <section class="detalle-section">
+                <h5 class="section-title">
+                    <span class="section-icon">$</span>
+                    Desglose de importes
+                </h5>
+
+                <div class="importes-lista">
+                    <div class="importe-fila">
+                        <span>Importe sin IVA</span>
+                        <strong>
+                            {{ detalle.importe_sin_iva | currency:'MXN':'symbol':'1.2-2' }}
+                        </strong>
+                    </div>
+
+                    <div class="importe-fila">
+                        <span>IVA</span>
+                        <strong>
+                            {{ detalle.iva_acreditable | currency:'MXN':'symbol':'1.2-2' }}
+                        </strong>
+                    </div>
+
+
+                    <div class="importe-total">
+                        <span>Gran total</span>
+                        <strong>
+                            {{ (+detalle.importe_sin_iva + +detalle.iva_acreditable) | currency:'MXN':'symbol':'1.2-2'
+                            }}
+                        </strong>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Archivos -->
+            <section class="detalle-section">
+                <h5 class="section-title">
+                    <span class="section-icon">↗</span>
+                    Documentos adjuntos
+                </h5>
+
+                <div class="archivos-lista">
+
+                    <!-- Facturas -->
+                    <a *ngFor="let archivo of obtenerArchivos(detalle.archivo_factura)" class="archivo-item"
+                        [href]="urlArchivo(archivo)" target="_blank" rel="noopener noreferrer">
+                        <span class="archivo-icon">PDF</span>
+                        <span class="archivo-info">
+                            <strong>Factura</strong>
+                            <span>{{ archivo }}</span>
+                        </span>
+                        <span class="archivo-abrir">Abrir ↗</span>
+                    </a>
+
+                    <!-- Comprobantes de pago -->
+                    <a *ngFor="let archivo of obtenerArchivos(detalle.archivo_pago)" class="archivo-item"
+                        [href]="urlArchivo(archivo)" target="_blank" rel="noopener noreferrer">
+                        <span class="archivo-icon">PDF</span>
+                        <span class="archivo-info">
+                            <strong>Comprobante de pago</strong>
+                            <span>{{ archivo }}</span>
+                        </span>
+                        <span class="archivo-abrir">Abrir ↗</span>
+                    </a>
+
+                    <!-- Notas de pago -->
+                    <a *ngFor="let archivo of obtenerArchivos(detalle.archivo_nota_pago)" class="archivo-item"
+                        [href]="urlArchivo(archivo)" target="_blank" rel="noopener noreferrer">
+                        <span class="archivo-icon">PDF</span>
+                        <span class="archivo-info">
+                            <strong>Nota de pago</strong>
+                            <span>{{ archivo }}</span>
+                        </span>
+                        <span class="archivo-abrir">Abrir ↗</span>
+                    </a>
+
+                    <!-- Prefacturas -->
+                    <a *ngFor="let archivo of obtenerArchivos(detalle.archivo_prefactura)" class="archivo-item"
+                        [href]="urlArchivo(archivo)" target="_blank" rel="noopener noreferrer">
+                        <span class="archivo-icon">PDF</span>
+                        <span class="archivo-info">
+                            <strong>Prefactura</strong>
+                            <span>{{ archivo }}</span>
+                        </span>
+                        <span class="archivo-abrir">Abrir ↗</span>
+                    </a>
+
+                    <!-- Otros archivos -->
+                    <a *ngFor="let archivo of obtenerArchivos(detalle.archivo_otra)" class="archivo-item"
+                        [href]="urlArchivo(archivo)" target="_blank" rel="noopener noreferrer">
+                        <span class="archivo-icon">PDF</span>
+                        <span class="archivo-info">
+                            <strong>Otro documento</strong>
+                            <span>{{ archivo }}</span>
+                        </span>
+                        <span class="archivo-abrir">Abrir ↗</span>
+                    </a>
+
+                    <!-- Sin archivos -->
+                    <div class="sin-archivos" *ngIf="
+              obtenerArchivos(detalle.archivo_factura).length === 0 &&
+              obtenerArchivos(detalle.archivo_pago).length === 0 &&
+              obtenerArchivos(detalle.archivo_nota_pago).length === 0 &&
+              obtenerArchivos(detalle.archivo_prefactura).length === 0 &&
+              obtenerArchivos(detalle.archivo_otra).length === 0
+            ">
+                        <span>📂</span>
+                        <p>No hay documentos adjuntos a este movimiento.</p>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- Pie -->
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="cerrarDetalle()">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>

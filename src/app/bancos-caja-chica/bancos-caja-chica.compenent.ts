@@ -5,6 +5,8 @@ import { BancosCajaChicaService } from '../services/bancos-caja-chica.service';
 import { NgxMaskDirective } from 'ngx-mask';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
+import { CajaChicaService } from '../services/caja-chica.service';
+import { FinanzasService } from '../services/finanzas.service';
 
 @Component({
     selector: 'app-bancos-caja-chica',
@@ -15,14 +17,22 @@ import { saveAs } from 'file-saver';
 })
 export class BancosCajaChicaComponent implements OnInit {
 
-    constructor(private service: BancosCajaChicaService) { }
+    constructor(private service: BancosCajaChicaService
+        , private cajaChicaService: CajaChicaService,
+        private finanzasService: FinanzasService
+    ) { }
 
     filtroAnio = new Date().getFullYear();
     filtroMes = new Date().getMonth() + 1;
     mesesVisibles: any[] = [];
     showExportar = false;
     exportarConCaja = true;
+    showDetalle = false;
+    cargandoDetalle = false;
+    detalle: any = null;
+    movimientosCaja: any[] = [];
 
+    readonly urlArchivos = 'http://localhost:3000/uploads/movimientos/';
     meses = [
         { value: 1, text: 'ENERO' }, { value: 2, text: 'FEBRERO' }, { value: 3, text: 'MARZO' },
         { value: 4, text: 'ABRIL' }, { value: 5, text: 'MAYO' }, { value: 6, text: 'JUNIO' },
@@ -40,6 +50,9 @@ export class BancosCajaChicaComponent implements OnInit {
         this.cargar();
     }
 
+
+
+
     get nombreMes() {
         return this.meses.find(m => m.value === this.filtroMes)?.text;
     }
@@ -54,6 +67,56 @@ export class BancosCajaChicaComponent implements OnInit {
         this.cargar();
     }
 
+    abrirDetalle(id: number) {
+        this.detalle = null;
+        this.cargandoDetalle = true;
+        this.showDetalle = true;
+
+        this.cajaChicaService.getMovimientoFinanciero(id).subscribe({
+            next: res => { this.detalle = res; this.cargandoDetalle = false; },
+            error: () => { this.cargandoDetalle = false; }
+        });
+    }
+
+    cerrarDetalle() {
+        this.showDetalle = false;
+        this.detalle = null;
+    }
+
+
+
+    obtenerArchivos(valor: string | null | undefined): string[] {
+        if (!valor || valor === 'null') {
+            return [];
+        }
+
+        try {
+            const archivos = typeof valor === 'string'
+                ? JSON.parse(valor)
+                : valor;
+
+            if (Array.isArray(archivos)) {
+                return archivos.filter(
+                    (archivo): archivo is string =>
+                        typeof archivo === 'string' && archivo.trim() !== ''
+                );
+            }
+
+            // Por si la API devuelve un solo nombre en lugar de un arreglo
+            return typeof archivos === 'string' && archivos.trim()
+                ? [archivos]
+                : [];
+        } catch {
+            // Si el campo contiene un nombre sin formato JSON
+            return [valor];
+        }
+    }
+
+    // Construye la URL del archivo
+    urlArchivo(nombre: string): string {
+        return this.urlArchivos + encodeURIComponent(nombre);
+    }
+
     cargar() {
         this.cargando = true;
         this.service.getMes(this.filtroAnio, this.filtroMes).subscribe({
@@ -61,6 +124,8 @@ export class BancosCajaChicaComponent implements OnInit {
             error: () => { this.cargando = false; }
         });
     }
+
+
 
     abrirSaldo() {
         this.form = { ...this.data.saldo_anterior };

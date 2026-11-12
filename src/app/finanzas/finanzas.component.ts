@@ -143,6 +143,13 @@ export class FinanzasComponent implements OnInit {
   usuarioActual: string = '';
   cargandoFinanzas = true;
 
+  activo_maquinaria_id: number | null = null;
+  numero_pago: number | null = null;
+  textoActivo = '';
+  activoSel: any = null;
+  resultadosActivos: any[] = [];
+  private busquedaActivo$ = new Subject<string>();
+
   filtroTipoConciliacion: 'todos' | 'ingreso' | 'egreso' = 'todos';
 
   filtroEstadoConciliacion: 'todos' | 'ok' | 'pendiente' = 'todos';
@@ -174,6 +181,10 @@ export class FinanzasComponent implements OnInit {
 
   get totalImporte(): number {
     return Number(String(this.importe_sin_iva ?? '').replace(/,/g, '')) || 0;
+  }
+
+  get mostrarActivo(): boolean {
+    return +this.tipo_movimiento_id === 2 && +this.categoria_id === 19;
   }
 
   private grupoTieneComentario(g: any): boolean {
@@ -865,6 +876,8 @@ export class FinanzasComponent implements OnInit {
     this.razon_social = '';
     this.concepto = '';
 
+    this.activo_maquinaria_id = null; this.numero_pago = null;
+    this.activoSel = null; this.textoActivo = '';
     this.metodo_pago_id = '';
     this.importe_sin_iva = null
     this.iva = 16;
@@ -922,6 +935,12 @@ export class FinanzasComponent implements OnInit {
       this.resultadosBusqueda = resultados;
     });
 
+    this.busquedaActivo$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(t => t && t.length >= 2 ? this.finanzasService.buscarActivos(t) : of([]))
+    ).subscribe(r => this.resultadosActivos = r);
+
     this.busquedaConcepto$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -942,6 +961,37 @@ export class FinanzasComponent implements OnInit {
       m => m.value <= mesActual
     );
 
+  }
+
+  onActivoInput(e: any) {
+    this.activoSel = null;
+    this.activo_maquinaria_id = null;
+    this.busquedaActivo$.next(e.target.value);
+  }
+  onActivoBlur() { setTimeout(() => this.resultadosActivos = [], 150); }
+
+  etiquetaActivo(a: any): string {
+    return `#${a.numero_activo} · ${a.descripcion ?? ''} ${a.marca ?? ''} · ${a.numero_serie}`.trim();
+  }
+
+  async seleccionarActivo(a: any) {
+    this.activoSel = a;
+    this.activo_maquinaria_id = a.id_maquinaria;
+    this.textoActivo = this.etiquetaActivo(a);
+    this.resultadosActivos = [];
+    this.numero_pago = a.siguiente_pago;
+    this.generarConcepto();
+  }
+
+  generarConcepto() {
+    const a = this.activoSel;
+    if (!a) return;
+    const base = [a.tipo_adquisicion, a.descripcion].filter(Boolean).join(' ');
+    const contrato = a.numero_de_contrato ? ` - CONTRATO ${a.numero_de_contrato}` : '';
+    const pago = this.numero_pago
+      ? ` PAGO${this.numero_pago}${a.plazo ? 'DE' + a.plazo : ''}`
+      : '';
+    this.concepto = `${base}${contrato}${pago}`.toUpperCase();
   }
 
   limpiarFiltro(campo: string): void {
@@ -1074,6 +1124,15 @@ export class FinanzasComponent implements OnInit {
 
       this.isr_retenido = data.isr_retenido;
       this.metodo_pago_id = data.metodo_pago_id;
+
+      this.activo_maquinaria_id = data.activo_maquinaria_id ?? null;
+      this.numero_pago = data.numero_pago ?? null;
+      
+      if (this.activo_maquinaria_id) {
+        this.activoSel = await firstValueFrom(this.finanzasService.getActivo(this.activo_maquinaria_id));
+        this.textoActivo = this.activoSel ? this.etiquetaActivo(this.activoSel) : '';
+        
+      }
 
       // ===== PAGO DIVIDIDO =====
       this.pago_dividido = Number(data.pago_dividido) === 1;
@@ -1656,6 +1715,8 @@ export class FinanzasComponent implements OnInit {
     formData.append('categoria_id', this.categoria_id);
     formData.append('metodo_pago_id', this.metodo_pago_id);
     formData.append('folio_fiscal', this.folio_fiscal.toUpperCase());
+    formData.append('activo_maquinaria_id', this.mostrarActivo && this.activo_maquinaria_id ? String(this.activo_maquinaria_id) : '');
+    formData.append('numero_pago', this.mostrarActivo && this.numero_pago ? String(this.numero_pago) : '');
 
     this.tiposArchivo.forEach(t => {
       this.archivos[t.key].forEach(file => {

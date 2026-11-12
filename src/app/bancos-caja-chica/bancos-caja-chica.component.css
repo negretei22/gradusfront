@@ -137,3 +137,27 @@ th.grupo-caja {
     font-weight: 600;
 }
 
+.celda-gasto-banco {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.icono-mov {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.celda-gasto-banco {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.icono-mov {
+  font-size: 12px;
+  line-height: 1;
+}
+

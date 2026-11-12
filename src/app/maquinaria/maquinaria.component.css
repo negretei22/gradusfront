@@ -7,9 +7,9 @@
 
 .page-header {
   display: flex;
-  flex-direction: column;   
-  align-items: flex-start;  
-  gap: 10px;                
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 15px;
 }
 
@@ -675,6 +675,225 @@ select {
   }
 }
 
+.acciones-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+/* Lugar reservado para el círculo de archivos, para que no se corran los iconos */
+.slot-archivos {
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-pagos-icon {
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Modal más grande */
+.modal-card.modal-card-pagos {
+  width: 96%;
+  max-width: 1250px;
+  max-height: 94vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+/* Tabla con más espacio */
+.pagos-tabla-wrap {
+  max-height: 58vh;
+  overflow: auto;
+}
+
+/* Que no se parta "Fecha de pago" ni el número */
+.pagos-tabla-wrap th,
+.pagos-tabla-wrap td:nth-child(1),
+.pagos-tabla-wrap td:nth-child(2) {
+  white-space: nowrap;
+}
+
+/* Bloque de información del activo */
+.pagos-info {
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  border-left: 4px solid #027a5b;
+  border-radius: 0 8px 8px 0;
+  background: #f3faf7;
+}
+
+.pagos-info-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #101828;
+}
+
+.pagos-info-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pagos-chip {
+  padding: 3px 12px;
+  border: 1px solid #cfe8df;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.8rem;
+  color: #475467;
+}
+
+.pagos-aviso {
+  margin: -6px 0 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b54708;
+}
+
+.fila-sin-info td {
+  background: #fffaeb;
+  color: #b54708;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+.fila-sin-info td:first-child { color: #101828; }
+
+/* Menú del globito de archivos */
+.menu-archivos-fixed {
+  position: fixed;
+  z-index: 3000;
+  min-width: 170px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
+}
+
+.menu-archivo-item {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.menu-archivo-item:hover { background: #eef4ff; }
+
+.pagos-chip strong {
+  color: #027a5b;
+  font-weight: 700;
+}
+
+.btn-pagos-icon:hover {
+  transform: scale(1.15);
+}
+
+.btn-pagos-icon.oculto {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-card-pagos {
+  width: 92%;
+  max-width: 860px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.pagos-subtitulo {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #667085;
+}
+
+.pagos-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pagos-card {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.pagos-card-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.pagos-card-valor {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #101828;
+}
+
+.pagos-card-valor small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #667085;
+}
+
+.pagos-barra {
+  position: relative;
+  height: 18px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: #eaecf0;
+  overflow: hidden;
+}
+
+.pagos-barra-relleno {
+  height: 100%;
+  background: #12b76a;
+  transition: width 0.3s ease;
+}
+
+.pagos-barra-texto {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #101828;
+}
+
+.pagos-tabla-wrap {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.pagos-vacio {
+  padding: 18px;
+  text-align: center;
+  color: #667085;
+}
+
+.pagos-total td {
+  font-weight: 700;
+  border-top: 2px solid #ddd;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -755,7 +974,7 @@ select {
   left: 20px;
   color: #fff;
   font-size: 14px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   padding: 4px 12px;
   border-radius: 20px;
 }
@@ -764,7 +983,7 @@ select {
   position: absolute;
   top: 10px;
   right: 15px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: #fff;
   font-size: 22px;
@@ -776,15 +995,16 @@ select {
   align-items: center;
   justify-content: center;
 }
+
 .carousel-close:hover {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .carousel-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   color: #fff;
   font-size: 36px;
@@ -797,11 +1017,18 @@ select {
   justify-content: center;
   transition: background 0.2s;
 }
+
 .carousel-nav:hover {
-  background: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.4);
 }
-.carousel-prev { left: 15px; }
-.carousel-next { right: 15px; }
+
+.carousel-prev {
+  left: 15px;
+}
+
+.carousel-next {
+  right: 15px;
+}
 
 .carousel-thumbnails {
   display: flex;
@@ -900,8 +1127,8 @@ select {
   overflow: hidden;
   opacity: 0;
   transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.25s ease,
-              padding 0.35s ease;
+    opacity 0.25s ease,
+    padding 0.35s ease;
 }
 
 .panel-body.abierto {

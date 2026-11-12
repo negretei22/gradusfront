@@ -7,6 +7,8 @@ import { HostListener } from '@angular/core';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { FinanzasService } from '../services/finanzas.service';
+import { firstValueFrom } from 'rxjs';
 
 
 @Pipe({ name: 'safeUrl' })
@@ -29,15 +31,23 @@ export class MaquinariaComponent {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  constructor(private maquinariaService: MaquinariaService) { }
+  constructor(private maquinariaService: MaquinariaService,
+    private finanzasService: FinanzasService
+  ) { }
 
   maquinaria: any[] = [];
   mostrarBuscador: boolean = true // controla visibilidad
   filtroMaquinaria: string = ''
   maquinariaFiltrada: any[] = []
 
+  mostrarPagos = false;
+  cargandoPagos = false;
+  activoPagos: any = null;
+  pagosActivo: any[] = [];
+
   showModal = false
   tituloAdquisicion = '';
+  numero_de_contrato = '';
 
   id_tipo_de_adquisicion = 0;
   numero_activo = '';
@@ -59,6 +69,11 @@ export class MaquinariaComponent {
   importe_con_iva: any = [];
   importe_sin_iva: any = [];
   fecha_de_adquisicion = '';
+
+  filasPagos: any[] = [];
+  menuPagoItems: { label: string, archivo: string }[] = [];
+  menuPagoId: number | null = null;
+  menuPos = { top: 0, left: 0 };
 
   plazo = 0;
   pago_mensual = 0;
@@ -101,7 +116,81 @@ export class MaquinariaComponent {
   toggleMenuArchivos(id: number) {
     this.mostrarMenuArchivos = this.mostrarMenuArchivos === id ? null : id;
   }
+  async verPagos(c: any) {
+    this.activoPagos = c;
+    this.pagosActivo = [];
+    this.filasPagos = [];
+    this.mostrarPagos = true;
+    this.cargandoPagos = true;
+    try {
+      this.pagosActivo = await firstValueFrom(
+        this.finanzasService.getPagosActivo(c.id_maquinaria)
+      );
+      this.filasPagos = this.armarFilasPagos();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      this.cargandoPagos = false;
+    }
+  }
 
+  cerrarPagos() {
+    this.mostrarPagos = false;
+    this.activoPagos = null;
+    this.pagosActivo = [];
+    this.filasPagos = [];
+    this.cerrarMenuPago();
+  }
+
+  // Rellena con "SIN INFORMACIÓN" los números que faltan entre el 1 y el más alto capturado
+  private armarFilasPagos(): any[] {
+    const conNumero = this.pagosActivo.filter(p => Number(p.numero_pago) > 0);
+    const sinNumero = this.pagosActivo.filter(p => !(Number(p.numero_pago) > 0));
+
+    const existentes = new Set(conNumero.map(p => Number(p.numero_pago)));
+    const max = conNumero.length ? Math.max(...existentes) : 0;
+
+    const filas: any[] = [...conNumero];
+    for (let n = 1; n <= max; n++) {
+      if (!existentes.has(n)) filas.push({ numero_pago: n, sinInfo: true });
+    }
+    filas.sort((a, b) => Number(b.numero_pago) - Number(a.numero_pago));
+
+    return [...filas, ...sinNumero];
+  }
+
+  get pagosSinInfo(): number {
+    return this.filasPagos.filter(f => f.sinInfo).length;
+  }
+
+  get pagosRealizados(): number {
+    const nums = this.pagosActivo.map(p => Number(p.numero_pago)).filter(n => n > 0);
+    return nums.length ? Math.max(...nums) : this.pagosActivo.length;
+  }
+
+  get plazoActivo(): number {
+    return Number(this.activoPagos?.plazo) || 0;
+  }
+
+  get pagosPendientes(): number {
+    return Math.max(this.plazoActivo - this.pagosRealizados, 0);
+  }
+
+  get progresoPagos(): number {
+    if (!this.plazoActivo) return 0;
+    return Math.min(Math.round((this.pagosRealizados / this.plazoActivo) * 100), 100);
+  }
+
+  get montoMensualActivo(): number {
+    const a = this.activoPagos;
+    if (!a) return 0;
+    return Number(+a.id_tipo_de_adquisicion === 2 ? a.pago_mensual : a.monto_renta_mensual) || 0;
+  }
+
+
+  get totalPagado(): number {
+    return this.pagosActivo.reduce((s, p) => s + (Number(p.importe_sin_iva) || 0), 0);
+  }
 
   onDragOverPanel(event: DragEvent) {
     event.preventDefault();
@@ -128,6 +217,51 @@ export class MaquinariaComponent {
       this.procesarArchivos(archivos);
     }
   }
+
+  archivosDePago(p: any): { label: string, archivo: string }[] {
+  const result: { label: string, archivo: string }[] = [];
+  const tipos = [
+    { campo: 'archivo_factura', label: 'Factura' },
+    { campo: 'archivo_pago', label: 'Pago' },
+  ];
+  tipos.forEach(t => {
+    this.parseDocumentosFrontend(p[t.campo]).forEach((a, i) =>
+      result.push({ label: `${t.label} ${i + 1}`, archivo: a })
+    );
+  });
+  return result;
+}
+
+contarArchivosPago(p: any): number {
+  return this.archivosDePago(p).length;
+}
+
+togglePagoArchivos(p: any, event: MouseEvent) {
+  event.stopPropagation();
+  if (this.menuPagoId === p.id) {
+    this.cerrarMenuPago();
+    return;
+  }
+  const r = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  this.menuPos = { top: r.bottom + 4, left: Math.max(r.right - 200, 8) };
+  this.menuPagoItems = this.archivosDePago(p);
+  this.menuPagoId = p.id;
+}
+
+cerrarMenuPago() {
+  this.menuPagoId = null;
+  this.menuPagoItems = [];
+}
+
+verArchivoPago(nombre: string) {
+  window.open(`http://localhost:3000/uploads/movimientos/${nombre}`, '_blank');
+  this.cerrarMenuPago();
+}
+
+@HostListener('document:click')
+onClickFueraMenuPago() {
+  if (this.menuPagoId !== null) this.cerrarMenuPago();
+}
 
   // --- Click en el body del panel ---
   onPanelBodyClick(event: Event) {
@@ -306,6 +440,7 @@ export class MaquinariaComponent {
     this.documentosExistentes = [];
 
     this.id_tipo_de_adquisicion = 0;
+    this.numero_de_contrato = '';
     this.numero_activo = '';
     this.numero_serie = '';
     this.descripcion = '';
@@ -356,6 +491,7 @@ export class MaquinariaComponent {
     this.descripcion = c.descripcion;
     this.id_marca = c.id_marca;
     this.anio = c.anio;
+    this.numero_de_contrato = c.numero_de_contrato ?? '';
     this.documentos = c.documentos;
     console.log('valor_compra RECIBIDO (crudo):', c.valor_compra);
     this.valor_compra = c.valor_compra;
@@ -417,6 +553,12 @@ export class MaquinariaComponent {
       formData.append('archivo_documento', file);
     });
 
+    const llevaContrato = [2, 3].includes(Number(this.id_tipo_de_adquisicion));
+    formData.append(
+      'numero_de_contrato',
+      llevaContrato ? (this.numero_de_contrato || '').trim().toUpperCase() : ''
+    );
+
     switch (Number(this.id_tipo_de_adquisicion)) {
       case 1:
         formData.append('valor_compra', this.valor_compra);
@@ -470,6 +612,7 @@ export class MaquinariaComponent {
     if (!resetCampos) return; // 👈 en modo edición no borra nada
 
     this.valor_compra = '';
+    this.numero_de_contrato = '';
     this.importe_con_iva = '';
     this.importe_sin_iva = '';
     this.fecha_de_adquisicion = '';

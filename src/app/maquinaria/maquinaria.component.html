@@ -44,16 +44,25 @@
                 <td>{{ c.b_marca }}</td>
 
                 <td>{{ c.descripcion | slice:0:90 }}...</td>
-
                 <td class="actions">
-                    <div class="archivos-indicador">
-                        <button *ngIf="contarArchivos(c) > 0" class="badge-archivos" (click)="abrirCarrousel(c)">
-                            {{ contarArchivos(c) }}
-                        </button>
-                    </div>
+                    <div class="acciones-wrap">
 
-                   <button class="btn-edit" (click)="editMaquinaria(c)">✏️</button>
-                    <button class="btn-delete" (click)="deleteMaquinaria(c.id)">🗑️</button>
+                        <!-- Lugar fijo para el contador de archivos -->
+                        <div class="archivos-indicador slot-archivos">
+                            <button *ngIf="contarArchivos(c) > 0" class="badge-archivos" (click)="abrirCarrousel(c)">
+                                {{ contarArchivos(c) }}
+                            </button>
+                        </div>
+
+                        <button class="btn-edit" (click)="editMaquinaria(c)" title="Editar">✏️</button>
+                        <button class="btn-delete" (click)="deleteMaquinaria(c.id_maquinaria)"
+                            title="Eliminar">🗑️</button>
+
+                        <!-- Siempre ocupa su lugar; en PROPIO se oculta pero no mueve nada -->
+                        <button class="btn-pagos-icon" title="Ver pagos" [class.oculto]="c.id_tipo_de_adquisicion == 1"
+                            (click)="verPagos(c)">💲</button>
+
+                    </div>
                 </td>
             </tr>
         </tbody>
@@ -61,64 +70,60 @@
 
 </div>
 
- <!-- MODAL CARROUSEL -->
-                    <div class="gradus-carousel-backdrop" *ngIf="mostrarCarrousel" (click)="cerrarCarrousel()"
-                        style="z-index:2000;">
-                        <div class="carousel-container" (click)="$event.stopPropagation()">
+<!-- MODAL CARROUSEL -->
+<div class="gradus-carousel-backdrop" *ngIf="mostrarCarrousel" (click)="cerrarCarrousel()" style="z-index:2000;">
+    <div class="carousel-container" (click)="$event.stopPropagation()">
 
-                            <!-- Contador -->
-                            <div class="carousel-counter">
-                                {{ indiceActual + 1 }} / {{ documentosCarrousel.length }}
-                            </div>
+        <!-- Contador -->
+        <div class="carousel-counter">
+            {{ indiceActual + 1 }} / {{ documentosCarrousel.length }}
+        </div>
 
-                            <!-- Botón cerrar -->
-                            <button class="carousel-close" (click)="cerrarCarrousel()">✕</button>
+        <!-- Botón cerrar -->
+        <button class="carousel-close" (click)="cerrarCarrousel()">✕</button>
 
-                            <!-- Archivo actual -->
-                            <div class="carousel-image-wrapper">
-                                <ng-container *ngIf="esImagen(documentosCarrousel[indiceActual])">
-                                    <img [src]="documentosCarrousel[indiceActual]" alt="Documento de maquinaria" />
-                                </ng-container>
+        <!-- Archivo actual -->
+        <div class="carousel-image-wrapper">
+            <ng-container *ngIf="esImagen(documentosCarrousel[indiceActual])">
+                <img [src]="documentosCarrousel[indiceActual]" alt="Documento de maquinaria" />
+            </ng-container>
 
-                                <ng-container *ngIf="esPdf(documentosCarrousel[indiceActual])">
-                                    <iframe [src]="documentosCarrousel[indiceActual] | safeUrl"
-                                        class="carousel-pdf-viewer"></iframe>
-                                </ng-container>
+            <ng-container *ngIf="esPdf(documentosCarrousel[indiceActual])">
+                <iframe [src]="documentosCarrousel[indiceActual] | safeUrl" class="carousel-pdf-viewer"></iframe>
+            </ng-container>
 
-                                <ng-container
-                                    *ngIf="!esImagen(documentosCarrousel[indiceActual]) && !esPdf(documentosCarrousel[indiceActual])">
-                                    <div class="carousel-generico">
-                                        <span>📄</span>
-                                        <p>{{ nombreArchivo(documentosCarrousel[indiceActual]) }}</p>
-                                    </div>
-                                </ng-container>
-                            </div>
+            <ng-container
+                *ngIf="!esImagen(documentosCarrousel[indiceActual]) && !esPdf(documentosCarrousel[indiceActual])">
+                <div class="carousel-generico">
+                    <span>📄</span>
+                    <p>{{ nombreArchivo(documentosCarrousel[indiceActual]) }}</p>
+                </div>
+            </ng-container>
+        </div>
 
-                            <!-- Controles -->
-                            <button class="carousel-nav carousel-prev" *ngIf="indiceActual > 0"
-                                (click)="anterior()">‹</button>
-                            <button class="carousel-nav carousel-next"
-                                *ngIf="indiceActual < documentosCarrousel.length - 1" (click)="siguiente()">›</button>
+        <!-- Controles -->
+        <button class="carousel-nav carousel-prev" *ngIf="indiceActual > 0" (click)="anterior()">‹</button>
+        <button class="carousel-nav carousel-next" *ngIf="indiceActual < documentosCarrousel.length - 1"
+            (click)="siguiente()">›</button>
 
-                            <!-- Thumbnails -->
-                            <div class="carousel-thumbnails" *ngIf="documentosCarrousel.length > 1">
-                                <ng-container *ngFor="let doc of documentosCarrousel; let i = index">
-                                    <img *ngIf="esImagen(doc)" [src]="doc" [class.active]="i === indiceActual"
-                                        (click)="indiceActual = i" />
-                                    <div *ngIf="!esImagen(doc)" class="thumb-pdf" [class.active]="i === indiceActual"
-                                        (click)="indiceActual = i">
-                                        📄
-                                    </div>
-                                </ng-container>
-                            </div>
+        <!-- Thumbnails -->
+        <div class="carousel-thumbnails" *ngIf="documentosCarrousel.length > 1">
+            <ng-container *ngFor="let doc of documentosCarrousel; let i = index">
+                <img *ngIf="esImagen(doc)" [src]="doc" [class.active]="i === indiceActual" (click)="indiceActual = i" />
+                <div *ngIf="!esImagen(doc)" class="thumb-pdf" [class.active]="i === indiceActual"
+                    (click)="indiceActual = i">
+                    📄
+                </div>
+            </ng-container>
+        </div>
 
-                            <!-- Descargar -->
-                            <button class="carousel-descargar" (click)="descargar(documentosCarrousel[indiceActual])">
-                                ⬇ Descargar
-                            </button>
+        <!-- Descargar -->
+        <button class="carousel-descargar" (click)="descargar(documentosCarrousel[indiceActual])">
+            ⬇ Descargar
+        </button>
 
-                        </div>
-                    </div>
+    </div>
+</div>
 
 
 
@@ -255,6 +260,8 @@
             <h3 class="title-adq">{{ tituloAdquisicion }}</h3>
 
             <div class="section-body">
+
+
                 <!-- PROPIO -->
                 <div *ngIf="id_tipo_de_adquisicion == 1">
                     <div class="form-row">
@@ -274,7 +281,16 @@
                 </div>
 
                 <!-- LEASING -->
+
                 <div *ngIf="id_tipo_de_adquisicion == 2">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Número de contrato</label>
+                            <input type="text" [(ngModel)]="numero_de_contrato" style="text-transform: uppercase;"
+                                placeholder="Ej. 702-30019126">
+                        </div>
+                    </div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -303,6 +319,14 @@
 
                 <!-- ARRENDADA -->
                 <div *ngIf="id_tipo_de_adquisicion == 3">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Número de contrato</label>
+                            <input type="text" [(ngModel)]="numero_de_contrato" style="text-transform: uppercase;"
+                                placeholder="Ej. 702-30019126">
+                        </div>
+                    </div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -335,5 +359,123 @@
             <button class="btn-primary" (click)="saveMaquinaria()">Guardar</button>
         </div>
 
+    </div>
+</div>
+
+<!-- MODAL PAGOS DEL ACTIVO -->
+<div class="modal-backdrop" *ngIf="mostrarPagos" (click)="cerrarPagos()">
+    <div class="modal-card modal-card-pagos" (click)="$event.stopPropagation()">
+
+        <h3>Pagos · {{ activoPagos?.tipo_adquisicion }} · #{{ activoPagos?.numero_activo }}</h3>
+        <div class="pagos-info">
+            <div class="pagos-info-titulo">{{ activoPagos?.descripcion }}</div>
+            <div class="pagos-info-chips">
+                <span class="pagos-chip" *ngIf="activoPagos?.numero_de_contrato">
+                    📄 Contrato <strong>{{ activoPagos?.numero_de_contrato }}</strong>
+                </span>
+                <span class="pagos-chip" *ngIf="activoPagos?.b_marca">
+                    🏷️ <strong>{{ activoPagos?.b_marca }}</strong>
+                </span>
+                <span class="pagos-chip" *ngIf="activoPagos?.numero_serie">
+                    # Serie <strong>{{ activoPagos?.numero_serie }}</strong>
+                </span>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="pagos-resumen">
+            <div class="pagos-card">
+                <span class="pagos-card-label">Pagos realizados</span>
+                <span class="pagos-card-valor">
+                    {{ pagosRealizados }}<small *ngIf="plazoActivo"> de {{ plazoActivo }}</small>
+                </span>
+            </div>
+            <div class="pagos-card" *ngIf="plazoActivo">
+                <span class="pagos-card-label">Pendientes</span>
+                <span class="pagos-card-valor">{{ pagosPendientes }}</span>
+            </div>
+            <div class="pagos-card">
+                <span class="pagos-card-label">Monto mensual</span>
+                <span class="pagos-card-valor">{{ montoMensualActivo | currency:'MXN' }}</span>
+            </div>
+            <div class="pagos-card">
+                <span class="pagos-card-label">Total pagado</span>
+                <span class="pagos-card-valor">{{ totalPagado | currency:'MXN' }}</span>
+            </div>
+        </div>
+
+        <div class="pagos-barra" *ngIf="plazoActivo">
+            <div class="pagos-barra-relleno" [style.width.%]="progresoPagos"></div>
+            <span class="pagos-barra-texto">{{ progresoPagos }}%</span>
+        </div>
+
+        <p class="pagos-aviso" *ngIf="pagosSinInfo > 0">
+            ⚠️ {{ pagosSinInfo }} {{ pagosSinInfo === 1 ? 'pago' : 'pagos' }} sin información capturada
+        </p>
+
+        <!-- Tabla -->
+        <div class="pagos-tabla-wrap">
+            <p *ngIf="cargandoPagos" class="pagos-vacio">Cargando pagos...</p>
+            <p *ngIf="!cargandoPagos && !pagosActivo.length" class="pagos-vacio">
+                Este activo todavía no tiene pagos registrados.
+            </p>
+
+            <table class="gradus-table" *ngIf="!cargandoPagos && filasPagos.length" (scroll)="cerrarMenuPago()">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Fecha de pago</th>
+                        <th>Concepto</th>
+                        <th>Método</th>
+                        <th style="text-align:right">Importe</th>
+                        <th style="text-align:center">Archivos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let p of filasPagos">
+
+                        <!-- Pago capturado -->
+                        <tr *ngIf="!p.sinInfo">
+                            <td>{{ p.numero_pago ?? '—' }}</td>
+                            <td>{{ p.fecha_pago | date:'dd/MM/yyyy' }}</td>
+                            <td>{{ p.concepto }}</td>
+                            <td>{{ p.metodo_pago }}</td>
+                            <td style="text-align:right">{{ p.importe_sin_iva | currency:'MXN' }}</td>
+                            <td style="text-align:center">
+                                <button *ngIf="contarArchivosPago(p) > 0" class="badge-archivos"
+                                    (click)="togglePagoArchivos(p, $event)">
+                                    {{ contarArchivosPago(p) }}
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Pago que no está capturado -->
+                        <tr *ngIf="p.sinInfo" class="fila-sin-info">
+                            <td>{{ p.numero_pago }}</td>
+                            <td colspan="5">SIN INFORMACIÓN</td>
+                        </tr>
+
+                    </ng-container>
+                </tbody>
+                <tfoot>
+                    <tr class="pagos-total">
+                        <td colspan="4">Total capturado</td>
+                        <td style="text-align:right">{{ totalPagado | currency:'MXN' }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="menu-archivos-fixed" *ngIf="menuPagoId !== null" [style.top.px]="menuPos.top"
+            [style.left.px]="menuPos.left" (click)="$event.stopPropagation()">
+            <div class="menu-archivo-item" *ngFor="let a of menuPagoItems" (click)="verArchivoPago(a.archivo)">
+                <span *ngIf="esPdf(a.archivo)">📄</span>
+                <span *ngIf="esImagen(a.archivo)">🖼️</span>
+                {{ a.label }}
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="cerrarPagos()">Cerrar</button>
+        </div>
     </div>
 </div>
