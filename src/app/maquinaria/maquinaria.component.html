@@ -260,66 +260,6 @@
             </div>
         </div>
 
-        <!-- ====== PÓLIZA DE SEGURO ====== -->
-        <div class="section-adq" id="seccion-poliza">
-            <h3 class="title-adq">🛡️ Póliza de seguro</h3>
-
-            <div class="section-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Empresa aseguradora</label>
-                        <input type="text" [(ngModel)]="aseguradora" style="text-transform: uppercase;"
-                            placeholder="Ej. AXA, GNP, QUALITAS">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Número de póliza</label>
-                        <input type="text" [(ngModel)]="numero_poliza" style="text-transform: uppercase;"
-                            placeholder="Ej. 12345678">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Inicio de vigencia</label>
-                        <input type="date" [(ngModel)]="fecha_inicio_poliza">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Fin de vigencia</label>
-                        <input type="date" [(ngModel)]="fecha_fin_poliza">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>PDF de la póliza</label>
-                    <input #polizaInput type="file" accept=".pdf" hidden (change)="onPolizaSeleccionada($event)">
-
-                    <div *ngIf="archivoPoliza" class="poliza-archivo">
-                        <span class="doc-icono">📄</span>
-                        <span class="doc-nombre">{{ archivoPoliza.name }}</span>
-                        <span class="badge-pendiente">Pendiente</span>
-                        <button type="button" class="btn-quitar" (click)="quitarPoliza()"
-                            title="Quitar PDF">✕</button>
-                    </div>
-
-                    <div *ngIf="!archivoPoliza && documento_poliza" class="poliza-archivo">
-                        <a class="doc-link" (click)="verPolizaPdf()" [title]="documento_poliza"
-                            style="cursor: pointer;">
-                            <span class="doc-icono">📄</span>
-                            <span class="doc-nombre">{{ documento_poliza }}</span>
-                        </a>
-                        <button type="button" class="btn-quitar" (click)="quitarPoliza()"
-                            title="Quitar PDF">✕</button>
-                    </div>
-
-                    <button type="button" class="btn-primary" (click)="polizaInput.click()">
-                        {{ documento_poliza || archivoPoliza ? 'Cambiar PDF' : 'Subir PDF de la póliza' }}
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- ====== CAMPOS CONDICIONALES ====== -->
         <div class="section-adq" *ngIf="tituloAdquisicion">
             <h3 class="title-adq">{{ tituloAdquisicion }}</h3>
@@ -424,6 +364,65 @@
             <button class="btn-primary" (click)="saveMaquinaria()">Guardar</button>
         </div>
 
+    </div>
+</div>
+
+<!-- MODAL PÓLIZA DE SEGURO (formulario aparte) -->
+<div class="modal-backdrop" *ngIf="mostrarPoliza" (click)="cerrarPoliza()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <h3>🛡️ Póliza de seguro</h3>
+        <p class="poliza-activo" *ngIf="activoPoliza">
+            {{ activoPoliza.numero_serie }} · {{ activoPoliza.descripcion }}
+        </p>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Empresa aseguradora</label>
+                <input type="text" [(ngModel)]="aseguradora" style="text-transform: uppercase;"
+                    placeholder="Ej. AXA, GNP, QUALITAS">
+            </div>
+
+            <div class="form-group">
+                <label>Número de póliza</label>
+                <input type="text" [(ngModel)]="numero_poliza" style="text-transform: uppercase;"
+                    placeholder="Ej. 12345678">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Inicio de vigencia</label>
+                <input type="date" [(ngModel)]="fecha_inicio_poliza">
+            </div>
+
+            <div class="form-group">
+                <label>Fin de vigencia</label>
+                <input type="date" [(ngModel)]="fecha_fin_poliza">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>PDF de la póliza</label>
+            <div class="poliza-dropzone" [class.dragover]="dragoverPoliza" (dragover)="onDragOverPoliza($event)"
+                (dragleave)="onDragLeavePoliza($event)" (drop)="onDropPoliza($event)"
+                (click)="polizaInput.click()">
+                <input #polizaInput type="file" accept=".pdf" hidden (change)="onPolizaSeleccionada($event)">
+                <span *ngIf="!archivoPoliza && !documento_poliza">📄 Arrastra el PDF aquí o haz clic para
+                    elegirlo</span>
+                <span *ngIf="archivoPoliza">📄 {{ archivoPoliza.name }} · Pendiente de guardar</span>
+                <span *ngIf="!archivoPoliza && documento_poliza">📄 {{ documento_poliza }}</span>
+            </div>
+            <div class="poliza-acciones-pdf" *ngIf="documento_poliza || archivoPoliza">
+                <button type="button" class="btn-cancel" *ngIf="documento_poliza && !archivoPoliza"
+                    (click)="verPolizaPdf()">Ver PDF</button>
+                <button type="button" class="btn-cancel" (click)="quitarPoliza()">Quitar PDF</button>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="cerrarPoliza()">Cancelar</button>
+            <button class="btn-primary" (click)="savePoliza()">Guardar póliza</button>
+        </div>
     </div>
 </div>
 

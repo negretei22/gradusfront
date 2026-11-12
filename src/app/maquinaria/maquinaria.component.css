@@ -836,6 +836,34 @@ select {
   margin-bottom: 8px;
 }
 
+.poliza-activo {
+  color: #555;
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.poliza-dropzone {
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  color: #777;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.poliza-dropzone.dragover {
+  border-color: #2e7d32;
+  background: #f0f7f4;
+  color: #2e7d32;
+}
+
+.poliza-acciones-pdf {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .modal-card-pagos {
   width: 92%;
   max-width: 860px;

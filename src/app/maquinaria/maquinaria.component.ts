@@ -45,6 +45,10 @@ export class MaquinariaComponent {
   activoPagos: any = null;
   pagosActivo: any[] = [];
 
+  mostrarPoliza = false;
+  activoPoliza: any = null;
+  dragoverPoliza = false;
+
   showModal = false
   tituloAdquisicion = '';
   numero_de_contrato = '';
@@ -504,16 +508,6 @@ onClickFueraMenuPago() {
     this.id_marca = c.id_marca;
     this.anio = c.anio;
     this.numero_de_contrato = c.numero_de_contrato ?? '';
-    this.aseguradora = c.aseguradora ?? '';
-    this.numero_poliza = c.numero_poliza ?? '';
-    this.fecha_inicio_poliza = c.fecha_inicio_poliza
-      ? c.fecha_inicio_poliza.toString().split('T')[0]
-      : '';
-    this.fecha_fin_poliza = c.fecha_fin_poliza
-      ? c.fecha_fin_poliza.toString().split('T')[0]
-      : '';
-    this.documento_poliza = c.documento_poliza ?? '';
-    this.archivoPoliza = null;
     this.documentos = c.documentos;
     console.log('valor_compra RECIBIDO (crudo):', c.valor_compra);
     this.valor_compra = c.valor_compra;
@@ -556,11 +550,88 @@ onClickFueraMenuPago() {
   }
 
   abrirPoliza(c: any) {
-    this.editMaquinaria(c);
-    // Baja hasta la sección de póliza dentro del modal
-    setTimeout(() => {
-      document.getElementById('seccion-poliza')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    // Formulario aparte: solo datos de la póliza, no abre el de nuevo/editar
+    this.activoPoliza = c;
+    this.aseguradora = c.aseguradora ?? '';
+    this.numero_poliza = c.numero_poliza ?? '';
+    this.fecha_inicio_poliza = c.fecha_inicio_poliza
+      ? c.fecha_inicio_poliza.toString().split('T')[0]
+      : '';
+    this.fecha_fin_poliza = c.fecha_fin_poliza
+      ? c.fecha_fin_poliza.toString().split('T')[0]
+      : '';
+    this.documento_poliza = c.documento_poliza ?? '';
+    this.archivoPoliza = null;
+    this.dragoverPoliza = false;
+    this.mostrarPoliza = true;
+  }
+
+  cerrarPoliza() {
+    this.mostrarPoliza = false;
+    this.activoPoliza = null;
+    this.dragoverPoliza = false;
+    this.aseguradora = '';
+    this.numero_poliza = '';
+    this.fecha_inicio_poliza = '';
+    this.fecha_fin_poliza = '';
+    this.documento_poliza = '';
+    this.archivoPoliza = null;
+  }
+
+  async savePoliza() {
+    if (!this.activoPoliza) return;
+
+    const formData = new FormData();
+    formData.append('id_maquinaria', this.activoPoliza.id_maquinaria.toString());
+    formData.append('numero_serie', this.activoPoliza.numero_serie);
+    formData.append('aseguradora', (this.aseguradora || '').trim().toUpperCase());
+    formData.append('numero_poliza', (this.numero_poliza || '').trim().toUpperCase());
+    formData.append('fecha_inicio_poliza', this.fecha_inicio_poliza || '');
+    formData.append('fecha_fin_poliza', this.fecha_fin_poliza || '');
+    formData.append('documento_poliza', this.documento_poliza || '');
+    if (this.archivoPoliza) {
+      formData.append('archivo_poliza', this.archivoPoliza);
+    }
+
+    await this.maquinariaService.updatePoliza(formData);
+
+    this.maquinariaService.getMaquinaria().subscribe(res => {
+      this.maquinaria = res as any[];
+      this.maquinariaFiltrada = [...this.maquinaria];
+    });
+
+    this.cerrarPoliza();
+  }
+
+  onDragOverPoliza(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragoverPoliza = true;
+  }
+
+  onDragLeavePoliza(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragoverPoliza = false;
+  }
+
+  onDropPoliza(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragoverPoliza = false;
+
+    const archivos = event.dataTransfer?.files;
+    if (archivos && archivos.length > 0) {
+      this.procesarArchivoPoliza(archivos[0]);
+    }
+  }
+
+  private procesarArchivoPoliza(archivo: File) {
+    if (archivo.type !== 'application/pdf') {
+      alert(`"${archivo.name}" no es válido. Solo se permite PDF.`);
+      return;
+    }
+    this.archivoPoliza = archivo;
   }
 
   onPolizaSeleccionada(event: Event) {
@@ -568,11 +639,7 @@ onClickFueraMenuPago() {
     const archivo = input.files?.[0];
     input.value = '';
     if (!archivo) return;
-    if (archivo.type !== 'application/pdf') {
-      alert(`"${archivo.name}" no es válido. Solo se permite PDF.`);
-      return;
-    }
-    this.archivoPoliza = archivo;
+    this.procesarArchivoPoliza(archivo);
   }
 
   quitarPoliza() {
@@ -582,7 +649,8 @@ onClickFueraMenuPago() {
 
   verPolizaPdf() {
     if (!this.documento_poliza) return;
-    window.open(`http://localhost:3000/uploads/activos/${this.numero_serie}/${this.documento_poliza}`, '_blank');
+    const serie = this.activoPoliza?.numero_serie || this.numero_serie;
+    window.open(`http://localhost:3000/uploads/activos/${serie}/${this.documento_poliza}`, '_blank');
   }
 
   // ===== ELIMINAR =====
@@ -623,16 +691,6 @@ onClickFueraMenuPago() {
       'numero_de_contrato',
       llevaContrato ? (this.numero_de_contrato || '').trim().toUpperCase() : ''
     );
-
-    // Póliza de seguro (aplica a todos los tipos de adquisición)
-    formData.append('aseguradora', (this.aseguradora || '').trim().toUpperCase());
-    formData.append('numero_poliza', (this.numero_poliza || '').trim().toUpperCase());
-    formData.append('fecha_inicio_poliza', this.fecha_inicio_poliza || '');
-    formData.append('fecha_fin_poliza', this.fecha_fin_poliza || '');
-    formData.append('documento_poliza', this.documento_poliza || '');
-    if (this.archivoPoliza) {
-      formData.append('archivo_poliza', this.archivoPoliza);
-    }
 
     switch (Number(this.id_tipo_de_adquisicion)) {
       case 1:
