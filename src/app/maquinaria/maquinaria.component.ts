@@ -52,6 +52,8 @@ export class MaquinariaComponent {
   numero_poliza = '';
   fecha_inicio_poliza = '';
   fecha_fin_poliza = '';
+  documento_poliza = '';
+  archivoPoliza: File | null = null;
 
   id_tipo_de_adquisicion = 0;
   numero_activo = '';
@@ -449,6 +451,8 @@ onClickFueraMenuPago() {
     this.numero_poliza = '';
     this.fecha_inicio_poliza = '';
     this.fecha_fin_poliza = '';
+    this.documento_poliza = '';
+    this.archivoPoliza = null;
     this.numero_activo = '';
     this.numero_serie = '';
     this.descripcion = '';
@@ -508,6 +512,8 @@ onClickFueraMenuPago() {
     this.fecha_fin_poliza = c.fecha_fin_poliza
       ? c.fecha_fin_poliza.toString().split('T')[0]
       : '';
+    this.documento_poliza = c.documento_poliza ?? '';
+    this.archivoPoliza = null;
     this.documentos = c.documentos;
     console.log('valor_compra RECIBIDO (crudo):', c.valor_compra);
     this.valor_compra = c.valor_compra;
@@ -557,6 +563,28 @@ onClickFueraMenuPago() {
     }, 100);
   }
 
+  onPolizaSeleccionada(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    if (archivo.type !== 'application/pdf') {
+      alert(`"${archivo.name}" no es válido. Solo se permite PDF.`);
+      return;
+    }
+    this.archivoPoliza = archivo;
+  }
+
+  quitarPoliza() {
+    this.archivoPoliza = null;
+    this.documento_poliza = '';
+  }
+
+  verPolizaPdf() {
+    if (!this.documento_poliza) return;
+    window.open(`http://localhost:3000/uploads/activos/${this.numero_serie}/${this.documento_poliza}`, '_blank');
+  }
+
   // ===== ELIMINAR =====
   async deleteMaquinaria(id: any) {
     const confirmado = confirm('¿Seguro que deseas eliminar esta maquinaria?');
@@ -601,6 +629,10 @@ onClickFueraMenuPago() {
     formData.append('numero_poliza', (this.numero_poliza || '').trim().toUpperCase());
     formData.append('fecha_inicio_poliza', this.fecha_inicio_poliza || '');
     formData.append('fecha_fin_poliza', this.fecha_fin_poliza || '');
+    formData.append('documento_poliza', this.documento_poliza || '');
+    if (this.archivoPoliza) {
+      formData.append('archivo_poliza', this.archivoPoliza);
+    }
 
     switch (Number(this.id_tipo_de_adquisicion)) {
       case 1:
