@@ -23,7 +23,7 @@
                 </th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
-                    TIPO DE ADQUISICIÓN</th>
+                    NOMBRE</th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
                     MONTO</th>
@@ -42,7 +42,7 @@
         <tbody>
             <tr *ngFor="let c of maquinariaFiltrada">
                 <td>{{ c.numero_serie }}</td>
-                <td>{{ c.tipo_adquisicion }}</td>
+                <td>{{ c.nombre }}</td>
                 <td>{{ c.monto | currency:'MXN' }}</td>
                 <td>{{ c.b_marca }}</td>
 
