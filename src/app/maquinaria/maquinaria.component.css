@@ -805,6 +805,30 @@ select {
   pointer-events: none;
 }
 
+.btn-poliza-icon {
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-poliza-icon:hover {
+  transform: scale(1.15);
+}
+
+.btn-poliza-icon.sin-poliza {
+  opacity: .45;
+  filter: grayscale(1);
+}
+
+.btn-poliza-icon.poliza-vencida {
+  box-shadow: 0 0 0 2px #d32f2f;
+  border-radius: 6px;
+}
+
 .modal-card-pagos {
   width: 92%;
   max-width: 860px;

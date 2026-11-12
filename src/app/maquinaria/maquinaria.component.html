@@ -58,6 +58,11 @@
                         <button class="btn-delete" (click)="deleteMaquinaria(c.id_maquinaria)"
                             title="Eliminar">🗑️</button>
 
+                        <button class="btn-poliza-icon" [class.sin-poliza]="!tienePoliza(c)"
+                            [class.poliza-vencida]="polizaVencida(c)"
+                            [title]="polizaVencida(c) ? 'Póliza de seguro vencida' : 'Póliza de seguro'"
+                            (click)="abrirPoliza(c)">🛡️</button>
+
                         <!-- Siempre ocupa su lugar; en PROPIO se oculta pero no mueve nada -->
                         <button class="btn-pagos-icon" title="Ver pagos" [class.oculto]="c.id_tipo_de_adquisicion == 1"
                             (click)="verPagos(c)">💲</button>
@@ -251,6 +256,39 @@
                         <span class="badge-pendiente">Pendiente</span>
                     </li>
 
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== PÓLIZA DE SEGURO ====== -->
+        <div class="section-adq" id="seccion-poliza">
+            <h3 class="title-adq">🛡️ Póliza de seguro</h3>
+
+            <div class="section-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Empresa aseguradora</label>
+                        <input type="text" [(ngModel)]="aseguradora" style="text-transform: uppercase;"
+                            placeholder="Ej. AXA, GNP, QUALITAS">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Número de póliza</label>
+                        <input type="text" [(ngModel)]="numero_poliza" style="text-transform: uppercase;"
+                            placeholder="Ej. 12345678">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Inicio de vigencia</label>
+                        <input type="date" [(ngModel)]="fecha_inicio_poliza">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fin de vigencia</label>
+                        <input type="date" [(ngModel)]="fecha_fin_poliza">
+                    </div>
                 </div>
             </div>
         </div>
