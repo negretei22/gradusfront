@@ -37,4 +37,8 @@ export class MaquinariaService {
   deleteMaquinaria(id: number) {
     return firstValueFrom(this.http.delete(`${this.api}/maquinaria/delete/${id}`));
   }
+
+  updatePoliza(data: FormData) {
+    return firstValueFrom(this.http.put(`${this.api}/maquinaria/poliza`, data));
+  }
 }
