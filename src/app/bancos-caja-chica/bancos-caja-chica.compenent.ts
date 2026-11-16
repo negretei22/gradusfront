@@ -43,6 +43,17 @@ export class BancosCajaChicaComponent implements OnInit {
     data: any = null;
     cargando = false;
     showSaldo = false;
+    // Mostrar centavos (con decimales) o redondear todo a pesos enteros
+    mostrarCentavos = false;
+
+    get fmtMoneda(): string {
+        return this.mostrarCentavos ? '1.2-2' : '1.0-0';
+    }
+
+    toggleCentavos() {
+        this.mostrarCentavos = !this.mostrarCentavos;
+    }
+
     form = { banco_gasto: 0, banco_ingreso: 0, caja_gasto: 0, caja_ingreso: 0 };
 
     ngOnInit() {
@@ -161,7 +172,9 @@ export class BancosCajaChicaComponent implements OnInit {
             const [y, m, dd] = f.split('-');
             return `${dd}-${MESES_ABR[Number(m) - 1]}-${y}`;
         };
-        const r = (n: any) => Math.round(Number(n) || 0);
+        const r = (n: any) => this.mostrarCentavos
+            ? Math.round(Number(n || 0) * 100) / 100
+            : Math.round(Number(n) || 0);
         const v = (n: number) => (n > 0 ? r(n) : '');
 
 
