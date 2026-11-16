@@ -11,6 +11,7 @@
         <h2>Bancos y Caja Chica — {{ nombreMes }}</h2>
         <div class="contratos-header">
             <button class="btn-primary" (click)="cargar()">🔄 Actualizar</button>
+            <button class="btn-primary" (click)="toggleCentavos()">{{ mostrarCentavos ? '💲 Ocultar centavos' : '💲 Mostrar centavos' }}</button>
             <button class="btn-primary" (click)="cerrarMes()">🔒 Cerrar mes</button>
             <button class="btn-primary" (click)="showExportar = true">📥 Exportar Excel</button>
         </div>
@@ -45,13 +46,13 @@
             <!-- TOTALES -->
             <tr class="fila-totales">
                 <td colspan="3" style="text-align:right;">TOTALES:</td>
-                <td class="col-monto sep-izq monto-gasto">{{ data.totales.banco_gasto | currency:'MXN':'$':'1.0-0' }}
+                <td class="col-monto sep-izq monto-gasto">{{ data.totales.banco_gasto | currency:'MXN':'$':fmtMoneda }}
                 </td>
-                <td class="col-monto monto-ingreso">{{ data.totales.banco_ingreso | currency:'MXN':'$':'1.0-0' }}</td>
+                <td class="col-monto monto-ingreso">{{ data.totales.banco_ingreso | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto"></td>
-                <td class="col-monto sep-izq monto-gasto">{{ data.totales.caja_gasto | currency:'MXN':'$':'1.0-0' }}
+                <td class="col-monto sep-izq monto-gasto">{{ data.totales.caja_gasto | currency:'MXN':'$':fmtMoneda }}
                 </td>
-                <td class="col-monto monto-ingreso">{{ data.totales.caja_ingreso | currency:'MXN':'$':'1.0-0' }}</td>
+                <td class="col-monto monto-ingreso">{{ data.totales.caja_ingreso | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto"></td>
                 <td class="col-pago"></td>
             </tr>
@@ -62,12 +63,12 @@
                 <td></td>
                 <td>SALDO ANTERIOR <span *ngIf="!data.saldo_anterior_guardado" style="opacity:.5;">(calculado)</span> ✏️
                 </td>
-                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.banco_gasto | currency:'MXN':'$' }}
+                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.banco_gasto | currency:'MXN':'$':fmtMoneda }}
                 </td>
-                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.banco_ingreso | currency:'MXN':'$' }}</td>
+                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.banco_ingreso | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto"></td>
-                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.caja_gasto | currency:'MXN':'$' }}</td>
-                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.caja_ingreso | currency:'MXN':'$' }}</td>
+                <td class="col-monto sep-izq monto-gasto">{{ data.saldo_anterior.caja_gasto | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto monto-ingreso">{{ data.saldo_anterior.caja_ingreso | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto"></td>
                 <td class="col-pago"></td>
             </tr>
@@ -91,7 +92,7 @@
 
                 <td class="col-monto sep-izq" [ngClass]="{'monto-gasto': m.banco_gasto > 0}">
                     <div class="celda-gasto-banco">
-                        <span>{{ m.banco_gasto > 0 ? (m.banco_gasto | currency:'MXN':'$':'1.0-0') : '' }}</span>
+                        <span>{{ m.banco_gasto > 0 ? (m.banco_gasto | currency:'MXN':'$':fmtMoneda) : '' }}</span>
 
                         <span *ngIf="m.banco_gasto > 0 && m.movimiento_financiero_id" class="icono-mov"
                             style="cursor:pointer;" title="Ver movimiento financiero #{{ m.movimiento_financiero_id }}"
@@ -102,20 +103,20 @@
                     </div>
                 </td>
                 <td class="col-monto" [ngClass]="{'monto-ingreso': m.banco_ingreso > 0}">
-                    {{ m.banco_ingreso > 0 ? (m.banco_ingreso | currency:'MXN':'$':'1.0-0') : '' }}
+                    {{ m.banco_ingreso > 0 ? (m.banco_ingreso | currency:'MXN':'$':fmtMoneda) : '' }}
                 </td>
                 <td class="col-monto" [ngClass]="{'monto-gasto': m.saldo_banco < 0}" style="font-weight:600;">
-                    {{ m.saldo_banco | currency:'MXN':'$':'1.0-0' }}
+                    {{ m.saldo_banco | currency:'MXN':'$':fmtMoneda }}
                 </td>
 
                 <td class="col-monto sep-izq" [ngClass]="{'monto-gasto': m.caja_gasto > 0}">
-                    {{ m.caja_gasto > 0 ? (m.caja_gasto | currency:'MXN':'$':'1.0-0') : '' }}
+                    {{ m.caja_gasto > 0 ? (m.caja_gasto | currency:'MXN':'$':fmtMoneda) : '' }}
                 </td>
                 <td class="col-monto" [ngClass]="{'monto-ingreso': m.caja_ingreso > 0}">
-                    {{ m.caja_ingreso > 0 ? (m.caja_ingreso | currency:'MXN':'$':'1.0-0') : '' }}
+                    {{ m.caja_ingreso > 0 ? (m.caja_ingreso | currency:'MXN':'$':fmtMoneda) : '' }}
                 </td>
                 <td class="col-monto" [ngClass]="{'monto-gasto': m.saldo_caja < 0}" style="font-weight:600;">
-                    {{ m.saldo_caja | currency:'MXN':'$':'1.0-0' }}
+                    {{ m.saldo_caja | currency:'MXN':'$':fmtMoneda }}
                 </td>
 
                 <td class="col-pago">
@@ -136,12 +137,12 @@
                 <td class="sep-izq"></td>
                 <td></td>
                 <td class="col-monto" [ngClass]="data.saldo_final.banco < 0 ? 'monto-gasto' : 'monto-ingreso'">
-                    {{ data.saldo_final.banco | currency:'MXN':'$' }}
+                    {{ data.saldo_final.banco | currency:'MXN':'$':fmtMoneda }}
                 </td>
                 <td class="sep-izq"></td>
                 <td></td>
                 <td class="col-monto" [ngClass]="data.saldo_final.caja < 0 ? 'monto-gasto' : 'monto-ingreso'">
-                    {{ data.saldo_final.caja | currency:'MXN':'$' }}
+                    {{ data.saldo_final.caja | currency:'MXN':'$':fmtMoneda }}
                 </td>
                 <td class="col-pago"></td>
             </tr>
@@ -311,14 +312,14 @@
                     <div class="importe-fila">
                         <span>Importe sin IVA</span>
                         <strong>
-                            {{ detalle.importe_sin_iva | currency:'MXN':'symbol':'1.2-2' }}
+                            {{ detalle.importe_sin_iva | currency:'MXN':'symbol':fmtMoneda }}
                         </strong>
                     </div>
 
                     <div class="importe-fila">
                         <span>IVA</span>
                         <strong>
-                            {{ detalle.iva_acreditable | currency:'MXN':'symbol':'1.2-2' }}
+                            {{ detalle.iva_acreditable | currency:'MXN':'symbol':fmtMoneda }}
                         </strong>
                     </div>
 
@@ -326,7 +327,7 @@
                     <div class="importe-total">
                         <span>Gran total</span>
                         <strong>
-                            {{ (+detalle.importe_sin_iva + +detalle.iva_acreditable) | currency:'MXN':'symbol':'1.2-2'
+                            {{ (+detalle.importe_sin_iva + +detalle.iva_acreditable) | currency:'MXN':'symbol':fmtMoneda
                             }}
                         </strong>
                     </div>
