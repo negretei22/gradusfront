@@ -42,6 +42,8 @@ export class BancosCajaChicaComponent implements OnInit {
 
     data: any = null;
     cargando = false;
+    errorCarga: string | null = null;
+    errorHoja: string | null = null;
     showSaldo = false;
     // Mostrar centavos (con decimales) o redondear todo a pesos enteros
     mostrarCentavos = false;
@@ -130,9 +132,14 @@ export class BancosCajaChicaComponent implements OnInit {
 
     cargar() {
         this.cargando = true;
+        this.errorCarga = null;
+        this.errorHoja = null;
         this.service.getMes(this.filtroAnio, this.filtroMes).subscribe({
-            next: res => { this.data = res; this.cargando = false; },
-            error: () => { this.cargando = false; }
+            next: res => { this.data = res; this.errorHoja = res.error_hoja ?? null; this.cargando = false; },
+            error: () => {
+                this.cargando = false;
+                this.errorCarga = 'No se pudo cargar el mes. Intenta de nuevo con Actualizar.';
+            }
         });
     }
 

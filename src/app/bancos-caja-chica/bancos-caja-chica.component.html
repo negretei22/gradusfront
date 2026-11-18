@@ -19,6 +19,16 @@
 
     <p *ngIf="cargando">Cargando...</p>
 
+    <div *ngIf="errorCarga" style="background:#FDECEA;color:#7A1F1A;padding:10px 12px;border-radius:6px;margin:10px 0;">
+        ⚠️ {{ errorCarga }}
+        <button class="btn-primary" (click)="cargar()" style="margin-left:10px;">Reintentar</button>
+    </div>
+
+    <div *ngIf="!errorCarga && errorHoja" style="background:#FFF4D6;color:#6B4E00;padding:10px 12px;border-radius:6px;margin:10px 0;">
+        ⚠️ {{ errorHoja }}
+        <button class="btn-primary" (click)="cargar()" style="margin-left:10px;">Reintentar</button>
+    </div>
+
     <table class="gradus-table" *ngIf="data">
         <thead>
             <tr>
