@@ -1,7 +1,7 @@
 <div class="page-container">
 
     <div class="page-header" style="flex-direction:column; align-items:flex-start; gap:10px;">
-        <h2>Recurrentes — {{ nombreMes }} {{ filtroAnio }}</h2>
+        <h2>Recurrentes</h2>
         <div class="contratos-header">
             <label style="display:flex; align-items:center; gap:6px;">
                 Mes
@@ -19,9 +19,9 @@
     </div>
 
     <!-- ===== Pestañas Recurrentes (v13): Pagos / Cobros ===== -->
-    <div class="secciones-tabs">
-        <button class="seccion-tab" routerLink="/pagos-recurrentes" routerLinkActive="activa" [routerLinkActiveOptions]="{ exact: true }">Pagos Recurrentes</button>
-        <button class="seccion-tab" routerLink="/cobros-recurrentes" routerLinkActive="activa" [routerLinkActiveOptions]="{ exact: true }">Cobros Recurrentes</button>
+    <div class="tipo-tabs">
+        <button class="tipo-tab" routerLink="/pagos-recurrentes" routerLinkActive="activa" [routerLinkActiveOptions]="{ exact: true }">Pagos Recurrentes</button>
+        <button class="tipo-tab" routerLink="/cobros-recurrentes" routerLinkActive="activa" [routerLinkActiveOptions]="{ exact: true }">Cobros Recurrentes</button>
     </div>
 
     <!-- ===== Pestañas / acordeón (v10): solo una sección abierta a la vez ===== -->

@@ -26,9 +26,14 @@ export interface ReporteFila {
   pago_recurrente_id?: number;
   movimiento_id?: number;
   incluido?: boolean;
-  // Facturas ligadas (cobros, v13): cada una trae folio_fiscal; el Excel
-  // combinado arma el FOLIO uniéndolos con " y ".
+  // Facturas ligadas (cobros, v13): cada una trae folio_fiscal; las usa el
+  // formulario de cobros. El FOLIO del Excel ya NO sale de aquí (v14: sale
+  // de fila.factura, ver abajo).
   facturas?: any[];
+  // Factura del movimiento (v14): sale de archivo_factura
+  // (["518_87.pdf","518_89.pdf"] -> "F87 y F89"); la trae el back en el
+  // reporte y se muestra en la columna FACTURA de la Programación.
+  factura?: string;
 }
 
 export interface ReportePagos {
