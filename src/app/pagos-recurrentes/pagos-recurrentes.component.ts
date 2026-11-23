@@ -42,10 +42,17 @@ export class PagosRecurrentesComponent implements OnInit {
   // Por default van todas, como antes.
   extrasSeleccionadas = new Set<number>();
 
-  // En pantalla solo se muestran los pagos recurrentes; los pagos del mes
-  // que no pertenecen a ningún recurrente solo aparecen en el Excel.
+  // En pantalla, los recurrentes van en su propia sección; los pagos del mes
+  // que no pertenecen a ningún recurrente van en la sección
+  // "Movimientos financieros del mes" (v9).
   get filasRecurrentes(): ReporteFila[] {
     return this.filas.filter(f => f.origen === 'recurrente');
+  }
+
+  // Filas extra del reporte: movimientos del mes que no casan con ningún
+  // recurrente (sección 2, v9).
+  get filasExtras(): ReporteFila[] {
+    return this.filas.filter(f => f.origen === 'factura');
   }
 
   get totalesRecurrentes(): { fiscal: number; no_fiscal: number } {
@@ -55,9 +62,10 @@ export class PagosRecurrentesComponent implements OnInit {
     );
   }
 
-  // Filas que se muestran en la sección revelada y se exportan al Excel (v5+v6):
-  // todos los recurrentes + las extras seleccionadas.
-  get filasExportar(): ReporteFila[] {
+  // Programación del Gasto (sección 3, v9): todos los recurrentes + las
+  // extras seleccionadas en la sección 2, en el orden que trae el back
+  // (mezclado por fecha; el front NO reordena). Es lo que se exporta al Excel.
+  get filasProgramacion(): ReporteFila[] {
     return this.filas.filter(f => {
       if (f.origen === 'recurrente') return true;
       // Extra sin movimiento_id (back sin el campo nuevo): no se puede
@@ -67,8 +75,13 @@ export class PagosRecurrentesComponent implements OnInit {
     });
   }
 
+  // Alias: lo que se exporta al Excel es la programación (v9).
+  get filasExportar(): ReporteFila[] {
+    return this.filasProgramacion;
+  }
+
   get totalesExportar(): { fiscal: number; no_fiscal: number } {
-    return this.filasExportar.reduce(
+    return this.filasProgramacion.reduce(
       (t, f) => ({ fiscal: t.fiscal + (Number(f.fiscal) || 0), no_fiscal: t.no_fiscal + (Number(f.no_fiscal) || 0) }),
       { fiscal: 0, no_fiscal: 0 }
     );
