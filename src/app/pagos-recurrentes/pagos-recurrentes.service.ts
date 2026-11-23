@@ -25,6 +25,8 @@ export interface ReporteFila {
   origen?: string;
   pago_recurrente_id?: number;
   movimiento_id?: number;
+  incluido?: boolean;
+  facturas?: any[];
 }
 
 export interface ReportePagos {
@@ -73,5 +75,13 @@ export class PagosRecurrentesService {
 
   marcarPagado(id: number, anio: number, mes: number, pagado: boolean): Observable<any> {
     return this.http.put(`${this.api}/pagos-recurrentes/${id}/pagado`, { anio, mes, pagado });
+  }
+
+  guardarSeleccion(anio: number, mes: number, movimiento_id: number, incluido: boolean): Observable<any> {
+    return this.http.put(`${this.api}/pagos-recurrentes/seleccion`, { anio, mes, movimiento_id, incluido });
+  }
+
+  guardarSeleccionMes(anio: number, mes: number, incluido: boolean): Observable<any> {
+    return this.http.put(`${this.api}/pagos-recurrentes/seleccion-mes`, { anio, mes, incluido });
   }
 }

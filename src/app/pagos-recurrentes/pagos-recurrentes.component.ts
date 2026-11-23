@@ -1,21 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
-import * as XLSX from 'xlsx-js-style';
-import { saveAs } from 'file-saver';
 import { PagoRecurrenteDto, PagosRecurrentesService, ReporteFila } from './pagos-recurrentes.service';
+import { CobrosRecurrentesService } from '../cobros-recurrentes/cobros-recurrentes.service';
+import { exportarExcelCombinado, extraerFilas, filtrarProgramacion } from './excel-combinado';
 
 @Component({
   selector: 'app-pagos-recurrentes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './pagos-recurrentes.component.html',
   styleUrls: ['../caja-chica/caja-chica.component.css', './pagos-recurrentes.component.css']
 })
 export class PagosRecurrentesComponent implements OnInit {
 
-  constructor(private service: PagosRecurrentesService) { }
+  constructor(private service: PagosRecurrentesService, private cobrosService: CobrosRecurrentesService) { }
 
   // ===== Selector de mes =====
   filtroAnio = new Date().getFullYear();
@@ -42,8 +44,8 @@ export class PagosRecurrentesComponent implements OnInit {
     this.seccionActiva = (this.seccionActiva === s ? null : s);
   }
 
-  // movimiento_id de las filas extra seleccionadas para el Excel (solo sesión, v6).
-  // Por default van todas, como antes.
+  // movimiento_id de las filas extra seleccionadas para la programación (v13:
+  // la selección se guarda en la base y se carga desde fila.incluido).
   extrasSeleccionadas = new Set<number>();
 
   // En pantalla, los recurrentes van en su propia sección; los pagos del mes
@@ -98,19 +100,44 @@ export class PagosRecurrentesComponent implements OnInit {
 
   toggleExtra(f: ReporteFila, ev: Event) {
     if (f.movimiento_id == null) return;
+    const movId = f.movimiento_id;
     const input = ev.target as HTMLInputElement;
-    if (input.checked) this.extrasSeleccionadas.add(f.movimiento_id);
-    else this.extrasSeleccionadas.delete(f.movimiento_id);
+    const incluido = input.checked;
+    if (incluido) this.extrasSeleccionadas.add(movId);
+    else this.extrasSeleccionadas.delete(movId);
+    // La selección se guarda en la base (v13): ante error se revierte el cambio local.
+    this.service.guardarSeleccion(this.filtroAnio, this.filtroMes, movId, incluido).subscribe({
+      error: (err) => {
+        if (incluido) this.extrasSeleccionadas.delete(movId);
+        else this.extrasSeleccionadas.add(movId);
+        input.checked = !incluido;
+        Swal.fire('No se pudo guardar', err.error?.message || 'No se pudo guardar la selección.', 'error');
+      }
+    });
   }
 
   seleccionarTodasExtras() {
+    const anteriores = new Set(this.extrasSeleccionadas);
     this.filas
       .filter(f => f.origen !== 'recurrente' && f.movimiento_id != null)
       .forEach(f => this.extrasSeleccionadas.add(f.movimiento_id as number));
+    this.service.guardarSeleccionMes(this.filtroAnio, this.filtroMes, true).subscribe({
+      error: (err) => {
+        this.extrasSeleccionadas = anteriores;
+        Swal.fire('No se pudo guardar', err.error?.message || 'No se pudo guardar la selección.', 'error');
+      }
+    });
   }
 
   seleccionarNingunaExtra() {
+    const anteriores = new Set(this.extrasSeleccionadas);
     this.extrasSeleccionadas.clear();
+    this.service.guardarSeleccionMes(this.filtroAnio, this.filtroMes, false).subscribe({
+      error: (err) => {
+        this.extrasSeleccionadas = anteriores;
+        Swal.fire('No se pudo guardar', err.error?.message || 'No se pudo guardar la selección.', 'error');
+      }
+    });
   }
 
   togglePagado(f: ReporteFila, ev: Event) {
@@ -174,10 +201,11 @@ export class PagosRecurrentesComponent implements OnInit {
       next: res => {
         const r: any = res || {};
         this.filas = r.filas || r.reporte || r.rows || (Array.isArray(r) ? r : []);
-        // Al cargar el mes, todas las extras van seleccionadas por default (v6).
+        // Al cargar el mes, la selección viene del back (fila.incluido, v13):
+        // incluido false = desmarcada guardada; sin el campo, va marcada como antes.
         this.extrasSeleccionadas = new Set(
           this.filas
-            .filter(f => f.origen !== 'recurrente' && f.movimiento_id != null)
+            .filter(f => f.origen !== 'recurrente' && f.movimiento_id != null && f.incluido !== false)
             .map(f => f.movimiento_id as number)
         );
         // El back devuelve total_fiscal / total_no_fiscal; si no vienen se suman las filas.
@@ -217,85 +245,24 @@ export class PagosRecurrentesComponent implements OnInit {
     return `${d}-${MESES_ABR[Number(m) - 1] || m}-${y.slice(2)}`;
   }
 
-  // ===== EXPORTAR EXCEL (Programación del Gasto) =====
+  // ===== EXPORTAR EXCEL COMBINADO (v13, diseño de Ivo 2026-11-23) =====
+  // Un solo archivo con gastos + cobros + Resumen + mensual estático.
+  // El botón de cualquiera de las dos pestañas genera el mismo archivo:
+  // se piden AMBOS reportes del mes (pagos + cobros).
   exportarExcel() {
-    const r = (n: any) => Math.round((Number(n) || 0) * 100) / 100;
-    const v = (n: any) => (Number(n) > 0 ? r(n) : '');
-
-    const filas: any[][] = [
-      ['Programación del Gasto', '', '', '', '', '', ''],
-      [this.mesAnioTitulo, '', '', '', '', '', ''],
-      ['CONCEPTO', 'BENEFICIARIO', 'FISCAL', 'N FISCAL', 'FECHA DE PAGO', 'PAGADO', 'ORIGEN'],
-      ...this.filasExportar.map((f: any) => [
-        f.concepto || '',
-        f.beneficiario || '',
-        v(f.fiscal),
-        v(f.no_fiscal),
-        this.fmtFecha(f.fecha_pago),
-        f.pagado ? '✓' : '☐',
-        f.origen === 'recurrente' ? 'Recurrente' : 'Factura'
-      ]),
-      ['TOTAL', '', r(this.totalesExportar.fiscal), r(this.totalesExportar.no_fiscal), '', '', '']
-    ];
-
-    // 👇 tipado como any para que TypeScript no marque error en ws[...]
-    const ws: any = XLSX.utils.aoa_to_sheet(filas);
-    ws['!cols'] = [
-      { wch: 42 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }
-    ];
-    ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }
-    ];
-
-    // ===== Estilos (mismo patrón que bancos-caja-chica) =====
-    const borde = { style: 'thin', color: { rgb: 'D9DEE2' } };
-    const bordes = { top: borde, bottom: borde, left: borde, right: borde };
-    const ultimaFila = filas.length - 1;
-
-    const estilo = (rr: number, c: number, s: any) => {
-      const ref = XLSX.utils.encode_cell({ r: rr, c });
-      if (!ws[ref]) ws[ref] = { t: 's', v: '' };
-      ws[ref].s = { ...(ws[ref].s || {}), ...s };
-    };
-
-    for (let rr = 0; rr <= ultimaFila; rr++) {
-      for (let c = 0; c <= 6; c++) {
-        const base: any = { font: { name: 'Arial', sz: 10 }, alignment: { vertical: 'center' } };
-        if (rr === 0) {
-          Object.assign(base, { font: { name: 'Arial', sz: 14, bold: true }, alignment: { horizontal: 'center' } });
-        } else if (rr === 1) {
-          Object.assign(base, { font: { name: 'Arial', sz: 12, bold: true }, alignment: { horizontal: 'center' } });
-        } else if (rr === 2) {
-          Object.assign(base, {
-            font: { name: 'Arial', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-            fill: { fgColor: { rgb: '2B5D8A' } },
-            alignment: { horizontal: 'center' },
-            border: bordes
-          });
-        } else if (rr === ultimaFila) {
-          Object.assign(base, {
-            font: { name: 'Arial', sz: 10, bold: true },
-            fill: { fgColor: { rgb: 'F2F6FA' } },
-            border: bordes
-          });
-        } else if (c >= 2 && c <= 3) {
-          base.numFmt = '"$"#,##0.00';
-          base.alignment = { horizontal: 'right' };
-          base.border = bordes;
-        } else {
-          base.border = bordes;
-        }
-        estilo(rr, c, base);
+    forkJoin({
+      pagos: this.service.reporte(this.filtroAnio, this.filtroMes),
+      cobros: this.cobrosService.reporte(this.filtroAnio, this.filtroMes)
+    }).subscribe({
+      next: ({ pagos, cobros }) => {
+        const filasGasto = filtrarProgramacion(extraerFilas(pagos));
+        const filasIngreso = filtrarProgramacion(extraerFilas(cobros));
+        exportarExcelCombinado(filasGasto, filasIngreso, this.mesAnioTitulo);
+      },
+      error: () => {
+        Swal.fire('No se pudo exportar', 'No se pudo cargar el reporte del mes para armar el Excel.', 'error');
       }
-    }
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, ws, 'Programación del Gasto');
-
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([buffer], { type: 'application/octet-stream' });
-    saveAs(blob, `Programación del Gasto ${this.mesAnioTitulo}.xlsx`);
+    });
   }
 
   // ===== MODAL (nuevo / editar) =====
