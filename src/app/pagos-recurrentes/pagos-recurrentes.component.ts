@@ -218,28 +218,29 @@ export class PagosRecurrentesComponent implements OnInit {
     const v = (n: any) => (Number(n) > 0 ? r(n) : '');
 
     const filas: any[][] = [
-      ['Programación del Gasto', '', '', '', '', ''],
-      [this.mesAnioTitulo, '', '', '', '', ''],
-      ['CONCEPTO', 'BENEFICIARIO', 'FISCAL', 'N FISCAL', 'FECHA DE PAGO', 'PAGADO'],
+      ['Programación del Gasto', '', '', '', '', '', ''],
+      [this.mesAnioTitulo, '', '', '', '', '', ''],
+      ['CONCEPTO', 'BENEFICIARIO', 'FISCAL', 'N FISCAL', 'FECHA DE PAGO', 'PAGADO', 'ORIGEN'],
       ...this.filasExportar.map((f: any) => [
         f.concepto || '',
         f.beneficiario || '',
         v(f.fiscal),
         v(f.no_fiscal),
         this.fmtFecha(f.fecha_pago),
-        f.pagado ? '✓' : '☐'
+        f.pagado ? '✓' : '☐',
+        f.origen === 'recurrente' ? 'Recurrente' : 'Factura'
       ]),
-      ['TOTAL', '', r(this.totalesExportar.fiscal), r(this.totalesExportar.no_fiscal), '', '']
+      ['TOTAL', '', r(this.totalesExportar.fiscal), r(this.totalesExportar.no_fiscal), '', '', '']
     ];
 
     // 👇 tipado como any para que TypeScript no marque error en ws[...]
     const ws: any = XLSX.utils.aoa_to_sheet(filas);
     ws['!cols'] = [
-      { wch: 42 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }
+      { wch: 42 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }
     ];
     ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }
     ];
 
     // ===== Estilos (mismo patrón que bancos-caja-chica) =====
@@ -254,7 +255,7 @@ export class PagosRecurrentesComponent implements OnInit {
     };
 
     for (let rr = 0; rr <= ultimaFila; rr++) {
-      for (let c = 0; c <= 5; c++) {
+      for (let c = 0; c <= 6; c++) {
         const base: any = { font: { name: 'Arial', sz: 10 }, alignment: { vertical: 'center' } };
         if (rr === 0) {
           Object.assign(base, { font: { name: 'Arial', sz: 14, bold: true }, alignment: { horizontal: 'center' } });

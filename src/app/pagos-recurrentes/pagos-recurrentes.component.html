@@ -50,6 +50,7 @@
                 <th class="col-monto">N/FISCAL</th>
                 <th>FECHA DE PAGO</th>
                 <th style="text-align:center;">PAGADO</th>
+                <th>ORIGEN</th>
                 <th style="text-align:center;">EXCEL</th>
             </tr>
         </thead>
@@ -64,6 +65,7 @@
                     <input *ngIf="f.origen === 'recurrente'" type="checkbox" [checked]="f.pagado" (change)="togglePagado(f, $event)">
                     <input *ngIf="f.origen !== 'recurrente'" type="checkbox" [checked]="f.pagado" disabled title="Se marca solo cuando la factura tiene fecha de pago">
                 </td>
+                <td>{{ f.origen === 'recurrente' ? '🔁 Recurrente' : '📄 Factura' }}</td>
                 <td style="text-align:center;">
                     <input *ngIf="f.origen === 'recurrente'" type="checkbox" checked disabled title="Los pagos recurrentes siempre van en el Excel">
                     <input *ngIf="f.origen !== 'recurrente'" type="checkbox" [checked]="isExtraSeleccionada(f)" (change)="toggleExtra(f, $event)">
@@ -73,6 +75,7 @@
                 <td colspan="2" style="text-align:right;">TOTALES:</td>
                 <td class="col-monto">{{ totalesExportar.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto">{{ totalesExportar.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
