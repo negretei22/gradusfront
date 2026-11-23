@@ -35,6 +35,19 @@ export class PagosRecurrentesComponent implements OnInit {
   cargando = false;
   errorCarga: string | null = null;
 
+  // En pantalla solo se muestran los pagos recurrentes; los pagos del mes
+  // que no pertenecen a ningún recurrente solo aparecen en el Excel.
+  get filasRecurrentes(): ReporteFila[] {
+    return this.filas.filter(f => f.origen === 'recurrente');
+  }
+
+  get totalesRecurrentes(): { fiscal: number; no_fiscal: number } {
+    return this.filasRecurrentes.reduce(
+      (t, f) => ({ fiscal: t.fiscal + (Number(f.fiscal) || 0), no_fiscal: t.no_fiscal + (Number(f.no_fiscal) || 0) }),
+      { fiscal: 0, no_fiscal: 0 }
+    );
+  }
+
   // ===== Recurrentes registrados =====
   recurrentes: any[] = [];
   cargandoRecurrentes = false;
@@ -247,7 +260,7 @@ export class PagosRecurrentesComponent implements OnInit {
     this.form.concepto = (f.concepto || '').toString();
     // El back devuelve el beneficiario como razon_social.
     this.form.beneficiario = (f.razon_social ?? f.beneficiario ?? f.nombre ?? '').toString();
-    this.form.fiscal = Number(f.gran_total ?? f.fiscal ?? f.total ?? 0) || 0;
+    this.form.fiscal = Number(f.importe_sin_iva ?? f.fiscal ?? 0) || 0;
     this.form.movimiento_id = f.id ?? null;
     this.facturas = [];
   }
