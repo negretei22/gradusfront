@@ -138,9 +138,9 @@ export class PagosRecurrentesComponent implements OnInit {
   cargandoRecurrentes = false;
   errorRecurrentes: string | null = null;
 
-  // Montos siempre redondeados a pesos enteros (v10: se quitó el botón de centavos).
+  // Montos siempre con centavos (v12: Ivo pidió centavos en este reporte).
   get fmtMoneda(): string {
-    return '1.0-0';
+    return '1.2-2';
   }
 
   get nombreMes() {
@@ -219,7 +219,7 @@ export class PagosRecurrentesComponent implements OnInit {
 
   // ===== EXPORTAR EXCEL (Programación del Gasto) =====
   exportarExcel() {
-    const r = (n: any) => Math.round(Number(n) || 0);
+    const r = (n: any) => Math.round((Number(n) || 0) * 100) / 100;
     const v = (n: any) => (Number(n) > 0 ? r(n) : '');
 
     const filas: any[][] = [
@@ -280,7 +280,7 @@ export class PagosRecurrentesComponent implements OnInit {
             border: bordes
           });
         } else if (c >= 2 && c <= 3) {
-          base.numFmt = '"$"#,##0';
+          base.numFmt = '"$"#,##0.00';
           base.alignment = { horizontal: 'right' };
           base.border = bordes;
         } else {

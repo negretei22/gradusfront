@@ -196,7 +196,7 @@
             <ul class="factura-resultados" *ngIf="facturas.length > 0">
                 <li *ngFor="let f of facturas">
                     <strong>{{ f.concepto }}</strong> — {{ f.razon_social || f.beneficiario }}
-                    <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
+                    <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.2-2' }}</span>
                     <span *ngIf="f.fecha_pago" class="factura-fecha">{{ fmtFecha(f.fecha_pago) }}</span>
                     <button type="button" class="btn-primary" style="padding:4px 10px; margin-top:6px;" (click)="agregarFactura(f)" [disabled]="facturaYaAgregada(f)">{{ facturaYaAgregada(f) ? '✓ Agregada' : '➕ Agregar' }}</button>
                 </li>
@@ -206,11 +206,11 @@
                 <ul class="factura-resultados">
                     <li *ngFor="let f of facturasSeleccionadas">
                         <strong>{{ f.concepto || 'Factura #' + f.id }}</strong> — {{ f.razon_social || f.beneficiario || '' }}
-                        <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
+                        <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? 0) | currency:'MXN':'$':'1.2-2' }}</span>
                         <button type="button" class="btn-link" (click)="quitarFacturaDeLista(f.id)" title="Quitar">✕</button>
                     </li>
                 </ul>
-                <p style="font-size:12px; margin:6px 0 0; text-align:right;">Total facturas: <strong>{{ totalFacturasSeleccionadas | currency:'MXN':'$':'1.0-0' }}</strong></p>
+                <p style="font-size:12px; margin:6px 0 0; text-align:right;">Total facturas: <strong>{{ totalFacturasSeleccionadas | currency:'MXN':'$':'1.2-2' }}</strong></p>
             </div>
         </div>
 
