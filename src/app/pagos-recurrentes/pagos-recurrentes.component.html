@@ -130,7 +130,7 @@
             <ul class="factura-resultados" *ngIf="facturas.length > 0">
                 <li *ngFor="let f of facturas" (click)="elegirFactura(f)">
                     <strong>{{ f.concepto }}</strong> — {{ f.razon_social || f.beneficiario }}
-                    <span class="factura-monto">{{ (f.gran_total ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
+                    <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
                     <span *ngIf="f.fecha_pago" class="factura-fecha">{{ fmtFecha(f.fecha_pago) }}</span>
                 </li>
             </ul>
