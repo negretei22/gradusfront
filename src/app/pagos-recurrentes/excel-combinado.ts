@@ -9,6 +9,9 @@
 // (Google Sheets): TODO lo calculado son FÓRMULAS vivas (SUM / SUMIF
 // sobre los rangos de datos de cada bloque) con su valor en caché, para
 // que al agregar renglones o cambiar valores todo se actualice solo.
+// Rediseño v15: presentación ejecutiva — banda de título azul marino con
+// filete dorado, encabezados azul acero, banding gris claro, totales
+// azul claro con texto azul marino. Misma estructura, datos y fórmulas.
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 
@@ -45,10 +48,18 @@ export function filtrarProgramacion(filas: FilaRecurrenteExport[]): FilaRecurren
 }
 
 const MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-const AZUL = '2B5D8A';
-const AMARILLO = 'FFFF00';
-const ROSA = 'FCE4EC';
-const GRIS_TOTAL = 'F2F6FA';
+// Paleta ejecutiva (v15)
+const NAVY = '1F3864'; // títulos y títulos de sección
+const STEEL = '2F5597'; // encabezados de columna
+const GOLD = 'BF9000'; // filete bajo el título
+const BANDING = 'F2F2F2'; // renglones pares de datos
+const TOTAL_BG = 'D9E2F3'; // totales
+const AMARILLO_SUAVE = 'FFF2CC'; // "Saldos al..."
+const VERDE_SUAVE = 'E2EFDA'; // "Saldo proyectado"
+const VERDE_TEXTO = '375623';
+const GRIS_NOTA = '595959';
+const BORDE_GRIS = 'BFBFBF';
+const BLANCO = 'FFFFFF';
 
 const r2 = (n: any) => Math.round((Number(n) || 0) * 100) / 100;
 const v = (n: any) => (Number(n) > 0 ? r2(n) : '');
@@ -89,6 +100,41 @@ const MENSUAL: Array<[string, number, number]> = [
   ['Maquinaria diversa', 273600.00, 360000.00],
 ];
 
+// ---- Posición de los bloques (filas 1-based, v15 con banda de título) ----
+// Fila 1: banda de título "Programación — {mes} {año}" (A:N).
+// Fila 2: filete dorado (A:N).
+// Los bloques empiezan en la fila 3:
+// Gasto: título 3, encabezado 4, datos 5.., total 5+nG.
+// Ingresos: 2 filas en blanco después del total del gasto.
+// Resumen (H:J, fijo): 3 título, 4 fecha, 5 encabezado, 6-11 filas,
+// 13 "Saldos al...", 14-16 manuales, 17-19 calculadas.
+// Mensual (L:N, fijo): 3 título, 4 encabezado, 5-14 datos, 15 total, 16 nota.
+const F_GASTO_TITULO = 3;
+const F_GASTO_HEAD = 4;
+const F_GASTO_FIRST = 5;
+const F_RES_TITULO = 3;
+const F_RES_FECHA = 4;
+const F_RES_HEAD = 5;
+const F_RES_RECIBIDOS = 6;
+const F_RES_REALIZADOS = 7;
+const F_RES_SALDOS = 8;
+const F_RES_COBRAR = 9;
+const F_RES_PAGAR = 10;
+const F_RES_PROYECTADO = 11;
+const F_RES_SALDOS_LBL = 13;
+const F_RES_BANORTE = 14;
+const F_RES_GBM = 15;
+const F_RES_CAJA = 16;
+const F_RES_BGB = 17;
+const F_RES_CAJA2 = 18;
+const F_RES_TOTAL = 19;
+const F_MEN_TITULO = 3;
+const F_MEN_HEAD = 4;
+const F_MEN_FIRST = 5;
+const F_MEN_LAST = 14;
+const F_MEN_TOTAL = 15;
+const F_MEN_NOTA = 16;
+
 export function exportarExcelCombinado(
   filasGasto: FilaRecurrenteExport[],
   filasIngreso: FilaRecurrenteExport[],
@@ -123,28 +169,27 @@ export function exportarExcelCombinado(
   );
 
   // ---- Posición de los bloques (filas 1-based) ----
-  // Gasto: título 1, encabezado 2, datos 3.., total 3+nG.
-  // Ingresos: 2 filas en blanco después del total del gasto.
   const nG = filasGasto.length;
   const nI = filasIngreso.length;
-  const totalGastoRow = 3 + nG;
+  const totalGastoRow = F_GASTO_FIRST + nG;
   const tituloIngresosRow = totalGastoRow + 3;
   const headerIngresosRow = tituloIngresosRow + 1;
   const totalIngresosRow = headerIngresosRow + 1 + nI;
-  // Resumen (H:J, fijo): 1 título, 2 fecha, 3 encabezado, 4-9 filas,
-  // 11 "Saldos al...", 12-14 manuales, 15-17 calculadas.
-  // Mensual (L:N, fijo): 1 título, 2 encabezado, 3-12 datos, 13 total, 14 nota.
-  const nRows = Math.max(totalIngresosRow, 17, 14);
+  const nRows = Math.max(totalIngresosRow, F_RES_TOTAL, F_MEN_NOTA);
 
   const aoa: any[][] = Array.from({ length: nRows }, () => new Array(N_COLS).fill(''));
   const set = (r1: number, c0: number, val: any) => { aoa[r1 - 1][c0] = val; };
 
+  // ===== Banda de título (v15, fila 1) + filete dorado (fila 2) =====
+  set(1, 0, `Programación — ${mesAnioTitulo}`);
+  // La fila 2 queda vacía (solo el filete dorado por estilo).
+
   // ===== Bloque 1: Programación del Gasto (A:F) =====
-  set(1, 0, 'Programación del Gasto');
+  set(F_GASTO_TITULO, 0, 'Programación del Gasto');
   ['CONCEPTO', 'BENEFICIARIO', 'FISCAL', 'N/FISCAL', 'FECHA DE PAGO', 'PAGADO']
-    .forEach((h, c) => set(2, c, h));
+    .forEach((h, c) => set(F_GASTO_HEAD, c, h));
   filasGasto.forEach((f, i) => {
-    const r = 3 + i;
+    const r = F_GASTO_FIRST + i;
     const fecha = fechaExcel(f.fecha_pago);
     set(r, 0, f.concepto || '');
     set(r, 1, f.beneficiario || '');
@@ -175,82 +220,88 @@ export function exportarExcelCombinado(
   set(totalIngresosRow, 3, r2(totalIngreso.no_fiscal));
 
   // ===== Bloque 3: Resumen (H:J) =====
-  // Filas fijas 1-17; las fórmulas referencian las celdas de este mismo
-  // bloque (las manuales I12:I14), no valores fijos.
-  set(1, 7, 'Resumen');
-  set(2, 7, tituloFecha);
-  set(3, 7, 'CONCEPTO');
-  set(3, 8, 'FISCAL');
-  set(3, 9, 'N/FISCAL');
-  set(4, 7, 'Pagos recibidos');
-  set(4, 8, v(recibidos.fiscal));
-  set(4, 9, v(recibidos.no_fiscal));
-  set(5, 7, 'Pagos realizados');
-  set(5, 8, v(realizados.fiscal));
-  set(5, 9, v(realizados.no_fiscal));
-  set(6, 7, 'Saldos actuales'); // fórmula -> I15 (Banorte + GBM)
-  set(7, 7, '(+) Por cobrar');
-  set(7, 8, v(porCobrar.fiscal));
-  set(7, 9, v(porCobrar.no_fiscal));
-  set(8, 7, '(-) Por pagar');
-  set(8, 8, v(porPagar.fiscal));
-  set(8, 9, v(porPagar.no_fiscal));
-  set(9, 7, 'Saldo proyectado'); // fórmula -> I6+(I7+J7)-(I8+J8)
-  set(11, 7, tituloSaldos);
-  set(12, 7, 'Banorte'); // I12 EN BLANCO: se captura a mano en el Excel
-  set(13, 7, 'GBM'); // I13 EN BLANCO
-  set(14, 7, 'Caja chica'); // I14 EN BLANCO
-  set(15, 7, 'Banorte + GBM'); // fórmula -> I12+I13
-  set(16, 7, 'Caja chica'); // fórmula -> I14
-  set(17, 7, 'Total'); // fórmula -> I15+I16
+  // Filas fijas 3-19; las fórmulas referencian las celdas de este mismo
+  // bloque (las manuales I14:I16), no valores fijos.
+  set(F_RES_TITULO, 7, 'Resumen');
+  set(F_RES_FECHA, 7, tituloFecha);
+  set(F_RES_HEAD, 7, 'CONCEPTO');
+  set(F_RES_HEAD, 8, 'FISCAL');
+  set(F_RES_HEAD, 9, 'N/FISCAL');
+  set(F_RES_RECIBIDOS, 7, 'Pagos recibidos');
+  set(F_RES_RECIBIDOS, 8, v(recibidos.fiscal));
+  set(F_RES_RECIBIDOS, 9, v(recibidos.no_fiscal));
+  set(F_RES_REALIZADOS, 7, 'Pagos realizados');
+  set(F_RES_REALIZADOS, 8, v(realizados.fiscal));
+  set(F_RES_REALIZADOS, 9, v(realizados.no_fiscal));
+  set(F_RES_SALDOS, 7, 'Saldos actuales'); // fórmula -> I17 (Banorte + GBM)
+  set(F_RES_COBRAR, 7, '(+) Por cobrar');
+  set(F_RES_COBRAR, 8, v(porCobrar.fiscal));
+  set(F_RES_COBRAR, 9, v(porCobrar.no_fiscal));
+  set(F_RES_PAGAR, 7, '(-) Por pagar');
+  set(F_RES_PAGAR, 8, v(porPagar.fiscal));
+  set(F_RES_PAGAR, 9, v(porPagar.no_fiscal));
+  set(F_RES_PROYECTADO, 7, 'Saldo proyectado'); // fórmula -> I8+(I9+J9)-(I10+J10)
+  set(F_RES_SALDOS_LBL, 7, tituloSaldos);
+  set(F_RES_BANORTE, 7, 'Banorte'); // I14 EN BLANCO: se captura a mano en el Excel
+  set(F_RES_GBM, 7, 'GBM'); // I15 EN BLANCO
+  set(F_RES_CAJA, 7, 'Caja chica'); // I16 EN BLANCO
+  set(F_RES_BGB, 7, 'Banorte + GBM'); // fórmula -> I14+I15
+  set(F_RES_CAJA2, 7, 'Caja chica'); // fórmula -> I16
+  set(F_RES_TOTAL, 7, 'Total'); // fórmula -> I17+I18
 
   // ===== Bloque 4: PROGRAMACIÓN MENSUAL DE GASTO (L:N, estático) =====
-  set(1, 11, 'PROGRAMACIÓN MENSUAL DE GASTO');
-  set(2, 11, 'CONCEPTO');
-  set(2, 12, 'FISCAL');
-  set(2, 13, 'N/FISCAL');
+  set(F_MEN_TITULO, 11, 'PROGRAMACIÓN MENSUAL DE GASTO');
+  set(F_MEN_HEAD, 11, 'CONCEPTO');
+  set(F_MEN_HEAD, 12, 'FISCAL');
+  set(F_MEN_HEAD, 13, 'N/FISCAL');
   MENSUAL.forEach(([nombre, a, b], i) => {
-    const r = 3 + i;
+    const r = F_MEN_FIRST + i;
     set(r, 11, nombre);
     set(r, 12, v(a));
     set(r, 13, v(b));
   });
-  set(13, 11, 'TOTAL:');
-  set(13, 12, r2(totalMensual.fiscal));
-  set(13, 13, r2(totalMensual.no_fiscal));
-  set(14, 11, '* Precios a octubre 2026');
+  set(F_MEN_TOTAL, 11, 'TOTAL:');
+  set(F_MEN_TOTAL, 12, r2(totalMensual.fiscal));
+  set(F_MEN_TOTAL, 13, r2(totalMensual.no_fiscal));
+  set(F_MEN_NOTA, 11, '* Precios a octubre 2026');
 
   // 👇 tipado como any para que TypeScript no marque error en ws[...]
   const ws: any = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
   ws['!cols'] = [
-    { wch: 42 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, // A:F
+    { wch: 44 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, // A:F
     { wch: 3 }, // G (separador)
-    { wch: 26 }, { wch: 16 }, { wch: 16 }, // H:J
+    { wch: 28 }, { wch: 16 }, { wch: 16 }, // H:J
     { wch: 3 }, // K (separador)
-    { wch: 38 }, { wch: 16 }, { wch: 16 } // L:N
+    { wch: 40 }, { wch: 16 }, { wch: 16 } // L:N
+  ];
+  ws['!rows'] = [
+    { hpt: 30 }, // 1: banda de título
+    { hpt: 6 } // 2: filete dorado
   ];
   ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Título gasto
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // Banda de título
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // Filete dorado
+    { s: { r: F_GASTO_TITULO - 1, c: 0 }, e: { r: F_GASTO_TITULO - 1, c: 5 } }, // Título gasto
     { s: { r: tituloIngresosRow - 1, c: 0 }, e: { r: tituloIngresosRow - 1, c: 5 } }, // Título ingresos
-    { s: { r: 0, c: 7 }, e: { r: 0, c: 9 } }, // Resumen
-    { s: { r: 1, c: 7 }, e: { r: 1, c: 9 } }, // Al {fecha}
-    { s: { r: 10, c: 7 }, e: { r: 10, c: 9 } }, // Saldos al {fecha}:
-    { s: { r: 0, c: 11 }, e: { r: 0, c: 13 } }, // Título mensual
-    { s: { r: 13, c: 11 }, e: { r: 13, c: 13 } } // Nota * Precios a octubre 2026
+    { s: { r: F_RES_TITULO - 1, c: 7 }, e: { r: F_RES_TITULO - 1, c: 9 } }, // Resumen
+    { s: { r: F_RES_FECHA - 1, c: 7 }, e: { r: F_RES_FECHA - 1, c: 9 } }, // Al {fecha}
+    { s: { r: F_RES_SALDOS_LBL - 1, c: 7 }, e: { r: F_RES_SALDOS_LBL - 1, c: 9 } }, // Saldos al {fecha}:
+    { s: { r: F_MEN_TITULO - 1, c: 11 }, e: { r: F_MEN_TITULO - 1, c: 13 } }, // Título mensual
+    { s: { r: F_MEN_NOTA - 1, c: 11 }, e: { r: F_MEN_NOTA - 1, c: 13 } } // Nota * Precios a octubre 2026
   ];
 
-  // ===== Fórmulas (referencian las celdas manuales I12:I14) =====
-  // Fórmulas vivas (ampliación v14): los totales y el Resumen se calculan
+  // ===== Fórmulas (referencian las celdas manuales I14:I16) =====
+  // Fórmulas vivas (v14): los totales y el Resumen se calculan
   // con SUM / SUMIF sobre los rangos EXACTOS de datos de cada bloque
   // (las variables de fila ya calculadas arriba); el valor en caché (`v`)
   // es el calculado en TS para que el archivo se vea bien al abrirlo
   // antes de recalcular. Con un bloque vacío no hay rango válido y se
   // deja el valor estático (0). Las columnas PAGADO/COBRADO llevan texto
   // ☑/☐, así que el criterio del SUMIF es el carácter exacto.
-  // Gasto: datos C3:C{gasLast} / D3:D{gasLast}; Ingresos: datos
-  // C{ingFirst}:C{ingLast} / D{ingFirst}:D{ingLast}; Mensual: M3:M12 / N3:N12.
-  const gasFirst = 3;
-  const gasLast = totalGastoRow - 1; // = 2 + nG
+  // Gasto: datos C5:C{gasLast} / D5:D{gasLast}; Ingresos: datos
+  // C{ingFirst}:C{ingLast} / D{ingFirst}:D{ingLast}; Mensual: M5:M14 / N5:N14.
+  const gasFirst = F_GASTO_FIRST;
+  const gasLast = totalGastoRow - 1; // = 4 + nG
   const ingFirst = headerIngresosRow + 1;
   const ingLast = totalIngresosRow - 1; // = headerIngresosRow + nI
   if (nG > 0) {
@@ -261,75 +312,95 @@ export function exportarExcelCombinado(
     ws[`C${totalIngresosRow}`] = { t: 'n', f: `SUM(C${ingFirst}:C${ingLast})`, v: r2(totalIngreso.fiscal) };
     ws[`D${totalIngresosRow}`] = { t: 'n', f: `SUM(D${ingFirst}:D${ingLast})`, v: r2(totalIngreso.no_fiscal) };
   }
-  ws['M13'] = { t: 'n', f: 'SUM(M3:M12)', v: r2(totalMensual.fiscal) };
-  ws['N13'] = { t: 'n', f: 'SUM(N3:N12)', v: r2(totalMensual.no_fiscal) };
+  ws[`M${F_MEN_TOTAL}`] = { t: 'n', f: `SUM(M${F_MEN_FIRST}:M${F_MEN_LAST})`, v: r2(totalMensual.fiscal) };
+  ws[`N${F_MEN_TOTAL}`] = { t: 'n', f: `SUM(N${F_MEN_FIRST}:N${F_MEN_LAST})`, v: r2(totalMensual.no_fiscal) };
   // Resumen: recibidos / por cobrar = SUMIF sobre Ingresos por COBRADO;
   // realizados / por pagar = SUMIF sobre Gasto por PAGADO (columna F).
   if (nI > 0) {
-    ws['I4'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",C${ingFirst}:C${ingLast})`, v: r2(recibidos.fiscal) };
-    ws['J4'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",D${ingFirst}:D${ingLast})`, v: r2(recibidos.no_fiscal) };
-    ws['I7'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",C${ingFirst}:C${ingLast})`, v: r2(porCobrar.fiscal) };
-    ws['J7'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",D${ingFirst}:D${ingLast})`, v: r2(porCobrar.no_fiscal) };
+    ws[`I${F_RES_RECIBIDOS}`] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",C${ingFirst}:C${ingLast})`, v: r2(recibidos.fiscal) };
+    ws[`J${F_RES_RECIBIDOS}`] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",D${ingFirst}:D${ingLast})`, v: r2(recibidos.no_fiscal) };
+    ws[`I${F_RES_COBRAR}`] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",C${ingFirst}:C${ingLast})`, v: r2(porCobrar.fiscal) };
+    ws[`J${F_RES_COBRAR}`] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",D${ingFirst}:D${ingLast})`, v: r2(porCobrar.no_fiscal) };
   }
   if (nG > 0) {
-    ws['I5'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",C${gasFirst}:C${gasLast})`, v: r2(realizados.fiscal) };
-    ws['J5'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",D${gasFirst}:D${gasLast})`, v: r2(realizados.no_fiscal) };
-    ws['I8'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",C${gasFirst}:C${gasLast})`, v: r2(porPagar.fiscal) };
-    ws['J8'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",D${gasFirst}:D${gasLast})`, v: r2(porPagar.no_fiscal) };
+    ws[`I${F_RES_REALIZADOS}`] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",C${gasFirst}:C${gasLast})`, v: r2(realizados.fiscal) };
+    ws[`J${F_RES_REALIZADOS}`] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",D${gasFirst}:D${gasLast})`, v: r2(realizados.no_fiscal) };
+    ws[`I${F_RES_PAGAR}`] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",C${gasFirst}:C${gasLast})`, v: r2(porPagar.fiscal) };
+    ws[`J${F_RES_PAGAR}`] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",D${gasFirst}:D${gasLast})`, v: r2(porPagar.no_fiscal) };
   }
-  ws['I6'] = { t: 'n', f: 'I15', v: 0 }; // Saldos actuales = Banorte + GBM
-  ws['I9'] = { t: 'n', f: 'I6+(I7+J7)-(I8+J8)', v: saldoProyectadoCache }; // Saldo proyectado
-  ws['I15'] = { t: 'n', f: 'I12+I13', v: 0 }; // Banorte + GBM
-  ws['I16'] = { t: 'n', f: 'I14', v: 0 }; // Caja chica
-  ws['I17'] = { t: 'n', f: 'I15+I16', v: 0 }; // Total saldos
+  ws[`I${F_RES_SALDOS}`] = { t: 'n', f: `I${F_RES_BGB}`, v: 0 }; // Saldos actuales = Banorte + GBM
+  ws[`I${F_RES_PROYECTADO}`] = { t: 'n', f: `I${F_RES_SALDOS}+(I${F_RES_COBRAR}+J${F_RES_COBRAR})-(I${F_RES_PAGAR}+J${F_RES_PAGAR})`, v: saldoProyectadoCache }; // Saldo proyectado
+  ws[`I${F_RES_BGB}`] = { t: 'n', f: `I${F_RES_BANORTE}+I${F_RES_GBM}`, v: 0 }; // Banorte + GBM
+  ws[`I${F_RES_CAJA2}`] = { t: 'n', f: `I${F_RES_CAJA}`, v: 0 }; // Caja chica
+  ws[`I${F_RES_TOTAL}`] = { t: 'n', f: `I${F_RES_BGB}+I${F_RES_CAJA2}`, v: 0 }; // Total saldos
 
-  // ===== Estilos =====
-  const borde = { style: 'thin', color: { rgb: 'D9DEE2' } };
-  const bordes = { top: borde, bottom: borde, left: borde, right: borde };
+  // ===== Estilos (v15, presentación ejecutiva) =====
+  const bordeFino = { style: 'thin', color: { rgb: BORDE_GRIS } };
+  const bordes = { top: bordeFino, bottom: bordeFino, left: bordeFino, right: bordeFino };
   const estilo = (r1: number, c0: number, s: any) => {
     const ref = XLSX.utils.encode_cell({ r: r1 - 1, c: c0 });
     if (!ws[ref]) ws[ref] = { t: 's', v: '' };
     ws[ref].s = { ...(ws[ref].s || {}), ...s };
   };
-  const titulo = {
-    font: { name: 'Arial', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: AZUL } },
+  // Aplica `s` a una fila de datos con banding en renglones pares (i impar).
+  const conBanding = (s: any, par: boolean) =>
+    par ? { ...s, fill: { fgColor: { rgb: BANDING } } } : s;
+  const banner = {
+    font: { name: 'Arial', sz: 16, bold: true, color: { rgb: BLANCO } },
+    fill: { fgColor: { rgb: NAVY } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  };
+  const tituloSeccion = {
+    font: { name: 'Arial', sz: 12, bold: true, color: { rgb: BLANCO } },
+    fill: { fgColor: { rgb: NAVY } },
     alignment: { horizontal: 'center', vertical: 'center' }
   };
   const encabezado = {
-    font: { name: 'Arial', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: AZUL } },
+    font: { name: 'Arial', sz: 11, bold: true, color: { rgb: BLANCO } },
+    fill: { fgColor: { rgb: STEEL } },
     alignment: { horizontal: 'center', vertical: 'center' },
     border: bordes
   };
-  const base: any = { font: { name: 'Arial', sz: 10 }, alignment: { vertical: 'center' }, border: bordes };
+  const base: any = { font: { name: 'Arial', sz: 11 }, alignment: { vertical: 'center' }, border: bordes };
   const centrado: any = { ...base, alignment: { horizontal: 'center', vertical: 'center' } };
   const monto: any = { ...base, numFmt: '"$"#,##0.00', alignment: { horizontal: 'right', vertical: 'center' } };
-  const total: any = { ...base, font: { name: 'Arial', sz: 10, bold: true }, fill: { fgColor: { rgb: GRIS_TOTAL } } };
+  const bordeTotalMedio = { style: 'medium', color: { rgb: NAVY } };
+  const total: any = {
+    font: { name: 'Arial', sz: 11, bold: true, color: { rgb: NAVY } },
+    fill: { fgColor: { rgb: TOTAL_BG } },
+    border: { top: bordeTotalMedio, bottom: bordeFino, left: bordeFino, right: bordeFino }
+  };
   const totalMonto: any = { ...total, numFmt: '"$"#,##0.00', alignment: { horizontal: 'right', vertical: 'center' } };
 
   const rango = (r1: number, c0: number, c1: number, s: any) => {
     for (let c = c0; c <= c1; c++) estilo(r1, c, s);
   };
-  // Títulos y encabezados
-  rango(1, 0, 5, titulo);
-  rango(2, 0, 5, encabezado);
-  rango(tituloIngresosRow, 0, 5, titulo);
+  // Banda de título (fila 1) y filete dorado (fila 2)
+  rango(1, 0, 13, banner);
+  rango(2, 0, 13, { fill: { fgColor: { rgb: GOLD } } });
+  // Títulos de sección y encabezados
+  rango(F_GASTO_TITULO, 0, 5, tituloSeccion);
+  rango(F_GASTO_HEAD, 0, 5, encabezado);
+  rango(tituloIngresosRow, 0, 5, tituloSeccion);
   rango(headerIngresosRow, 0, 5, encabezado);
-  rango(1, 7, 9, titulo);
-  rango(2, 7, 9, { font: { name: 'Arial', sz: 12, bold: true }, alignment: { horizontal: 'center', vertical: 'center' } });
-  rango(3, 7, 9, encabezado);
-  rango(1, 11, 13, titulo);
-  rango(2, 11, 13, encabezado);
+  rango(F_RES_TITULO, 7, 9, tituloSeccion);
+  rango(F_RES_FECHA, 7, 9, {
+    font: { name: 'Arial', sz: 12, bold: true, color: { rgb: NAVY } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  });
+  rango(F_RES_HEAD, 7, 9, encabezado);
+  rango(F_MEN_TITULO, 11, 13, tituloSeccion);
+  rango(F_MEN_HEAD, 11, 13, encabezado);
   // Datos del gasto: fecha (E) como yyyy-mm-dd, PAGADO (F) centrado
   for (let i = 0; i < nG; i++) {
-    const r = 3 + i;
-    estilo(r, 0, base);
-    estilo(r, 1, base);
-    estilo(r, 2, monto);
-    estilo(r, 3, monto);
-    estilo(r, 4, { ...centrado, numFmt: 'yyyy-mm-dd' });
-    estilo(r, 5, centrado);
+    const r = F_GASTO_FIRST + i;
+    const par = i % 2 === 1;
+    estilo(r, 0, conBanding(base, par));
+    estilo(r, 1, conBanding(base, par));
+    estilo(r, 2, conBanding(monto, par));
+    estilo(r, 3, conBanding(monto, par));
+    estilo(r, 4, conBanding({ ...centrado, numFmt: 'yyyy-mm-dd' }, par));
+    estilo(r, 5, conBanding(centrado, par));
     // La fecha es celda de fecha real: el formato va en `z` (aoa_to_sheet le
     // pone el default m/d/yy y `z` manda sobre s.numFmt en estas celdas).
     if (fechaExcel(filasGasto[i].fecha_pago) != null) {
@@ -345,60 +416,77 @@ export function exportarExcelCombinado(
   // Datos de ingresos: FOLIO (E) texto, COBRADO (F) centrado
   for (let i = 0; i < nI; i++) {
     const r = headerIngresosRow + 1 + i;
-    estilo(r, 0, base);
-    estilo(r, 1, base);
-    estilo(r, 2, monto);
-    estilo(r, 3, monto);
-    estilo(r, 4, base);
-    estilo(r, 5, centrado);
+    const par = i % 2 === 1;
+    estilo(r, 0, conBanding(base, par));
+    estilo(r, 1, conBanding(base, par));
+    estilo(r, 2, conBanding(monto, par));
+    estilo(r, 3, conBanding(monto, par));
+    estilo(r, 4, conBanding(base, par));
+    estilo(r, 5, conBanding(centrado, par));
   }
   // Total de ingresos
   rango(totalIngresosRow, 0, 1, total);
   estilo(totalIngresosRow, 2, totalMonto);
   estilo(totalIngresosRow, 3, totalMonto);
   rango(totalIngresosRow, 4, 5, total);
-  // Resumen: filas 4-8 normales, 9 proyectado (rosa), 11 saldos (amarillo),
-  // 12-14 manuales, 15-17 calculadas
-  for (const r of [4, 5, 6, 7, 8]) {
-    estilo(r, 7, base);
+  // Resumen: etiquetas azul marino en negrita, montos normales
+  const etiquetaResumen: any = {
+    ...base,
+    font: { name: 'Arial', sz: 11, bold: true, color: { rgb: NAVY } }
+  };
+  for (const r of [F_RES_RECIBIDOS, F_RES_REALIZADOS, F_RES_SALDOS, F_RES_COBRAR, F_RES_PAGAR]) {
+    estilo(r, 7, etiquetaResumen);
     estilo(r, 8, monto);
     estilo(r, 9, monto);
   }
-  const rosa: any = { ...base, font: { name: 'Arial', sz: 10, bold: true }, fill: { fgColor: { rgb: ROSA } } };
-  const rosaMonto: any = { ...rosa, numFmt: '"$"#,##0.00', alignment: { horizontal: 'right', vertical: 'center' } };
-  estilo(9, 7, rosa);
-  estilo(9, 8, rosaMonto);
-  estilo(9, 9, rosa);
-  rango(11, 7, 9, {
-    font: { name: 'Arial', sz: 10, bold: true },
-    fill: { fgColor: { rgb: AMARILLO } },
+  const verde: any = {
+    ...base,
+    font: { name: 'Arial', sz: 11, bold: true, color: { rgb: VERDE_TEXTO } },
+    fill: { fgColor: { rgb: VERDE_SUAVE } }
+  };
+  const verdeMonto: any = { ...verde, numFmt: '"$"#,##0.00', alignment: { horizontal: 'right', vertical: 'center' } };
+  estilo(F_RES_PROYECTADO, 7, verde);
+  estilo(F_RES_PROYECTADO, 8, verdeMonto);
+  estilo(F_RES_PROYECTADO, 9, verde);
+  rango(F_RES_SALDOS_LBL, 7, 9, {
+    font: { name: 'Arial', sz: 11, bold: true, color: { rgb: NAVY } },
+    fill: { fgColor: { rgb: AMARILLO_SUAVE } },
     alignment: { vertical: 'center' },
     border: bordes
   });
-  for (const r of [12, 13, 14]) {
-    estilo(r, 7, base);
-    estilo(r, 8, monto); // celdas manuales: con formato $ para cuando se capturen
+  // Celdas manuales (Banorte / GBM / Caja chica): fondo blanco con borde
+  // medio azul acero para que se note que ahí se escribe.
+  const bordeManual = { style: 'medium', color: { rgb: STEEL } };
+  const manual: any = {
+    ...monto,
+    fill: { fgColor: { rgb: BLANCO } },
+    border: { top: bordeManual, bottom: bordeManual, left: bordeManual, right: bordeManual }
+  };
+  for (const r of [F_RES_BANORTE, F_RES_GBM, F_RES_CAJA]) {
+    estilo(r, 7, etiquetaResumen);
+    estilo(r, 8, manual); // celdas manuales: con formato $ para cuando se capturen
     estilo(r, 9, base);
   }
-  for (const r of [15, 16]) {
-    estilo(r, 7, base);
+  for (const r of [F_RES_BGB, F_RES_CAJA2]) {
+    estilo(r, 7, etiquetaResumen);
     estilo(r, 8, monto);
     estilo(r, 9, base);
   }
-  estilo(17, 7, total);
-  estilo(17, 8, totalMonto);
-  estilo(17, 9, total);
-  // Mensual: datos 3-12, total 13, nota 14
+  estilo(F_RES_TOTAL, 7, total);
+  estilo(F_RES_TOTAL, 8, totalMonto);
+  estilo(F_RES_TOTAL, 9, total);
+  // Mensual: datos 5-14, total 15, nota 16
   for (let i = 0; i < MENSUAL.length; i++) {
-    const r = 3 + i;
-    estilo(r, 11, base);
-    estilo(r, 12, monto);
-    estilo(r, 13, monto);
+    const r = F_MEN_FIRST + i;
+    const par = i % 2 === 1;
+    estilo(r, 11, conBanding(base, par));
+    estilo(r, 12, conBanding(monto, par));
+    estilo(r, 13, conBanding(monto, par));
   }
-  estilo(13, 11, total);
-  estilo(13, 12, totalMonto);
-  estilo(13, 13, totalMonto);
-  rango(14, 11, 13, { font: { name: 'Arial', sz: 10, italic: true, color: { rgb: '666666' } } });
+  estilo(F_MEN_TOTAL, 11, total);
+  estilo(F_MEN_TOTAL, 12, totalMonto);
+  estilo(F_MEN_TOTAL, 13, totalMonto);
+  rango(F_MEN_NOTA, 11, 13, { font: { name: 'Arial', sz: 10, italic: true, color: { rgb: GRIS_NOTA } } });
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, ws, 'Programación');
