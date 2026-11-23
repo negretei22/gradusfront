@@ -12,6 +12,8 @@
 // Rediseño v15: presentación ejecutiva — banda de título azul marino con
 // filete dorado, encabezados azul acero, banding gris claro, totales
 // azul claro con texto azul marino. Misma estructura, datos y fórmulas.
+// Corrección v16: Saldo proyectado por columna (fiscal y no fiscal por
+// separado, sin mezclarlas); Saldos actuales N/FISCAL en $0.00.
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 
@@ -157,12 +159,12 @@ export function exportarExcelCombinado(
   const porPagar = suma(filasGasto, f => !f.pagado);
   const totalGasto = suma(filasGasto, () => true);
   const totalIngreso = suma(filasIngreso, () => true);
-  // Valor en caché de la fórmula de Saldo proyectado: los saldos manuales
-  // parten en blanco (= 0), así que el archivo abre con el proyectado
-  // calculado y se recalcula solo al capturar Banorte / GBM / Caja chica.
-  const saldoProyectadoCache = r2(
-    (porCobrar.fiscal + porCobrar.no_fiscal) - (porPagar.fiscal + porPagar.no_fiscal)
-  );
+  // Valor en caché de la fórmula de Saldo proyectado, POR COLUMNA (v16):
+  // los saldos manuales parten en blanco (= 0), así que el archivo abre
+  // con el proyectado calculado y se recalcula solo al capturar Banorte /
+  // GBM / Caja chica. Antes se mezclaba lo no fiscal en lo fiscal.
+  const saldoProyectadoFiscalCache = r2(porCobrar.fiscal - porPagar.fiscal);
+  const saldoProyectadoNoFiscalCache = r2(porCobrar.no_fiscal - porPagar.no_fiscal);
   const totalMensual = MENSUAL.reduce(
     (t, [, a, b]) => ({ fiscal: t.fiscal + a, no_fiscal: t.no_fiscal + b }),
     { fiscal: 0, no_fiscal: 0 }
@@ -240,7 +242,7 @@ export function exportarExcelCombinado(
   set(F_RES_PAGAR, 7, '(-) Por pagar');
   set(F_RES_PAGAR, 8, v(porPagar.fiscal));
   set(F_RES_PAGAR, 9, v(porPagar.no_fiscal));
-  set(F_RES_PROYECTADO, 7, 'Saldo proyectado'); // fórmula -> I8+(I9+J9)-(I10+J10)
+  set(F_RES_PROYECTADO, 7, 'Saldo proyectado'); // fórmula por columna (v16): I8+I9-I10 / J8+J9-J10
   set(F_RES_SALDOS_LBL, 7, tituloSaldos);
   set(F_RES_BANORTE, 7, 'Banorte'); // I14 EN BLANCO: se captura a mano en el Excel
   set(F_RES_GBM, 7, 'GBM'); // I15 EN BLANCO
@@ -329,7 +331,11 @@ export function exportarExcelCombinado(
     ws[`J${F_RES_PAGAR}`] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",D${gasFirst}:D${gasLast})`, v: r2(porPagar.no_fiscal) };
   }
   ws[`I${F_RES_SALDOS}`] = { t: 'n', f: `I${F_RES_BGB}`, v: 0 }; // Saldos actuales = Banorte + GBM
-  ws[`I${F_RES_PROYECTADO}`] = { t: 'n', f: `I${F_RES_SALDOS}+(I${F_RES_COBRAR}+J${F_RES_COBRAR})-(I${F_RES_PAGAR}+J${F_RES_PAGAR})`, v: saldoProyectadoCache }; // Saldo proyectado
+  ws[`J${F_RES_SALDOS}`] = { t: 'n', v: 0 }; // Saldos actuales N/FISCAL: los saldos no tienen parte no fiscal
+  // Saldo proyectado POR COLUMNA (v16): fiscal = saldos + por cobrar - por
+  // pagar; no fiscal igual por su lado. Nunca se mezclan las columnas.
+  ws[`I${F_RES_PROYECTADO}`] = { t: 'n', f: `I${F_RES_SALDOS}+I${F_RES_COBRAR}-I${F_RES_PAGAR}`, v: saldoProyectadoFiscalCache }; // Saldo proyectado FISCAL
+  ws[`J${F_RES_PROYECTADO}`] = { t: 'n', f: `J${F_RES_SALDOS}+J${F_RES_COBRAR}-J${F_RES_PAGAR}`, v: saldoProyectadoNoFiscalCache }; // Saldo proyectado N/FISCAL
   ws[`I${F_RES_BGB}`] = { t: 'n', f: `I${F_RES_BANORTE}+I${F_RES_GBM}`, v: 0 }; // Banorte + GBM
   ws[`I${F_RES_CAJA2}`] = { t: 'n', f: `I${F_RES_CAJA}`, v: 0 }; // Caja chica
   ws[`I${F_RES_TOTAL}`] = { t: 'n', f: `I${F_RES_BGB}+I${F_RES_CAJA2}`, v: 0 }; // Total saldos
@@ -447,7 +453,7 @@ export function exportarExcelCombinado(
   const verdeMonto: any = { ...verde, numFmt: '"$"#,##0.00', alignment: { horizontal: 'right', vertical: 'center' } };
   estilo(F_RES_PROYECTADO, 7, verde);
   estilo(F_RES_PROYECTADO, 8, verdeMonto);
-  estilo(F_RES_PROYECTADO, 9, verde);
+  estilo(F_RES_PROYECTADO, 9, verdeMonto);
   rango(F_RES_SALDOS_LBL, 7, 9, {
     font: { name: 'Arial', sz: 11, bold: true, color: { rgb: NAVY } },
     fill: { fgColor: { rgb: AMARILLO_SUAVE } },
