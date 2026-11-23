@@ -5,6 +5,10 @@
 // (estática, precios a octubre 2026 de la captura de Ivo).
 // Lo genera el botón Exportar Excel de cualquiera de las dos pestañas
 // (Pagos / Cobros) pidiendo AMBOS reportes del mes.
+// Ampliación v14: el archivo NO es para imprimir, se llena en un Drive
+// (Google Sheets): TODO lo calculado son FÓRMULAS vivas (SUM / SUMIF
+// sobre los rangos de datos de cada bloque) con su valor en caché, para
+// que al agregar renglones o cambiar valores todo se actualice solo.
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 
@@ -236,6 +240,43 @@ export function exportarExcelCombinado(
   ];
 
   // ===== Fórmulas (referencian las celdas manuales I12:I14) =====
+  // Fórmulas vivas (ampliación v14): los totales y el Resumen se calculan
+  // con SUM / SUMIF sobre los rangos EXACTOS de datos de cada bloque
+  // (las variables de fila ya calculadas arriba); el valor en caché (`v`)
+  // es el calculado en TS para que el archivo se vea bien al abrirlo
+  // antes de recalcular. Con un bloque vacío no hay rango válido y se
+  // deja el valor estático (0). Las columnas PAGADO/COBRADO llevan texto
+  // ☑/☐, así que el criterio del SUMIF es el carácter exacto.
+  // Gasto: datos C3:C{gasLast} / D3:D{gasLast}; Ingresos: datos
+  // C{ingFirst}:C{ingLast} / D{ingFirst}:D{ingLast}; Mensual: M3:M12 / N3:N12.
+  const gasFirst = 3;
+  const gasLast = totalGastoRow - 1; // = 2 + nG
+  const ingFirst = headerIngresosRow + 1;
+  const ingLast = totalIngresosRow - 1; // = headerIngresosRow + nI
+  if (nG > 0) {
+    ws[`C${totalGastoRow}`] = { t: 'n', f: `SUM(C${gasFirst}:C${gasLast})`, v: r2(totalGasto.fiscal) };
+    ws[`D${totalGastoRow}`] = { t: 'n', f: `SUM(D${gasFirst}:D${gasLast})`, v: r2(totalGasto.no_fiscal) };
+  }
+  if (nI > 0) {
+    ws[`C${totalIngresosRow}`] = { t: 'n', f: `SUM(C${ingFirst}:C${ingLast})`, v: r2(totalIngreso.fiscal) };
+    ws[`D${totalIngresosRow}`] = { t: 'n', f: `SUM(D${ingFirst}:D${ingLast})`, v: r2(totalIngreso.no_fiscal) };
+  }
+  ws['M13'] = { t: 'n', f: 'SUM(M3:M12)', v: r2(totalMensual.fiscal) };
+  ws['N13'] = { t: 'n', f: 'SUM(N3:N12)', v: r2(totalMensual.no_fiscal) };
+  // Resumen: recibidos / por cobrar = SUMIF sobre Ingresos por COBRADO;
+  // realizados / por pagar = SUMIF sobre Gasto por PAGADO (columna F).
+  if (nI > 0) {
+    ws['I4'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",C${ingFirst}:C${ingLast})`, v: r2(recibidos.fiscal) };
+    ws['J4'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☑",D${ingFirst}:D${ingLast})`, v: r2(recibidos.no_fiscal) };
+    ws['I7'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",C${ingFirst}:C${ingLast})`, v: r2(porCobrar.fiscal) };
+    ws['J7'] = { t: 'n', f: `SUMIF(F${ingFirst}:F${ingLast},"☐",D${ingFirst}:D${ingLast})`, v: r2(porCobrar.no_fiscal) };
+  }
+  if (nG > 0) {
+    ws['I5'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",C${gasFirst}:C${gasLast})`, v: r2(realizados.fiscal) };
+    ws['J5'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☑",D${gasFirst}:D${gasLast})`, v: r2(realizados.no_fiscal) };
+    ws['I8'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",C${gasFirst}:C${gasLast})`, v: r2(porPagar.fiscal) };
+    ws['J8'] = { t: 'n', f: `SUMIF(F${gasFirst}:F${gasLast},"☐",D${gasFirst}:D${gasLast})`, v: r2(porPagar.no_fiscal) };
+  }
   ws['I6'] = { t: 'n', f: 'I15', v: 0 }; // Saldos actuales = Banorte + GBM
   ws['I9'] = { t: 'n', f: 'I6+(I7+J7)-(I8+J8)', v: saldoProyectadoCache }; // Saldo proyectado
   ws['I15'] = { t: 'n', f: 'I12+I13', v: 0 }; // Banorte + GBM
