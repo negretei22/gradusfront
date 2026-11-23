@@ -23,6 +23,8 @@ export interface ReporteFila {
   fecha_pago: string | null;
   pagado: boolean;
   origen?: string;
+  pago_recurrente_id?: number;
+  movimiento_id?: number;
 }
 
 export interface ReportePagos {
@@ -67,5 +69,9 @@ export class PagosRecurrentesService {
     return this.http.get<any[]>(`${this.api}/pagos-recurrentes/buscar-facturas`, {
       params: { texto }
     });
+  }
+
+  marcarPagado(id: number, anio: number, mes: number, pagado: boolean): Observable<any> {
+    return this.http.put(`${this.api}/pagos-recurrentes/${id}/pagado`, { anio, mes, pagado });
   }
 }
