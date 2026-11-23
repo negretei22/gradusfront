@@ -10,6 +10,7 @@ import { ContratosComponent } from './contratos/contratos.component';
 import { LicitacionesComponent } from './licitaciones/licitaciones.component';
 import { MaquinariaComponent } from './maquinaria/maquinaria.component';
 import { FinanzasComponent } from './finanzas/finanzas.component';
+import { PagosRecurrentesComponent } from './pagos-recurrentes/pagos-recurrentes.component';
 import { MonitorProcedimientosComponent } from './monitor-procedimientos/monitor-procedimientos.component';
 import { CajaChicaComponent } from './caja-chica/caja-chica.component';
 import { BancosCajaChicaComponent } from './bancos-caja-chica/bancos-caja-chica.compenent';
@@ -54,6 +55,11 @@ export const routes: Route[] = [
       {
         path: 'finanzas',
         component: FinanzasComponent,
+        canActivate: [moduloGuard],
+      },
+      {
+        path: 'pagos-recurrentes',
+        component: PagosRecurrentesComponent,
         canActivate: [moduloGuard],
       },
       {

@@ -1,0 +1,193 @@
+<div class="page-container">
+
+    <div class="page-header" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <h2>Pagos Recurrentes — {{ nombreMes }} {{ filtroAnio }}</h2>
+        <div class="contratos-header">
+            <label style="display:flex; align-items:center; gap:6px;">
+                Mes
+                <select [(ngModel)]="filtroMes" (change)="cambiarMes()">
+                    <option *ngFor="let m of meses" [value]="m.value">{{ m.text }}</option>
+                </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px;">
+                Año
+                <select [(ngModel)]="filtroAnio" (change)="cambiarMes()">
+                    <option *ngFor="let a of anios" [value]="a">{{ a }}</option>
+                </select>
+            </label>
+            <button class="btn-primary" (click)="cargar()">🔄 Actualizar</button>
+            <button class="btn-primary" (click)="toggleCentavos()">{{ mostrarCentavos ? '💲 Ocultar centavos' : '💲 Mostrar centavos' }}</button>
+            <button class="btn-primary" (click)="exportarExcel()">📥 Exportar Excel</button>
+            <button class="btn-primary" (click)="nuevo()">➕ Nuevo</button>
+        </div>
+    </div>
+
+    <p *ngIf="cargando">Cargando...</p>
+
+    <div *ngIf="errorCarga" style="background:#FDECEA;color:#7A1F1A;padding:10px 12px;border-radius:6px;margin:10px 0;">
+        ⚠️ {{ errorCarga }}
+        <button class="btn-primary" (click)="cargar()" style="margin-left:10px;">Reintentar</button>
+    </div>
+
+    <!-- ===== REPORTE: Programación del Gasto ===== -->
+    <h3 style="margin:16px 0 8px;">Programación del Gasto — {{ mesAnioTitulo }}</h3>
+
+    <table class="gradus-table" *ngIf="!errorCarga && filas.length > 0">
+        <thead>
+            <tr>
+                <th>CONCEPTO</th>
+                <th>BENEFICIARIO</th>
+                <th class="col-monto">FISCAL</th>
+                <th class="col-monto">N/FISCAL</th>
+                <th>FECHA DE PAGO</th>
+                <th style="text-align:center;">PAGADO</th>
+            </tr>
+        </thead>
+        <tbody style="font-size: 12px;">
+            <tr *ngFor="let f of filas">
+                <td>{{ f.concepto }}</td>
+                <td>{{ f.beneficiario }}</td>
+                <td class="col-monto">{{ f.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto">{{ f.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td>{{ fmtFecha(f.fecha_pago) }}</td>
+                <td style="text-align:center; font-size:16px;">{{ f.pagado ? '✓' : '☐' }}</td>
+            </tr>
+            <tr class="fila-totales">
+                <td colspan="2" style="text-align:right;">TOTALES:</td>
+                <td class="col-monto">{{ totales.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto">{{ totales.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p *ngIf="!cargando && !errorCarga && filas.length === 0" style="color:#666;">
+        No hay pagos programados para {{ mesAnioTitulo }}.
+    </p>
+
+    <!-- ===== RECURRENTES REGISTRADOS ===== -->
+    <h3 style="margin:24px 0 8px;">Pagos recurrentes registrados</h3>
+
+    <p *ngIf="cargandoRecurrentes">Cargando...</p>
+
+    <div *ngIf="errorRecurrentes" style="background:#FDECEA;color:#7A1F1A;padding:10px 12px;border-radius:6px;margin:10px 0;">
+        ⚠️ {{ errorRecurrentes }}
+        <button class="btn-primary" (click)="cargarRecurrentes()" style="margin-left:10px;">Reintentar</button>
+    </div>
+
+    <table class="gradus-table" *ngIf="!errorRecurrentes && recurrentes.length > 0">
+        <thead>
+            <tr>
+                <th>CONCEPTO</th>
+                <th>BENEFICIARIO</th>
+                <th class="col-monto">FISCAL</th>
+                <th class="col-monto">N/FISCAL</th>
+                <th>DÍA DE PAGO</th>
+                <th>ACTIVO</th>
+                <th>ACCIONES</th>
+            </tr>
+        </thead>
+        <tbody style="font-size: 12px;">
+            <tr *ngFor="let p of recurrentes">
+                <td>{{ p.concepto }}</td>
+                <td>{{ p.beneficiario }}</td>
+                <td class="col-monto">{{ p.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto">{{ p.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td>{{ p.dia_pago ? 'Día ' + p.dia_pago : 'Por definir' }}</td>
+                <td>{{ (p.activo === true || p.activo === 1) ? 'Sí' : 'No' }}</td>
+                <td>
+                    <div class="actions">
+                        <button class="action-btn" (click)="editar(p)" title="Editar">✏️</button>
+                        <button class="action-btn" (click)="eliminar(p)" title="Eliminar">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p *ngIf="!cargandoRecurrentes && !errorRecurrentes && recurrentes.length === 0" style="color:#666;">
+        No hay pagos recurrentes registrados. Usa el botón "Nuevo" para dar de alta el primero.
+    </p>
+
+</div>
+
+<!-- ===== MODAL NUEVO / EDITAR ===== -->
+<div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-card modal-card-wide">
+        <h3>{{ editando ? 'Editar pago recurrente' : 'Nuevo pago recurrente' }}</h3>
+
+        <!-- Buscar factura -->
+        <div class="factura-box">
+            <label>Buscar factura</label>
+            <div class="factura-row">
+                <input type="text" [(ngModel)]="textoFactura" placeholder="Concepto, beneficiario o folio..."
+                    (keyup.enter)="buscarFacturas()">
+                <button class="btn-primary" type="button" (click)="buscarFacturas()">🔍 Buscar</button>
+            </div>
+            <p *ngIf="buscandoFacturas" style="color:#666; font-size:12px;">Buscando...</p>
+            <ul class="factura-resultados" *ngIf="facturas.length > 0">
+                <li *ngFor="let f of facturas" (click)="elegirFactura(f)">
+                    <strong>{{ f.concepto }}</strong> — {{ f.razon_social || f.beneficiario }}
+                    <span class="factura-monto">{{ (f.gran_total ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
+                    <span *ngIf="f.fecha_pago" class="factura-fecha">{{ fmtFecha(f.fecha_pago) }}</span>
+                </li>
+            </ul>
+            <div *ngIf="facturaElegida" class="factura-elegida">
+                📄 Factura vinculada: <strong>{{ facturaElegida.concepto }}</strong>
+                <button type="button" class="btn-link" (click)="quitarFactura()">Quitar</button>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Concepto *</label>
+                <input type="text" [(ngModel)]="form.concepto" style="text-transform: uppercase;">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Beneficiario</label>
+                <input type="text" [(ngModel)]="form.beneficiario" style="text-transform: uppercase;">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Fiscal</label>
+                <input type="number" min="0" step="0.01" [(ngModel)]="form.fiscal">
+            </div>
+            <div class="form-group">
+                <label>No fiscal</label>
+                <input type="number" min="0" step="0.01" [(ngModel)]="form.no_fiscal">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Día de pago</label>
+                <select [(ngModel)]="diaPagoSel">
+                    <option value="">Por definir</option>
+                    <option *ngFor="let d of diasPago" [value]="d">{{ d }}</option>
+                </select>
+            </div>
+            <div class="form-group form-group-check">
+                <label>
+                    <input type="checkbox" [(ngModel)]="form.activo"> Activo
+                </label>
+            </div>
+        </div>
+
+        <div *ngIf="errorModal" style="background:#FDECEA;color:#7A1F1A;padding:8px 10px;border-radius:6px;margin-bottom:10px;">
+            ⚠️ {{ errorModal }}
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" type="button" (click)="cerrarModal()">Cancelar</button>
+            <button class="btn-save" type="button" (click)="guardar()" [disabled]="guardando">
+                {{ guardando ? 'Guardando...' : 'Guardar' }}
+            </button>
+        </div>
+    </div>
+</div>
