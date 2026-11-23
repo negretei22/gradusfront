@@ -15,13 +15,14 @@
                     <option *ngFor="let a of anios" [value]="a">{{ a }}</option>
                 </select>
             </label>
-            <button class="btn-primary" (click)="cargar()">🔄 Actualizar</button>
-            <button class="btn-primary" (click)="toggleCentavos()">{{ mostrarCentavos ? '💲 Ocultar centavos' : '💲 Mostrar centavos' }}</button>
-            <button class="btn-primary" (click)="exportarExcel()">📥 Exportar Excel</button>
-            <span style="color:#666; font-size:12px;">En el Excel se agregan también los pagos del mes que no pertenecen a ningún pago recurrente.</span>
-            <button class="btn-primary" (click)="toggleProgramacion()">📋 {{ mostrarProgramacion ? 'Ocultar programación del gasto' : 'Ver programación del gasto' }}</button>
-            <button class="btn-primary" (click)="nuevo()">➕ Nuevo</button>
         </div>
+    </div>
+
+    <!-- ===== Pestañas / acordeón (v10): solo una sección abierta a la vez ===== -->
+    <div class="secciones-tabs">
+        <button class="seccion-tab" [class.activa]="seccionActiva === 'recurrentes'" (click)="toggleSeccion('recurrentes')">Cargos Recurrentes</button>
+        <button class="seccion-tab" [class.activa]="seccionActiva === 'movimientos'" (click)="toggleSeccion('movimientos')">Movimientos Financieros del mes</button>
+        <button class="seccion-tab" [class.activa]="seccionActiva === 'programacion'" (click)="toggleSeccion('programacion')">Programación del Gasto · {{ mesAnioTitulo }}</button>
     </div>
 
     <p *ngIf="cargando">Cargando...</p>
@@ -31,8 +32,13 @@
         <button class="btn-primary" (click)="cargar()" style="margin-left:10px;">Reintentar</button>
     </div>
 
-    <!-- ===== RECURRENTES REGISTRADOS ===== -->
+    <!-- ===== SECCIÓN 1: Cargos Recurrentes (acordeón v10) ===== -->
+    <div *ngIf="seccionActiva === 'recurrentes'">
     <h3 style="margin:24px 0 8px;">Pagos recurrentes registrados</h3>
+
+    <div style="margin:6px 0 10px;">
+        <button class="btn-primary" (click)="nuevo()">➕ Nuevo</button>
+    </div>
 
     <p *ngIf="cargandoRecurrentes">Cargando...</p>
 
@@ -76,8 +82,10 @@
     <p *ngIf="!cargandoRecurrentes && !errorRecurrentes && recurrentes.length === 0" style="color:#666;">
         No hay pagos recurrentes registrados. Usa el botón "Nuevo" para dar de alta el primero.
     </p>
+    </div>
 
-    <!-- ===== SECCIÓN 2: Movimientos financieros del mes (v9, siempre visible) ===== -->
+    <!-- ===== SECCIÓN 2: Movimientos financieros del mes (acordeón v10) ===== -->
+    <div *ngIf="seccionActiva === 'movimientos'">
     <h3 style="margin:24px 0 8px;">Movimientos financieros del mes — {{ mesAnioTitulo }}</h3>
 
     <div style="margin:6px 0; display:flex; gap:6px; align-items:center;">
@@ -118,10 +126,15 @@
     <p *ngIf="!cargando && !errorCarga && filasExtras.length === 0" style="color:#666;">
         No hay movimientos financieros fuera de los recurrentes para este mes.
     </p>
+    </div>
 
-<!-- ===== SECCIÓN 3: Programación del Gasto (oculta por default, v9) ===== -->
-    <div *ngIf="mostrarProgramacion">
+<!-- ===== SECCIÓN 3: Programación del Gasto (acordeón v10) ===== -->
+    <div *ngIf="seccionActiva === 'programacion'">
     <h3 style="margin:16px 0 8px;">Programación del Gasto — {{ mesAnioTitulo }}</h3>
+
+    <div style="margin:6px 0 10px;">
+        <button class="btn-primary" (click)="exportarExcel()">📥 Exportar Excel</button>
+    </div>
 
     <table class="gradus-table" *ngIf="!errorCarga && filasProgramacion.length > 0">
         <thead>

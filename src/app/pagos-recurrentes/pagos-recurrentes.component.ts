@@ -35,8 +35,12 @@ export class PagosRecurrentesComponent implements OnInit {
   cargando = false;
   errorCarga: string | null = null;
 
-  // La sección "Programación del Gasto" está oculta por default (v5).
-  mostrarProgramacion = false;
+  // Acordeón de secciones (v10): solo una abierta a la vez; null = todas cerradas.
+  seccionActiva: 'recurrentes' | 'movimientos' | 'programacion' | null = 'recurrentes';
+
+  toggleSeccion(s: 'recurrentes' | 'movimientos' | 'programacion') {
+    this.seccionActiva = (this.seccionActiva === s ? null : s);
+  }
 
   // movimiento_id de las filas extra seleccionadas para el Excel (solo sesión, v6).
   // Por default van todas, como antes.
@@ -87,10 +91,6 @@ export class PagosRecurrentesComponent implements OnInit {
     );
   }
 
-  toggleProgramacion() {
-    this.mostrarProgramacion = !this.mostrarProgramacion;
-  }
-
   isExtraSeleccionada(f: ReporteFila): boolean {
     if (f.movimiento_id == null) return true;
     return this.extrasSeleccionadas.has(f.movimiento_id);
@@ -138,15 +138,9 @@ export class PagosRecurrentesComponent implements OnInit {
   cargandoRecurrentes = false;
   errorRecurrentes: string | null = null;
 
-  // Mostrar centavos (con decimales) o redondear todo a pesos enteros
-  mostrarCentavos = false;
-
+  // Montos siempre redondeados a pesos enteros (v10: se quitó el botón de centavos).
   get fmtMoneda(): string {
-    return this.mostrarCentavos ? '1.2-2' : '1.0-0';
-  }
-
-  toggleCentavos() {
-    this.mostrarCentavos = !this.mostrarCentavos;
+    return '1.0-0';
   }
 
   get nombreMes() {
@@ -225,9 +219,7 @@ export class PagosRecurrentesComponent implements OnInit {
 
   // ===== EXPORTAR EXCEL (Programación del Gasto) =====
   exportarExcel() {
-    const r = (n: any) => this.mostrarCentavos
-      ? Math.round(Number(n || 0) * 100) / 100
-      : Math.round(Number(n) || 0);
+    const r = (n: any) => Math.round(Number(n) || 0);
     const v = (n: any) => (Number(n) > 0 ? r(n) : '');
 
     const filas: any[][] = [
@@ -288,7 +280,7 @@ export class PagosRecurrentesComponent implements OnInit {
             border: bordes
           });
         } else if (c >= 2 && c <= 3) {
-          base.numFmt = this.mostrarCentavos ? '"$"#,##0.00' : '"$"#,##0';
+          base.numFmt = '"$"#,##0';
           base.alignment = { horizontal: 'right' };
           base.border = bordes;
         } else {
