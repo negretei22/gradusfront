@@ -19,6 +19,9 @@ export interface FilaRecurrenteExport {
   movimiento_id?: number;
   incluido?: boolean;
   facturas?: Array<{ folio_fiscal?: string | null }>;
+  // Factura del movimiento (v14): sale de archivo_factura; el back la trae
+  // en el reporte de cobros y de ahí sale el FOLIO de Ingresos.
+  factura?: string;
 }
 
 // Extrae las filas de una respuesta de reporte (mismo fallback que cargarReporte).
@@ -58,13 +61,12 @@ function fechaExcel(valor: string | null): Date | null {
   return new Date(y, m - 1, d, 12);
 }
 
-// FOLIO: los folio_fiscal de las facturas ligadas al cobro, unidos con " y "
-// (ej. "F87 y F89"); vacío si no tiene facturas ligadas.
+// FOLIO (v14): la factura del movimiento, que el back ya trae como
+// fila.factura y sale de archivo_factura (["518_87.pdf","518_89.pdf"] ->
+// "F87 y F89"); vacío si el movimiento no tiene archivo_factura.
+// Ya NO usa folio_fiscal de las facturas ligadas.
 function folioDe(f: FilaRecurrenteExport): string {
-  const folios = (f.facturas || [])
-    .map(x => (x.folio_fiscal || '').toString().trim())
-    .filter(Boolean);
-  return folios.join(' y ');
+  return (f.factura || '').toString().trim();
 }
 
 // Bloque 4 ESTÁTICO: valores tal cual de la captura de Ivo (precios a

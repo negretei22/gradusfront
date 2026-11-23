@@ -40,6 +40,37 @@
   color: #fff;
 }
 
+/* ===== Switch Pagos / Cobros (v14): texto simple subrayado, sin pastilla ===== */
+.tipo-tabs {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}
+
+.tipo-tab {
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: #555;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.tipo-tab:hover {
+  color: var(--gradus-green);
+}
+
+.tipo-tab.activa {
+  color: var(--gradus-green);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--gradus-green);
+  text-underline-offset: 3px;
+}
+
 /* ===== Modal (mismo patrón que maquinaria) ===== */
 .modal-backdrop {
   position: fixed;
