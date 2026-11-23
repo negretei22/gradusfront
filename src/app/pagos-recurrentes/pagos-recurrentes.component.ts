@@ -35,6 +35,13 @@ export class PagosRecurrentesComponent implements OnInit {
   cargando = false;
   errorCarga: string | null = null;
 
+  // La sección "Programación del Gasto" está oculta por default (v5).
+  mostrarProgramacion = false;
+
+  // movimiento_id de las filas extra seleccionadas para el Excel (solo sesión, v6).
+  // Por default van todas, como antes.
+  extrasSeleccionadas = new Set<number>();
+
   // En pantalla solo se muestran los pagos recurrentes; los pagos del mes
   // que no pertenecen a ningún recurrente solo aparecen en el Excel.
   get filasRecurrentes(): ReporteFila[] {
@@ -46,6 +53,71 @@ export class PagosRecurrentesComponent implements OnInit {
       (t, f) => ({ fiscal: t.fiscal + (Number(f.fiscal) || 0), no_fiscal: t.no_fiscal + (Number(f.no_fiscal) || 0) }),
       { fiscal: 0, no_fiscal: 0 }
     );
+  }
+
+  // Filas que se muestran en la sección revelada y se exportan al Excel (v5+v6):
+  // todos los recurrentes + las extras seleccionadas.
+  get filasExportar(): ReporteFila[] {
+    return this.filas.filter(f => {
+      if (f.origen === 'recurrente') return true;
+      // Extra sin movimiento_id (back sin el campo nuevo): no se puede
+      // deseleccionar, va como antes.
+      if (f.movimiento_id == null) return true;
+      return this.extrasSeleccionadas.has(f.movimiento_id);
+    });
+  }
+
+  get totalesExportar(): { fiscal: number; no_fiscal: number } {
+    return this.filasExportar.reduce(
+      (t, f) => ({ fiscal: t.fiscal + (Number(f.fiscal) || 0), no_fiscal: t.no_fiscal + (Number(f.no_fiscal) || 0) }),
+      { fiscal: 0, no_fiscal: 0 }
+    );
+  }
+
+  toggleProgramacion() {
+    this.mostrarProgramacion = !this.mostrarProgramacion;
+  }
+
+  isExtraSeleccionada(f: ReporteFila): boolean {
+    if (f.movimiento_id == null) return true;
+    return this.extrasSeleccionadas.has(f.movimiento_id);
+  }
+
+  toggleExtra(f: ReporteFila, ev: Event) {
+    if (f.movimiento_id == null) return;
+    const input = ev.target as HTMLInputElement;
+    if (input.checked) this.extrasSeleccionadas.add(f.movimiento_id);
+    else this.extrasSeleccionadas.delete(f.movimiento_id);
+  }
+
+  seleccionarTodasExtras() {
+    this.filas
+      .filter(f => f.origen !== 'recurrente' && f.movimiento_id != null)
+      .forEach(f => this.extrasSeleccionadas.add(f.movimiento_id as number));
+  }
+
+  seleccionarNingunaExtra() {
+    this.extrasSeleccionadas.clear();
+  }
+
+  togglePagado(f: ReporteFila, ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const pagado = input.checked;
+    const id = f.pago_recurrente_id;
+    if (id == null) {
+      input.checked = f.pagado;
+      return;
+    }
+    const anterior = f.pagado;
+    f.pagado = pagado;
+    this.service.marcarPagado(id, this.filtroAnio, this.filtroMes, pagado).subscribe({
+      next: () => { /* queda actualizado en local, sin recargar todo */ },
+      error: (err) => {
+        f.pagado = anterior;
+        input.checked = anterior;
+        Swal.fire('No se pudo guardar', err.error?.message || 'No se pudo marcar el pago.', 'error');
+      }
+    });
   }
 
   // ===== Recurrentes registrados =====
@@ -95,6 +167,12 @@ export class PagosRecurrentesComponent implements OnInit {
       next: res => {
         const r: any = res || {};
         this.filas = r.filas || r.reporte || r.rows || (Array.isArray(r) ? r : []);
+        // Al cargar el mes, todas las extras van seleccionadas por default (v6).
+        this.extrasSeleccionadas = new Set(
+          this.filas
+            .filter(f => f.origen !== 'recurrente' && f.movimiento_id != null)
+            .map(f => f.movimiento_id as number)
+        );
         // El back devuelve total_fiscal / total_no_fiscal; si no vienen se suman las filas.
         this.totales = {
           fiscal: r.total_fiscal !== undefined ? (Number(r.total_fiscal) || 0) : this.filas.reduce((s, f) => s + (Number(f.fiscal) || 0), 0),
@@ -143,7 +221,7 @@ export class PagosRecurrentesComponent implements OnInit {
       ['Programación del Gasto', '', '', '', '', ''],
       [this.mesAnioTitulo, '', '', '', '', ''],
       ['CONCEPTO', 'BENEFICIARIO', 'FISCAL', 'N FISCAL', 'FECHA DE PAGO', 'PAGADO'],
-      ...this.filas.map((f: any) => [
+      ...this.filasExportar.map((f: any) => [
         f.concepto || '',
         f.beneficiario || '',
         v(f.fiscal),
@@ -151,7 +229,7 @@ export class PagosRecurrentesComponent implements OnInit {
         this.fmtFecha(f.fecha_pago),
         f.pagado ? '✓' : '☐'
       ]),
-      ['TOTAL', '', r(this.totales.fiscal), r(this.totales.no_fiscal), '', '']
+      ['TOTAL', '', r(this.totalesExportar.fiscal), r(this.totalesExportar.no_fiscal), '', '']
     ];
 
     // 👇 tipado como any para que TypeScript no marque error en ws[...]

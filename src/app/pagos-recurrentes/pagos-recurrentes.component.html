@@ -19,6 +19,7 @@
             <button class="btn-primary" (click)="toggleCentavos()">{{ mostrarCentavos ? '💲 Ocultar centavos' : '💲 Mostrar centavos' }}</button>
             <button class="btn-primary" (click)="exportarExcel()">📥 Exportar Excel</button>
             <span style="color:#666; font-size:12px;">En el Excel se agregan también los pagos del mes que no pertenecen a ningún pago recurrente.</span>
+            <button class="btn-primary" (click)="toggleProgramacion()">📋 {{ mostrarProgramacion ? 'Ocultar programación del gasto' : 'Ver programación del gasto' }}</button>
             <button class="btn-primary" (click)="nuevo()">➕ Nuevo</button>
         </div>
     </div>
@@ -30,10 +31,17 @@
         <button class="btn-primary" (click)="cargar()" style="margin-left:10px;">Reintentar</button>
     </div>
 
-    <!-- ===== REPORTE: Programación del Gasto ===== -->
+    <!-- ===== REPORTE: Programación del Gasto (oculto por default, v5) ===== -->
+    <div *ngIf="mostrarProgramacion">
     <h3 style="margin:16px 0 8px;">Programación del Gasto — {{ mesAnioTitulo }}</h3>
 
-    <table class="gradus-table" *ngIf="!errorCarga && filasRecurrentes.length > 0">
+    <div style="margin:6px 0; display:flex; gap:6px; align-items:center;">
+        <span style="color:#666; font-size:12px;">Excel:</span>
+        <button class="btn-primary" style="padding:4px 10px;" (click)="seleccionarTodasExtras()">Todas</button>
+        <button class="btn-primary" style="padding:4px 10px;" (click)="seleccionarNingunaExtra()">Ninguna</button>
+    </div>
+
+    <table class="gradus-table" *ngIf="!errorCarga && filas.length > 0">
         <thead>
             <tr>
                 <th>CONCEPTO</th>
@@ -42,30 +50,40 @@
                 <th class="col-monto">N/FISCAL</th>
                 <th>FECHA DE PAGO</th>
                 <th style="text-align:center;">PAGADO</th>
+                <th style="text-align:center;">EXCEL</th>
             </tr>
         </thead>
         <tbody style="font-size: 12px;">
-            <tr *ngFor="let f of filasRecurrentes">
+            <tr *ngFor="let f of filas">
                 <td>{{ f.concepto }}</td>
                 <td>{{ f.beneficiario }}</td>
                 <td class="col-monto">{{ f.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto">{{ f.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
                 <td>{{ fmtFecha(f.fecha_pago) }}</td>
-                <td style="text-align:center; font-size:16px;">{{ f.pagado ? '✓' : '☐' }}</td>
+                <td style="text-align:center;">
+                    <input *ngIf="f.origen === 'recurrente'" type="checkbox" [checked]="f.pagado" (change)="togglePagado(f, $event)">
+                    <input *ngIf="f.origen !== 'recurrente'" type="checkbox" [checked]="f.pagado" disabled title="Se marca solo cuando la factura tiene fecha de pago">
+                </td>
+                <td style="text-align:center;">
+                    <input *ngIf="f.origen === 'recurrente'" type="checkbox" checked disabled title="Los pagos recurrentes siempre van en el Excel">
+                    <input *ngIf="f.origen !== 'recurrente'" type="checkbox" [checked]="isExtraSeleccionada(f)" (change)="toggleExtra(f, $event)">
+                </td>
             </tr>
             <tr class="fila-totales">
                 <td colspan="2" style="text-align:right;">TOTALES:</td>
-                <td class="col-monto">{{ totalesRecurrentes.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
-                <td class="col-monto">{{ totalesRecurrentes.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto">{{ totalesExportar.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td class="col-monto">{{ totalesExportar.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
         </tbody>
     </table>
 
-    <p *ngIf="!cargando && !errorCarga && filasRecurrentes.length === 0" style="color:#666;">
+    <p *ngIf="!cargando && !errorCarga && filas.length === 0" style="color:#666;">
         No hay pagos programados para {{ mesAnioTitulo }}.
     </p>
+    </div>
 
     <!-- ===== RECURRENTES REGISTRADOS ===== -->
     <h3 style="margin:24px 0 8px;">Pagos recurrentes registrados</h3>
@@ -80,6 +98,7 @@
     <table class="gradus-table" *ngIf="!errorRecurrentes && recurrentes.length > 0">
         <thead>
             <tr>
+                <th>No.</th>
                 <th>CONCEPTO</th>
                 <th>BENEFICIARIO</th>
                 <th class="col-monto">FISCAL</th>
@@ -90,7 +109,8 @@
             </tr>
         </thead>
         <tbody style="font-size: 12px;">
-            <tr *ngFor="let p of recurrentes">
+            <tr *ngFor="let p of recurrentes; let i = index">
+                <td>{{ i + 1 }}</td>
                 <td>{{ p.concepto }} <span style="background:#eef2f5; color:#555; font-size:10px; padding:2px 6px; border-radius:10px; white-space:nowrap;">{{ (p.monto_factura === 1 || p.monto_factura === true) ? 'factura del mes' : 'fijo' }}</span> <span *ngIf="numFacturas(p) > 0" style="background:#e8f3e8; color:#2b5d2b; font-size:10px; padding:2px 6px; border-radius:10px; white-space:nowrap;">{{ numFacturas(p) }} {{ numFacturas(p) === 1 ? 'factura' : 'facturas' }}</span></td>
                 <td>{{ p.beneficiario }}</td>
                 <td class="col-monto">{{ p.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
