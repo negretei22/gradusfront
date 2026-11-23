@@ -91,7 +91,7 @@
         </thead>
         <tbody style="font-size: 12px;">
             <tr *ngFor="let p of recurrentes">
-                <td>{{ p.concepto }}</td>
+                <td>{{ p.concepto }} <span style="background:#eef2f5; color:#555; font-size:10px; padding:2px 6px; border-radius:10px; white-space:nowrap;">{{ (p.monto_factura === 1 || p.monto_factura === true) ? 'factura del mes' : 'fijo' }}</span> <span *ngIf="numFacturas(p) > 0" style="background:#e8f3e8; color:#2b5d2b; font-size:10px; padding:2px 6px; border-radius:10px; white-space:nowrap;">{{ numFacturas(p) }} {{ numFacturas(p) === 1 ? 'factura' : 'facturas' }}</span></td>
                 <td>{{ p.beneficiario }}</td>
                 <td class="col-monto">{{ p.fiscal | currency:'MXN':'$':fmtMoneda }}</td>
                 <td class="col-monto">{{ p.no_fiscal | currency:'MXN':'$':fmtMoneda }}</td>
@@ -128,15 +128,23 @@
             </div>
             <p *ngIf="buscandoFacturas" style="color:#666; font-size:12px;">Buscando...</p>
             <ul class="factura-resultados" *ngIf="facturas.length > 0">
-                <li *ngFor="let f of facturas" (click)="elegirFactura(f)">
+                <li *ngFor="let f of facturas">
                     <strong>{{ f.concepto }}</strong> — {{ f.razon_social || f.beneficiario }}
                     <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? f.total ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
                     <span *ngIf="f.fecha_pago" class="factura-fecha">{{ fmtFecha(f.fecha_pago) }}</span>
+                    <button type="button" class="btn-primary" style="padding:4px 10px; margin-top:6px;" (click)="agregarFactura(f)" [disabled]="facturaYaAgregada(f)">{{ facturaYaAgregada(f) ? '✓ Agregada' : '➕ Agregar' }}</button>
                 </li>
             </ul>
-            <div *ngIf="facturaElegida" class="factura-elegida">
-                📄 Factura vinculada: <strong>{{ facturaElegida.concepto }}</strong>
-                <button type="button" class="btn-link" (click)="quitarFactura()">Quitar</button>
+            <div *ngIf="facturasSeleccionadas.length > 0" style="margin-top:10px;">
+                <strong style="font-size:12px;">Facturas ligadas ({{ facturasSeleccionadas.length }}):</strong>
+                <ul class="factura-resultados">
+                    <li *ngFor="let f of facturasSeleccionadas">
+                        <strong>{{ f.concepto || 'Factura #' + f.id }}</strong> — {{ f.razon_social || f.beneficiario || '' }}
+                        <span class="factura-monto">{{ (f.importe_sin_iva ?? f.fiscal ?? 0) | currency:'MXN':'$':'1.0-0' }}</span>
+                        <button type="button" class="btn-link" (click)="quitarFacturaDeLista(f.id)" title="Quitar">✕</button>
+                    </li>
+                </ul>
+                <p style="font-size:12px; margin:6px 0 0; text-align:right;">Total facturas: <strong>{{ totalFacturasSeleccionadas | currency:'MXN':'$':'1.0-0' }}</strong></p>
             </div>
         </div>
 
@@ -158,10 +166,19 @@
             <div class="form-group">
                 <label>Fiscal</label>
                 <input type="number" min="0" step="0.01" [(ngModel)]="form.fiscal">
+                <p *ngIf="form.monto_factura" style="color:#666; font-size:11px; margin:0 0 10px;">El fiscal se toma de la factura del mes; el valor guardado se usa si aún no hay factura.</p>
             </div>
             <div class="form-group">
                 <label>No fiscal</label>
                 <input type="number" min="0" step="0.01" [(ngModel)]="form.no_fiscal">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group form-group-check">
+                <label>
+                    <input type="checkbox" [(ngModel)]="form.monto_factura"> Usar el monto de la factura del mes
+                </label>
             </div>
         </div>
 
