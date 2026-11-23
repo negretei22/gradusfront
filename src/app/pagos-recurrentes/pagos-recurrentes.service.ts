@@ -9,7 +9,10 @@ export interface PagoRecurrenteDto {
   no_fiscal: number;
   dia_pago: number | null;
   activo: boolean;
+  monto_factura: boolean;
   movimiento_id?: number | null;
+  factura_ids: number[];
+  facturas?: any[];
 }
 
 export interface ReporteFila {

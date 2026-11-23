@@ -228,7 +228,9 @@ export class PagosRecurrentesComponent implements OnInit {
     no_fiscal: 0,
     dia_pago: null,
     activo: true,
-    movimiento_id: null
+    monto_factura: false,
+    movimiento_id: null,
+    factura_ids: []
   };
 
   // Día de pago en el select: '' = Por definir
@@ -239,11 +241,21 @@ export class PagosRecurrentesComponent implements OnInit {
     this.form.dia_pago = v === '' ? null : Number(v);
   }
 
-  // ===== Buscar factura =====
+  // ===== Buscar factura (varias facturas por pago recurrente) =====
   textoFactura = '';
   facturas: any[] = [];
   buscandoFacturas = false;
-  facturaElegida: any = null;
+  facturasSeleccionadas: any[] = [];
+
+  get totalFacturasSeleccionadas(): number {
+    return this.facturasSeleccionadas.reduce((s, f) => s + (Number(f.importe_sin_iva ?? f.fiscal ?? 0) || 0), 0);
+  }
+
+  numFacturas(p: any): number {
+    if (Array.isArray(p.facturas)) return p.facturas.length;
+    if (Array.isArray(p.factura_ids)) return p.factura_ids.length;
+    return 0;
+  }
 
   buscarFacturas() {
     const texto = (this.textoFactura || '').trim();
@@ -255,28 +267,35 @@ export class PagosRecurrentesComponent implements OnInit {
     });
   }
 
-  elegirFactura(f: any) {
-    this.facturaElegida = f;
-    this.form.concepto = (f.concepto || '').toString();
-    // El back devuelve el beneficiario como razon_social.
-    this.form.beneficiario = (f.razon_social ?? f.beneficiario ?? f.nombre ?? '').toString();
-    this.form.fiscal = Number(f.importe_sin_iva ?? f.fiscal ?? 0) || 0;
-    this.form.movimiento_id = f.id ?? null;
-    this.facturas = [];
+  facturaYaAgregada(f: any): boolean {
+    return this.facturasSeleccionadas.some(s => s.id === f.id);
   }
 
-  quitarFactura() {
-    this.facturaElegida = null;
-    this.form.movimiento_id = null;
+  agregarFactura(f: any) {
+    if (this.facturaYaAgregada(f)) return;
+    // La primera factura llena concepto y beneficiario (como hacía elegirFactura en v3).
+    if (this.facturasSeleccionadas.length === 0) {
+      this.form.concepto = (f.concepto || '').toString();
+      // El back devuelve el beneficiario como razon_social.
+      this.form.beneficiario = (f.razon_social ?? f.beneficiario ?? f.nombre ?? '').toString();
+    }
+    this.facturasSeleccionadas.push(f);
+    // El Fiscal es la suma de los importe_sin_iva de las seleccionadas.
+    this.form.fiscal = this.totalFacturasSeleccionadas;
+  }
+
+  quitarFacturaDeLista(id: number) {
+    this.facturasSeleccionadas = this.facturasSeleccionadas.filter(f => f.id !== id);
+    this.form.fiscal = this.totalFacturasSeleccionadas;
   }
 
   nuevo() {
     this.editando = false;
     this.idEditando = null;
-    this.form = { concepto: '', beneficiario: '', fiscal: 0, no_fiscal: 0, dia_pago: null, activo: true, movimiento_id: null };
+    this.form = { concepto: '', beneficiario: '', fiscal: 0, no_fiscal: 0, dia_pago: null, activo: true, monto_factura: false, movimiento_id: null, factura_ids: [] };
     this.textoFactura = '';
     this.facturas = [];
-    this.facturaElegida = null;
+    this.facturasSeleccionadas = [];
     this.errorModal = null;
     this.showModal = true;
   }
@@ -291,11 +310,25 @@ export class PagosRecurrentesComponent implements OnInit {
       no_fiscal: Number(p.no_fiscal) || 0,
       dia_pago: p.dia_pago ?? null,
       activo: p.activo !== false && p.activo !== 0,
-      movimiento_id: p.movimiento_id ?? null
+      monto_factura: p.monto_factura === 1 || p.monto_factura === true,
+      movimiento_id: p.movimiento_id ?? null,
+      factura_ids: Array.isArray(p.factura_ids) ? p.factura_ids : []
     };
+    // Carga las facturas ligadas: objetos completos si vienen, o entradas
+    // mínimas con solo el id si solo vienen los ids. El Fiscal queda como venga en p.fiscal.
+    if (Array.isArray(p.facturas) && p.facturas.length > 0) {
+      this.facturasSeleccionadas = [...p.facturas];
+      this.form.factura_ids = this.facturasSeleccionadas.map(f => f.id);
+    } else if (Array.isArray(p.factura_ids) && p.factura_ids.length > 0) {
+      this.facturasSeleccionadas = p.factura_ids.map((id: number) => ({ id }));
+    } else {
+      this.facturasSeleccionadas = [];
+    }
+    if (this.facturasSeleccionadas.length > 0) {
+      this.form.movimiento_id = this.facturasSeleccionadas[0].id ?? null;
+    }
     this.textoFactura = '';
     this.facturas = [];
-    this.facturaElegida = null;
     this.errorModal = null;
     this.showModal = true;
   }
@@ -312,6 +345,7 @@ export class PagosRecurrentesComponent implements OnInit {
     }
     this.guardando = true;
     this.errorModal = null;
+    const facturaIds = this.facturasSeleccionadas.map(f => f.id);
     const dto: PagoRecurrenteDto = {
       concepto: this.form.concepto.trim().toUpperCase(),
       beneficiario: (this.form.beneficiario || '').trim().toUpperCase(),
@@ -319,7 +353,9 @@ export class PagosRecurrentesComponent implements OnInit {
       no_fiscal: Number(this.form.no_fiscal) || 0,
       dia_pago: this.form.dia_pago,
       activo: !!this.form.activo,
-      movimiento_id: this.form.movimiento_id ?? null
+      monto_factura: !!this.form.monto_factura,
+      movimiento_id: facturaIds.length > 0 ? facturaIds[0] : null,
+      factura_ids: facturaIds
     };
     const req = this.editando && this.idEditando != null
       ? this.service.update(this.idEditando, dto)
