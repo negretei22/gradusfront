@@ -10,6 +10,36 @@
   background: #f2f6fa;
 }
 
+/* ===== Pestañas / acordeón (v10) ===== */
+.secciones-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0 4px;
+}
+
+.seccion-tab {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid #c9d4cd;
+  background: #f5f7f5;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seccion-tab:hover {
+  border-color: var(--gradus-green);
+}
+
+.seccion-tab.activa {
+  background: var(--gradus-green);
+  border-color: var(--gradus-green);
+  color: #fff;
+}
+
 /* ===== Modal (mismo patrón que maquinaria) ===== */
 .modal-backdrop {
   position: fixed;
