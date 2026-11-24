@@ -55,6 +55,13 @@
         <label>Fecha de servicio</label>
         <input type="date" [(ngModel)]="fecha_servicio" />
       </div>
+      <div class="form-group">
+        <label>Tipo de servicio</label>
+        <select [(ngModel)]="id_tipo_servicio">
+          <option value="0">Seleccionar tipo</option>
+          <option *ngFor="let t of tiposServicio" [value]="t.id_tipo_servicio">{{ t.tipo_servicio }}</option>
+        </select>
+      </div>
     </div>
 
     <!-- BUSCADOR DE ACTIVOS -->

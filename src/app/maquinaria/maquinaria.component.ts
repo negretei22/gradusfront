@@ -102,6 +102,7 @@ export class MaquinariaComponent {
   tipo_maquinaria_id = 0;
   placas = '';
   especificacion = '';
+  ubicacion = '';
   dragoverActivo = false;
 
 
@@ -479,6 +480,7 @@ onClickFueraMenuPago() {
     this.tipo_maquinaria_id = 0;
     this.placas = '';
     this.especificacion = '';
+    this.ubicacion = '';
     this.anio = '';
     this.id_marca = 0;
     this.id_modelo = 0;
@@ -528,6 +530,7 @@ onClickFueraMenuPago() {
     this.tipo_maquinaria_id = c.tipo_maquinaria_id ?? 0;
     this.placas = c.placas ?? '';
     this.especificacion = c.especificacion ?? '';
+    this.ubicacion = c.ubicacion ?? '';
     this.id_marca = c.id_marca;
     this.anio = c.anio;
     this.numero_de_contrato = c.numero_de_contrato ?? '';
@@ -680,51 +683,89 @@ onClickFueraMenuPago() {
     window.open(`http://localhost:3000/uploads/activos/${serie}/${this.documento_poliza}`, '_blank');
   }
 
-  // ===== EXPORTAR EXCEL (pólizas de maquinaria, igual formato a la hoja) =====
+  // ===== EXPORTAR EXCEL (inventario de maquinaria, 18 columnas) =====
   exportarExcel() {
     const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     const fmtFecha = (f: any): string => {
-      if (!f) return '-';
+      if (!f) return '';
       const soloFecha = f.toString().split('T')[0].split(' ')[0];
       const partes = soloFecha.split('-');
       if (partes.length !== 3) return soloFecha;
       const [y, m, d] = partes;
       return `${d}-${MESES_ABR[Number(m) - 1] || m}-${y.slice(2)}`;
     };
+    // Monto como número para Excel (vacío si no aplica); el formato $ se pone en la celda
+    const montoNum = (v: any): number | '' => {
+      if (v === null || v === undefined || v === '') return '';
+      const n = Number(v);
+      return isFinite(n) ? n : '';
+    };
+    // Hrs o km del último servicio, con su unidad (HR/KM)
+    const fmtHrsKm = (c: any): string => {
+      const num = (v: any): string => {
+        const n = Number(v);
+        return isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '';
+      };
+      if (c.ultimo_unidad_servicio === 'HR' && c.ultimo_horometro_servicio != null && c.ultimo_horometro_servicio !== '') return `${num(c.ultimo_horometro_servicio)} HR`;
+      if (c.ultimo_unidad_servicio === 'KM' && c.ultimo_kilometraje != null && c.ultimo_kilometraje !== '') return `${num(c.ultimo_kilometraje)} KM`;
+      if (c.ultimo_horometro_servicio != null && c.ultimo_horometro_servicio !== '') return num(c.ultimo_horometro_servicio);
+      if (c.ultimo_kilometraje != null && c.ultimo_kilometraje !== '') return num(c.ultimo_kilometraje);
+      return '';
+    };
 
-    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)', 'ASEGURADORA', 'NO. PÓLIZA', 'FECHA DE INICIO', 'FECHA DE TÉRMINO'];
+    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'ESPECIFICACIONES', 'NÚMERO DE PLACAS', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'UBICACIÓN ACTUAL', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'SERVICIO DADO POR'];
 
-    const rows = this.maquinariaFiltrada.map((c: any, i: number) => [
-      i + 1,
-      c.descripcion || '',
-      c.nombre || '',
-      c.b_marca || '',
-      c.m_modelo || '',
-      c.numero_serie || '',
-      c.anio || '',
-      c.costo_poliza || (this.tienePoliza(c) ? '' : 'No asegurado'),
-      c.aseguradora || '-',
-      c.numero_poliza || '-',
-      fmtFecha(c.fecha_inicio_poliza),
-      fmtFecha(c.fecha_fin_poliza)
-    ]);
+    const rows = this.maquinariaFiltrada.map((c: any, i: number) => {
+      const esRenta = Number(c.id_tipo_de_adquisicion) === 3;
+      const pagoMensual = (c.monto_renta_mensual != null && c.monto_renta_mensual !== '')
+        ? c.monto_renta_mensual
+        : c.pago_mensual;
+      return [
+        i + 1,
+        c.tipo_maquinaria || '',
+        c.nombre || '',
+        c.b_marca || '',
+        c.m_modelo || '',
+        c.numero_serie || '',
+        c.anio || '',
+        c.especificacion || '',
+        c.placas || '',
+        esRenta ? '' : montoNum(c.valor_compra),
+        montoNum(pagoMensual),
+        fmtFecha(c.fecha_de_adquisicion),
+        c.tipo_adquisicion || '',
+        c.ubicacion || '',
+        c.ultimo_tipo_servicio || '',
+        fmtFecha(c.ultimo_fecha_servicio),
+        fmtHrsKm(c),
+        c.ultimo_responsable || ''
+      ];
+    });
 
     const sheetData = [headers, ...rows];
 
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
     worksheet['!cols'] = [
-      { wch: 5 }, { wch: 28 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
-      { wch: 20 }, { wch: 8 }, { wch: 24 }, { wch: 14 }, { wch: 16 },
-      { wch: 14 }, { wch: 14 }
+      { wch: 5 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+      { wch: 20 }, { wch: 8 }, { wch: 22 }, { wch: 14 }, { wch: 20 },
+      { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 },
+      { wch: 14 }, { wch: 16 }, { wch: 18 }
     ];
+    // Formato $ a las dos columnas de montos (J y K)
+    for (let r = 1; r <= rows.length; r++) {
+      for (const col of ['J', 'K']) {
+        const cell = worksheet[`${col}${r + 1}`];
+        if (cell && typeof cell.v === 'number') { cell.t = 'n'; cell.z = '"$"#,##0.00'; }
+      }
+    }
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pólizas');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Maquinaria');
 
     const hoy = new Date();
     const fechaArchivo = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([buffer], { type: 'application/octet-stream' });
-    saveAs(blob, `Pólizas maquinaria ${fechaArchivo}.xlsx`);
+    saveAs(blob, `Maquinaria ${fechaArchivo}.xlsx`);
   }
 
   // ===== ELIMINAR =====
@@ -752,6 +793,7 @@ onClickFueraMenuPago() {
     formData.append('tipo_maquinaria_id', this.tipo_maquinaria_id > 0 ? this.tipo_maquinaria_id.toString() : '');
     formData.append('placas', (this.placas || '').trim().toUpperCase());
     formData.append('especificacion', (this.especificacion || '').trim().toUpperCase());
+    formData.append('ubicacion', (this.ubicacion || '').trim());
     formData.append('id_marca', this.id_marca.toString());
     formData.append('id_modelo', this.id_modelo.toString());
     formData.append('anio', this.anio.toString());
