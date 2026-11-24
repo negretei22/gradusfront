@@ -59,6 +59,10 @@ export class FinanzasService {
     return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-conceptos`, { params });
   }
 
+  getDondeAplica(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/finanzas/donde-aplica`);
+  }
+
   getCatalogo(catalogo: any): Observable<any[]> {
 
     return this.http.get<any[]>(`${this.api}/finanzas/${catalogo}`);

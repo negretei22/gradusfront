@@ -122,6 +122,7 @@ export class FinanzasComponent implements OnInit {
   metodoPagoFiltro: number = 0;
   expandidoKey: string | null = null;
   donde_aplica: number | null = null;
+  opcionesDondeAplicaCatalogo: any[] = [];
   pago_dividido = false;
   pagos: { metodo_pago_id: number; importe: any }[] = [];
   // ===== FILTROS DE ENCABEZADO =====
@@ -174,31 +175,21 @@ export class FinanzasComponent implements OnInit {
     pago: 'archivo_pago'
   };
 
-  // Opciones de "Dónde se aplica" por categoría (el código se guarda en donde_aplica, tinyint).
-  // 17 (Obra Puerto Peñasco): 1 = Puerto Peñasco, 2 = Hermosillo.
-  // 31 (OBRAS): 3 = Puerto Peñasco, Sonora; 4 = Zaragoza, S.L.P.;
-  // 5 = Ezcárcega, Campeche; 6 = Imperial del Golfo.
-  // Los códigos 3-6 son nuevos para no chocar con los de la 17, que el módulo
-  // obra-puerto-penasco interpreta (1 = Peñasco, 2 = Hermosillo).
-  private opcionesDondeAplicaPorCategoria: Record<number, { codigo: number; etiqueta: string }[]> = {
-    17: [
-      { codigo: 1, etiqueta: 'PUERTO PEÑASCO' },
-      { codigo: 2, etiqueta: 'HERMOSILLO' },
-    ],
-    31: [
-      { codigo: 3, etiqueta: 'PUERTO PEÑASCO, SONORA' },
-      { codigo: 4, etiqueta: 'ZARAGOZA, S.L.P.' },
-      { codigo: 5, etiqueta: 'EZCÁRCEGA, CAMPECHE' },
-      { codigo: 6, etiqueta: 'IMPERIAL DEL GOLFO' },
-    ],
-  };
+  // "Dónde se aplica" es un catálogo de MySQL (tabla donde_aplica) que se carga
+  // del endpoint GET /finanzas/donde-aplica, ordenado por nombre (alfabético).
+  // El código se guarda en donde_aplica (tinyint). Solo aplica a la categoría 17:
+  // 1 = Puerto Peñasco y 2 = Hermosillo son fijos (los datos ya guardados y el
+  // módulo obra-puerto-penasco los interpreta así).
 
   get mostrarDondeAplica(): boolean {
-    return +this.tipo_movimiento_id === 2 && [17, 31].includes(+this.categoria_id);
+    return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
   }
 
   get opcionesDondeAplica(): { codigo: number; etiqueta: string }[] {
-    return this.opcionesDondeAplicaPorCategoria[+this.categoria_id] ?? [];
+    return (this.opcionesDondeAplicaCatalogo || []).map(o => ({
+      codigo: +o.id_donde_aplica,
+      etiqueta: o.nombre,
+    }));
   }
 
 
@@ -638,9 +629,11 @@ export class FinanzasComponent implements OnInit {
       this.donde_aplica = null;
       return;
     }
-    // El código guardado era de la otra categoría (p. ej. cambiar de 17 a 31)
+    // El código guardado no está en el catálogo (p. ej. era de la categoría 31,
+    // que ya no existe). Solo se limpia cuando el catálogo ya cargó, para no
+    // borrar un código válido mientras llega la respuesta del endpoint.
     const codigoActual = this.donde_aplica === null ? null : +this.donde_aplica;
-    if (codigoActual !== null && !this.opcionesDondeAplica.some(o => o.codigo === codigoActual)) {
+    if (codigoActual !== null && this.opcionesDondeAplicaCatalogo.length > 0 && !this.opcionesDondeAplica.some(o => o.codigo === codigoActual)) {
       this.donde_aplica = null;
     }
   }
@@ -807,6 +800,7 @@ export class FinanzasComponent implements OnInit {
     this.resetForm()
     this.showModal = true
     this.getMetodosPago()
+    this.getDondeAplica()
     this.inicializarFechas()
   }
 
@@ -925,6 +919,7 @@ export class FinanzasComponent implements OnInit {
     this.filtroMes = (hoy.getMonth() + 1);
 
     this.getMetodosPago();
+    this.getDondeAplica();
 
     setTimeout(() => {
       this.cargarMovimientos();
@@ -1142,6 +1137,7 @@ export class FinanzasComponent implements OnInit {
       this.textoBoton = 'Actualizar';
 
       this.getMetodosPago();
+      this.getDondeAplica();
       this.tipo_movimiento_id = +data.tipo_movimiento_id;
       this.getCategorias(this.tipo_movimiento_id);
 
@@ -1276,6 +1272,13 @@ export class FinanzasComponent implements OnInit {
 
     await this.finanzasService.getCatalogo('metodos_pago').subscribe(res => {
       this.metodosPago = res;
+    });
+  }
+
+  async getDondeAplica() {
+
+    await this.finanzasService.getDondeAplica().subscribe(res => {
+      this.opcionesDondeAplicaCatalogo = res || [];
     });
   }
 
