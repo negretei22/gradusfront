@@ -951,7 +951,15 @@ export class FinanzasComponent implements OnInit {
         return of([]);
       })
     ).subscribe(resultados => {
-      this.resultadosConceptos = resultados;
+      // El back trae los últimos movimientos del RFC (más recientes primero);
+      // el autocompletado muestra solo el concepto, sin repetirlo.
+      const vistos = new Set<string>();
+      this.resultadosConceptos = (resultados || []).filter((r: any) => {
+        const c = (r?.concepto ?? '').trim();
+        if (!c || vistos.has(c)) return false;
+        vistos.add(c);
+        return true;
+      });
     });
 
     this.getSaldo(this.filtroAnio, this.filtroMes)
