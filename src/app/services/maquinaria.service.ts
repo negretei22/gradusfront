@@ -25,6 +25,10 @@ export class MaquinariaService {
     return this.http.get<any[]>(`${this.api}/maquinaria/arrendadores`);
   }
 
+  getTiposMaquinaria(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/maquinaria/tipos-maquinaria`);
+  }
+
 
   saveMaquinaria(data: FormData) {
     return firstValueFrom(this.http.post(`${this.api}/maquinaria/save`, data));

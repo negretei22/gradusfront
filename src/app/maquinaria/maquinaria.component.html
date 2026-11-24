@@ -19,20 +19,23 @@
             <tr>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
-                    NO. DE SERIE
+                    TIPO DE MAQUINARIA
                 </th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
                     NOMBRE</th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
-                    MONTO</th>
-                <th
-                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
                     MARCA</th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
-                    DESCRIPCIÓN</th>
+                    MODELO</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    AÑO</th>
+                <th
+                    style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
+                    ESPECIFICACIÓN</th>
                 <th
                     style="padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; width: 100px;text-transform: uppercase;">
                 </th>
@@ -41,12 +44,12 @@
 
         <tbody>
             <tr *ngFor="let c of maquinariaFiltrada">
-                <td>{{ c.numero_serie }}</td>
+                <td>{{ c.tipo_maquinaria || '-' }}</td>
                 <td>{{ c.nombre }}</td>
-                <td>{{ c.monto | currency:'MXN' }}</td>
                 <td>{{ c.b_marca }}</td>
-
-                <td>{{ c.descripcion | slice:0:90 }}...</td>
+                <td>{{ c.m_modelo }}</td>
+                <td>{{ c.anio }}</td>
+                <td>{{ c.especificacion || '-' }}</td>
                 <td class="actions">
                     <div class="acciones-wrap">
 
@@ -205,69 +208,28 @@
             </div>
         </div>
 
-        <!-- DOCUMENTOS (TEMP TEXTO) -->
-        <div class="form-group">
-            <label>Documentos</label>
+        <!-- TIPO DE MAQUINARIA / PLACAS -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo de maquinaria</label>
+                <select [(ngModel)]="tipo_maquinaria_id">
+                    <option value="0">Seleccionar tipo</option>
+                    <option *ngFor="let t of tiposMaquinaria" [value]="t.id_tipo_maquinaria">{{ t.nombre }}</option>
+                </select>
+            </div>
 
-            <!-- El panel completo es la zona de drop -->
-            <div class="panel-documentos" [class.dragover]="dragoverActivo" (dragover)="onDragOverPanel($event)"
-                (dragleave)="onDragLeavePanel($event)" (drop)="onDropPanel($event)">
+            <div class="form-group">
+                <label>Placas</label>
+                <input type="text" [(ngModel)]="placas" style="text-transform: uppercase;"
+                    placeholder="Ej. ABC-123">
+            </div>
+        </div>
 
-                <!-- Header del acordeón -->
-                <button type="button" class="panel-header" (click)="panelDocumentosAbierto = !panelDocumentosAbierto">
-                    <div class="panel-titulo">
-                        <span class="icono">📁</span>
-                        <span class="titulo">Documentos</span>
-                        <span class="badge-total" *ngIf="documentosExistentes.length + documentosNuevos.length > 0">
-                            {{ documentosExistentes.length + documentosNuevos.length }}
-                        </span>
-                    </div>
-                    <span class="flecha" [class.abierto]="panelDocumentosAbierto">▼</span>
-                </button>
-
-                <!-- Body: zona de drop + clic -->
-                <div class="panel-body" [class.abierto]="panelDocumentosAbierto" (click)="onPanelBodyClick($event)">
-
-                    <input #fileInput type="file" accept=".pdf,.jpg,.jpeg,.png" multiple hidden
-                        (change)="onDocumentosSeleccionados($event)">
-
-                    <!-- Vacío: muestra zona de drop -->
-                    <div class="panel-vacio" *ngIf="!documentosExistentes.length && !documentosNuevos.length">
-                        <span class="vacio-icono">📎</span>
-                        <p class="vacio-texto">Arrastra archivos aquí</p>
-                        <p class="vacio-subtexto">PDF, JPG o PNG</p>
-                    </div>
-
-                    <!-- Guardados -->
-                    <div class="grupo-documentos" *ngIf="documentosExistentes.length">
-                        <div class="grupo-titulo">Guardados</div>
-                        <ul class="lista-documentos lista-guardados">
-                            <li *ngFor="let doc of documentosExistentes">
-                                <a class="doc-link"
-                                    [href]="'http://localhost:3000/uploads/activos/' + numero_serie + '/' + doc"
-                                    target="_blank" [title]="doc">
-                                    <span class="doc-icono">📄</span>
-                                    <span class="doc-nombre">{{ doc }}</span>
-                                </a>
-                                <button type="button" class="btn-quitar"
-                                    (click)="quitarDocumentoExistente(doc, numero_serie); $event.stopPropagation()"
-                                    title="Eliminar documento">
-                                    ✕
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <!-- Nuevos -->
-                    <li *ngFor="let f of documentosNuevos">
-                        <div class="doc-info">
-                            <span class="doc-icono">{{ f.type === 'application/pdf' ? '📄' : '🖼️' }}</span>
-                            <span class="doc-nombre" [title]="f.name">{{ f.name }}</span>
-                        </div>
-                        <span class="badge-pendiente">Pendiente</span>
-                    </li>
-
-                </div>
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label>Especificación</label>
+                <input type="text" [(ngModel)]="especificacion" style="text-transform: uppercase;"
+                    placeholder="Ej. 25,000 litros, 3000 toneladas">
             </div>
         </div>
 
@@ -365,6 +327,72 @@
                             <input type="number" [(ngModel)]="plazo">
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOCUMENTOS (TEMP TEXTO) -->
+        <div class="form-group">
+            <label>Documentos</label>
+
+            <!-- El panel completo es la zona de drop -->
+            <div class="panel-documentos" [class.dragover]="dragoverActivo" (dragover)="onDragOverPanel($event)"
+                (dragleave)="onDragLeavePanel($event)" (drop)="onDropPanel($event)">
+
+                <!-- Header del acordeón -->
+                <button type="button" class="panel-header" (click)="panelDocumentosAbierto = !panelDocumentosAbierto">
+                    <div class="panel-titulo">
+                        <span class="icono">📁</span>
+                        <span class="titulo">Documentos</span>
+                        <span class="badge-total" *ngIf="documentosExistentes.length + documentosNuevos.length > 0">
+                            {{ documentosExistentes.length + documentosNuevos.length }}
+                        </span>
+                    </div>
+                    <span class="flecha" [class.abierto]="panelDocumentosAbierto">▼</span>
+                </button>
+
+                <!-- Body: zona de drop + clic -->
+                <div class="panel-body" [class.abierto]="panelDocumentosAbierto" (click)="onPanelBodyClick($event)">
+
+                    <input #fileInput type="file" accept=".pdf,.jpg,.jpeg,.png" multiple hidden
+                        (change)="onDocumentosSeleccionados($event)">
+
+                    <!-- Vacío: muestra zona de drop -->
+                    <div class="panel-vacio" *ngIf="!documentosExistentes.length && !documentosNuevos.length">
+                        <span class="vacio-icono">📎</span>
+                        <p class="vacio-texto">Arrastra archivos aquí</p>
+                        <p class="vacio-subtexto">PDF, JPG o PNG</p>
+                    </div>
+
+                    <!-- Guardados -->
+                    <div class="grupo-documentos" *ngIf="documentosExistentes.length">
+                        <div class="grupo-titulo">Guardados</div>
+                        <ul class="lista-documentos lista-guardados">
+                            <li *ngFor="let doc of documentosExistentes">
+                                <a class="doc-link"
+                                    [href]="'http://localhost:3000/uploads/activos/' + numero_serie + '/' + doc"
+                                    target="_blank" [title]="doc">
+                                    <span class="doc-icono">📄</span>
+                                    <span class="doc-nombre">{{ doc }}</span>
+                                </a>
+                                <button type="button" class="btn-quitar"
+                                    (click)="quitarDocumentoExistente(doc, numero_serie); $event.stopPropagation()"
+                                    title="Eliminar documento">
+                                    ✕
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Nuevos -->
+                    <li *ngFor="let f of documentosNuevos">
+                        <div class="doc-info">
+                            <span class="doc-icono">{{ f.type === 'application/pdf' ? '📄' : '🖼️' }}</span>
+                            <span class="doc-nombre" [title]="f.name">{{ f.name }}</span>
+                        </div>
+                        <span class="badge-pendiente">Pendiente</span>
+                    </li>
+
                 </div>
             </div>
         </div>
