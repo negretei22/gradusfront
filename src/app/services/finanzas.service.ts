@@ -54,7 +54,7 @@ export class FinanzasService {
   buscarConceptosPorRfc(rfc: string, texto: string = ''): Observable<any[]> {
     let params = new HttpParams().set('rfc', rfc);
     if (texto) {
-      params = params.set('q', texto);
+      params = params.set('texto', texto);
     }
     return this.http.get<any[]>(`${this.api}/finanzas/movimientos/buscar-conceptos`, { params });
   }
