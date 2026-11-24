@@ -87,7 +87,6 @@ export class ServicioComponent {
 
   fecha_servicio: string = '';
   id_activo: number = 0;
-  id_tipo_servicio: number = 0;
   activoSeleccionado: any = null;
   codigo: string = '';
 
@@ -127,13 +126,6 @@ export class ServicioComponent {
   ngOnInit() {
     this.cargarServicios();
     this.cargarActivos();
-    this.cargarTiposServicio();
-  }
-
-  cargarTiposServicio() {
-    this.servicioService.getTiposServicio().subscribe((res: any) => {
-      this.tiposServicio = res ?? [];
-    });
   }
 
   getSafeUrl(url: string): SafeResourceUrl {
@@ -274,7 +266,6 @@ export class ServicioComponent {
   resetForm() {
     this.fecha_servicio = '';
     this.id_activo = 0;
-    this.id_tipo_servicio = 0;
     this.activoSeleccionado = null;
     this.textoBusquedaActivo = '';
     this.codigo = '';
@@ -296,7 +287,6 @@ export class ServicioComponent {
   async saveServicio() {
     const formData = new FormData();
     formData.append('id_activo', this.id_activo.toString());
-    formData.append('id_tipo_servicio', this.id_tipo_servicio > 0 ? this.id_tipo_servicio.toString() : '');
     formData.append('fecha_servicio', this.fecha_servicio);
     formData.append('servicio_programado', (this.servicio_programado ?? '').toString());
     formData.append('unidad_servicio', this.unidad_servicio);
@@ -328,7 +318,6 @@ export class ServicioComponent {
     this.codigo = s.codigo;
     this.fecha_servicio = s.fecha_servicio ? s.fecha_servicio.toString().split('T')[0] : '';
     this.id_activo = s.id_activo;
-    this.id_tipo_servicio = s.id_tipo_servicio ?? 0;
 
     this.activoSeleccionado = s.activo ?? this.activos.find(a => a.id_maquinaria === s.id_activo);
     this.textoBusquedaActivo = this.activoSeleccionado
