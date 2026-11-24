@@ -98,6 +98,10 @@ export class MaquinariaComponent {
   marcas: any[] = [];
   modelos: any[] = [];
   arrendadores: any[] = [];
+  tiposMaquinaria: any[] = [];
+  tipo_maquinaria_id = 0;
+  placas = '';
+  especificacion = '';
   dragoverActivo = false;
 
 
@@ -110,7 +114,13 @@ export class MaquinariaComponent {
   openModal() {
     this.showModal = true;
     this.loadMarcas();
+    this.loadTiposMaquinaria();
 
+  }
+
+  loadTiposMaquinaria() {
+    this.maquinariaService.getTiposMaquinaria()
+      .subscribe(res => this.tiposMaquinaria = res);
   }
 
 
@@ -466,6 +476,9 @@ onClickFueraMenuPago() {
     this.numero_serie = '';
     this.descripcion = '';
     this.nombre = '';
+    this.tipo_maquinaria_id = 0;
+    this.placas = '';
+    this.especificacion = '';
     this.anio = '';
     this.id_marca = 0;
     this.id_modelo = 0;
@@ -512,6 +525,9 @@ onClickFueraMenuPago() {
     this.numero_serie = c.numero_serie;
     this.descripcion = c.descripcion;
     this.nombre = c.nombre ?? '';
+    this.tipo_maquinaria_id = c.tipo_maquinaria_id ?? 0;
+    this.placas = c.placas ?? '';
+    this.especificacion = c.especificacion ?? '';
     this.id_marca = c.id_marca;
     this.anio = c.anio;
     this.numero_de_contrato = c.numero_de_contrato ?? '';
@@ -535,6 +551,7 @@ onClickFueraMenuPago() {
     // 👇 clave: carga modelos y AL FINAL asigna id_modelo
 
     this.loadModelosParaEditar(c.id_marca, c.id_modelo);
+    this.loadTiposMaquinaria();
 
     this.onTipoAdquisicionChange(false);
 
@@ -732,6 +749,9 @@ onClickFueraMenuPago() {
     formData.append('numero_serie', this.numero_serie.toUpperCase());
     formData.append('descripcion', this.descripcion.toUpperCase());
     formData.append('nombre', (this.nombre || '').trim().toUpperCase());
+    formData.append('tipo_maquinaria_id', this.tipo_maquinaria_id > 0 ? this.tipo_maquinaria_id.toString() : '');
+    formData.append('placas', (this.placas || '').trim().toUpperCase());
+    formData.append('especificacion', (this.especificacion || '').trim().toUpperCase());
     formData.append('id_marca', this.id_marca.toString());
     formData.append('id_modelo', this.id_modelo.toString());
     formData.append('anio', this.anio.toString());
