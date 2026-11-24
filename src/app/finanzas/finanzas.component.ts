@@ -174,8 +174,31 @@ export class FinanzasComponent implements OnInit {
     pago: 'archivo_pago'
   };
 
+  // Opciones de "Dónde se aplica" por categoría (el código se guarda en donde_aplica, tinyint).
+  // 17 (Obra Puerto Peñasco): 1 = Puerto Peñasco, 2 = Hermosillo.
+  // 31 (OBRAS): 3 = Puerto Peñasco, Sonora; 4 = Zaragoza, S.L.P.;
+  // 5 = Ezcárcega, Campeche; 6 = Imperial del Golfo.
+  // Los códigos 3-6 son nuevos para no chocar con los de la 17, que el módulo
+  // obra-puerto-penasco interpreta (1 = Peñasco, 2 = Hermosillo).
+  private opcionesDondeAplicaPorCategoria: Record<number, { codigo: number; etiqueta: string }[]> = {
+    17: [
+      { codigo: 1, etiqueta: 'PUERTO PEÑASCO' },
+      { codigo: 2, etiqueta: 'HERMOSILLO' },
+    ],
+    31: [
+      { codigo: 3, etiqueta: 'PUERTO PEÑASCO, SONORA' },
+      { codigo: 4, etiqueta: 'ZARAGOZA, S.L.P.' },
+      { codigo: 5, etiqueta: 'EZCÁRCEGA, CAMPECHE' },
+      { codigo: 6, etiqueta: 'IMPERIAL DEL GOLFO' },
+    ],
+  };
+
   get mostrarDondeAplica(): boolean {
-    return +this.tipo_movimiento_id === 2 && +this.categoria_id === 17;
+    return +this.tipo_movimiento_id === 2 && [17, 31].includes(+this.categoria_id);
+  }
+
+  get opcionesDondeAplica(): { codigo: number; etiqueta: string }[] {
+    return this.opcionesDondeAplicaPorCategoria[+this.categoria_id] ?? [];
   }
 
 
@@ -612,6 +635,12 @@ export class FinanzasComponent implements OnInit {
       this.fecha_factura = '1900-01-01';
     }
     if (!this.mostrarDondeAplica) {
+      this.donde_aplica = null;
+      return;
+    }
+    // El código guardado era de la otra categoría (p. ej. cambiar de 17 a 31)
+    const codigoActual = this.donde_aplica === null ? null : +this.donde_aplica;
+    if (codigoActual !== null && !this.opcionesDondeAplica.some(o => o.codigo === codigoActual)) {
       this.donde_aplica = null;
     }
   }
