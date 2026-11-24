@@ -713,6 +713,20 @@ onClickFueraMenuPago() {
       return '';
     };
 
+    // TIPO DE SERVICIO derivado del último servicio: si trae servicio programado
+    // (horas) se muestra "Servicio programado {valor} {unidad}"; si no trae,
+    // van los comentarios del servicio; en blanco solo si tampoco hay comentarios.
+    const fmtTipoServicio = (c: any): string => {
+      const prog = c.ultimo_servicio_programado;
+      if (prog !== null && prog !== undefined && prog !== '') {
+        const n = Number(prog);
+        const valor = isFinite(n) ? String(n) : String(prog);
+        const unidad = (c.ultimo_unidad_servicio || '').trim();
+        return unidad ? `Servicio programado ${valor} ${unidad}` : `Servicio programado ${valor}`;
+      }
+      return (c.ultimo_comentarios || '').trim();
+    };
+
     const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'ESPECIFICACIONES', 'NÚMERO DE PLACAS', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'UBICACIÓN ACTUAL', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'SERVICIO DADO POR'];
 
     const rows = this.maquinariaFiltrada.map((c: any, i: number) => {
@@ -735,7 +749,7 @@ onClickFueraMenuPago() {
         fmtFecha(c.fecha_de_adquisicion),
         c.tipo_adquisicion || '',
         c.ubicacion || '',
-        c.ultimo_tipo_servicio || '',
+        fmtTipoServicio(c),
         fmtFecha(c.ultimo_fecha_servicio),
         fmtHrsKm(c),
         c.ultimo_responsable || ''
