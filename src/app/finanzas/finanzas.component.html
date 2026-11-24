@@ -333,8 +333,7 @@
           <label>Dónde se aplica</label>
           <select [(ngModel)]="donde_aplica">
             <option [ngValue]="null">SELECCIONE...</option>
-            <option [ngValue]="1">PUERTO PEÑASCO</option>
-            <option [ngValue]="2">HERMOSILLO</option>
+            <option *ngFor="let o of opcionesDondeAplica" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
           </select>
         </div>
 
