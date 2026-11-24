@@ -716,11 +716,13 @@ onClickFueraMenuPago() {
     // TIPO DE SERVICIO derivado del último servicio: si trae servicio programado
     // (horas) se muestra "Servicio programado {valor} {unidad}"; si no trae,
     // van los comentarios del servicio; en blanco solo si tampoco hay comentarios.
+    // OJO: las horas por default se guardan como 0, así que el 0 NO es programado
+    // y también va a comentarios (no "Servicio programado 0 HR").
     const fmtTipoServicio = (c: any): string => {
       const prog = c.ultimo_servicio_programado;
-      if (prog !== null && prog !== undefined && prog !== '') {
-        const n = Number(prog);
-        const valor = isFinite(n) ? String(n) : String(prog);
+      const n = Number(prog);
+      if (prog !== null && prog !== undefined && prog !== '' && isFinite(n) && n !== 0) {
+        const valor = String(n);
         const unidad = (c.ultimo_unidad_servicio || '').trim();
         return unidad ? `Servicio programado ${valor} ${unidad}` : `Servicio programado ${valor}`;
       }
