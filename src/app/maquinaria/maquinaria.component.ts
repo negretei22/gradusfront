@@ -700,16 +700,17 @@ onClickFueraMenuPago() {
       const n = Number(v);
       return isFinite(n) ? n : '';
     };
-    // Hrs o km del último servicio, con su unidad (HR/KM)
+    // Hrs o km del último servicio: si el horómetro es 0 se usa el
+    // kilometraje con "kms"; si el kilometraje también es 0, queda en blanco.
     const fmtHrsKm = (c: any): string => {
       const num = (v: any): string => {
         const n = Number(v);
         return isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '';
       };
-      if (c.ultimo_unidad_servicio === 'HR' && c.ultimo_horometro_servicio != null && c.ultimo_horometro_servicio !== '') return `${num(c.ultimo_horometro_servicio)} HR`;
-      if (c.ultimo_unidad_servicio === 'KM' && c.ultimo_kilometraje != null && c.ultimo_kilometraje !== '') return `${num(c.ultimo_kilometraje)} KM`;
-      if (c.ultimo_horometro_servicio != null && c.ultimo_horometro_servicio !== '') return num(c.ultimo_horometro_servicio);
-      if (c.ultimo_kilometraje != null && c.ultimo_kilometraje !== '') return num(c.ultimo_kilometraje);
+      const h = Number(c.ultimo_horometro_servicio);
+      if (isFinite(h) && h !== 0) return `${num(c.ultimo_horometro_servicio)} HR`;
+      const k = Number(c.ultimo_kilometraje);
+      if (isFinite(k) && k !== 0) return `${num(c.ultimo_kilometraje)} kms`;
       return '';
     };
 
