@@ -683,25 +683,32 @@ onClickFueraMenuPago() {
     window.open(`http://localhost:3000/uploads/activos/${serie}/${this.documento_poliza}`, '_blank');
   }
 
-  // ===== EXPORTAR EXCEL (inventario de maquinaria, 18 columnas) =====
+  // ===== EXPORTAR EXCEL (reporte de maquinaria, 21 columnas: servicios y pólizas) =====
   exportarExcel() {
     const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    // Dato que falta -> guion, como pidió Ivo
+    const GUION = '-';
     const fmtFecha = (f: any): string => {
-      if (!f) return '';
+      if (!f) return GUION;
       const soloFecha = f.toString().split('T')[0].split(' ')[0];
       const partes = soloFecha.split('-');
       if (partes.length !== 3) return soloFecha;
       const [y, m, d] = partes;
       return `${d}-${MESES_ABR[Number(m) - 1] || m}-${y.slice(2)}`;
     };
-    // Monto como número para Excel (vacío si no aplica); el formato $ se pone en la celda
-    const montoNum = (v: any): number | '' => {
-      if (v === null || v === undefined || v === '') return '';
+    // Monto como número para Excel (guion si no aplica); el formato $ se pone en la celda.
+    // Si el valor es texto no numérico (ej. "Financiado en letra") se deja el texto tal cual.
+    const montoCelda = (v: any): number | string => {
+      if (v === null || v === undefined || v === '') return GUION;
       const n = Number(v);
-      return isFinite(n) ? n : '';
+      // El 0 es el valor por default cuando no se capturó nada (igual que en
+      // horómetro y servicio programado), así que también es guion.
+      if (isFinite(n)) return n === 0 ? GUION : n;
+      const t = String(v).trim();
+      return t || GUION;
     };
     // Hrs o km del último servicio: si el horómetro es 0 se usa el
-    // kilometraje con "kms"; si el kilometraje también es 0, queda en blanco.
+    // kilometraje con "kms"; si el kilometraje también es 0, guion.
     const fmtHrsKm = (c: any): string => {
       const num = (v: any): string => {
         const n = Number(v);
@@ -711,12 +718,12 @@ onClickFueraMenuPago() {
       if (isFinite(h) && h !== 0) return `${num(c.ultimo_horometro_servicio)} HR`;
       const k = Number(c.ultimo_kilometraje);
       if (isFinite(k) && k !== 0) return `${num(c.ultimo_kilometraje)} kms`;
-      return '';
+      return GUION;
     };
 
     // TIPO DE SERVICIO derivado del último servicio: si trae servicio programado
     // (horas) se muestra solo "{valor} {unidad}" (ej. "2000 HR"); si no trae,
-    // van los comentarios del servicio; en blanco solo si tampoco hay comentarios.
+    // van los comentarios del servicio; guion solo si tampoco hay comentarios.
     // OJO: las horas por default se guardan como 0, así que el 0 NO es programado
     // y también va a comentarios (no "0 HR").
     const fmtTipoServicio = (c: any): string => {
@@ -727,35 +734,45 @@ onClickFueraMenuPago() {
         const unidad = (c.ultimo_unidad_servicio || '').trim();
         return unidad ? `${valor} ${unidad}` : `${valor}`;
       }
-      return (c.ultimo_comentarios || '').trim();
+      return (c.ultimo_comentarios || '').trim() || GUION;
     };
 
-    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'ESPECIFICACIONES', 'NÚMERO DE PLACAS', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'UBICACIÓN ACTUAL', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'SERVICIO DADO POR'];
+    // ASEGURADORA: nombre si lo tiene; "No Asegurado" si no tiene póliza;
+    // guion si tiene número de póliza pero no capturaron la aseguradora.
+    const fmtAseguradora = (c: any): string => {
+      if ((c.aseguradora || '').trim()) return c.aseguradora;
+      if ((c.numero_poliza || '').trim()) return GUION;
+      return 'No Asegurado';
+    };
+
+    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'UBICACIÓN ACTUAL', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
 
     const rows = this.maquinariaFiltrada.map((c: any, i: number) => {
-      const esRenta = Number(c.id_tipo_de_adquisicion) === 3;
       const pagoMensual = (c.monto_renta_mensual != null && c.monto_renta_mensual !== '')
         ? c.monto_renta_mensual
         : c.pago_mensual;
       return [
         i + 1,
-        c.tipo_maquinaria || '',
-        c.nombre || '',
-        c.b_marca || '',
-        c.m_modelo || '',
-        c.numero_serie || '',
-        c.anio || '',
-        c.especificacion || '',
-        c.placas || '',
-        esRenta ? '' : montoNum(c.valor_compra),
-        montoNum(pagoMensual),
+        c.tipo_maquinaria || GUION,
+        c.nombre || GUION,
+        c.b_marca || GUION,
+        c.m_modelo || GUION,
+        c.numero_serie || GUION,
+        c.anio || GUION,
+        c.placas || GUION,
+        montoCelda(c.valor_compra),
+        montoCelda(pagoMensual),
         fmtFecha(c.fecha_de_adquisicion),
-        c.tipo_adquisicion || '',
-        c.ubicacion || '',
+        c.tipo_adquisicion || GUION,
+        c.ubicacion || GUION,
         fmtTipoServicio(c),
         fmtFecha(c.ultimo_fecha_servicio),
         fmtHrsKm(c),
-        c.ultimo_responsable || ''
+        fmtAseguradora(c),
+        c.numero_poliza || GUION,
+        fmtFecha(c.fecha_inicio_poliza),
+        fmtFecha(c.fecha_fin_poliza),
+        montoCelda(c.costo_poliza)
       ];
     });
 
@@ -764,13 +781,14 @@ onClickFueraMenuPago() {
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
     worksheet['!cols'] = [
       { wch: 5 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
-      { wch: 20 }, { wch: 8 }, { wch: 22 }, { wch: 14 }, { wch: 20 },
-      { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 },
-      { wch: 14 }, { wch: 16 }, { wch: 18 }
+      { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 20 }, { wch: 20 },
+      { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 14 },
+      { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
+      { wch: 20 }
     ];
-    // Formato $ a las dos columnas de montos (J y K)
+    // Formato $ a las tres columnas de montos (I, J y U)
     for (let r = 1; r <= rows.length; r++) {
-      for (const col of ['J', 'K']) {
+      for (const col of ['I', 'J', 'U']) {
         const cell = worksheet[`${col}${r + 1}`];
         if (cell && typeof cell.v === 'number') { cell.t = 'n'; cell.z = '"$"#,##0.00'; }
       }
