@@ -683,7 +683,7 @@ onClickFueraMenuPago() {
     window.open(`http://localhost:3000/uploads/activos/${serie}/${this.documento_poliza}`, '_blank');
   }
 
-  // ===== EXPORTAR EXCEL (reporte de maquinaria, 21 columnas: servicios y pólizas) =====
+  // ===== EXPORTAR EXCEL (reporte de maquinaria, 21 columnas en 4 grupos: activo, leasing, servicio y seguro) =====
   exportarExcel() {
     const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     // Dato que falta -> guion, como pidió Ivo
@@ -745,7 +745,10 @@ onClickFueraMenuPago() {
       return 'No Asegurado';
     };
 
-    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'UBICACIÓN ACTUAL', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
+    // Columnas en el orden de los grupos: activo (1-9), leasing (10-13),
+    // servicio (14-16) y seguro (17-21). UBICACIÓN ACTUAL se mueve junto
+    // a los datos del activo para que los grupos queden corridos.
+    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'UBICACIÓN ACTUAL', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
 
     const rows = this.maquinariaFiltrada.map((c: any, i: number) => {
       const pagoMensual = (c.monto_renta_mensual != null && c.monto_renta_mensual !== '')
@@ -760,11 +763,11 @@ onClickFueraMenuPago() {
         c.numero_serie || GUION,
         c.anio || GUION,
         c.placas || GUION,
+        c.ubicacion || GUION,
         montoCelda(c.valor_compra),
         montoCelda(pagoMensual),
         fmtFecha(c.fecha_de_adquisicion),
         c.tipo_adquisicion || GUION,
-        c.ubicacion || GUION,
         fmtTipoServicio(c),
         fmtFecha(c.ultimo_fecha_servicio),
         fmtHrsKm(c),
@@ -776,21 +779,84 @@ onClickFueraMenuPago() {
       ];
     });
 
-    const sheetData = [headers, ...rows];
+    // ===== AGRUPACIÓN Y COLORES: encabezado en 2 niveles =====
+    // Fila 1: título de cada grupo (combinado, color fuerte, texto blanco).
+    // Fila 2: nombres de columna (tinte claro del color de su grupo).
+    const GRUPOS = [
+      { titulo: 'DATOS DEL ACTIVO', desde: 0, hasta: 8, color: 'FF1F4E79', claro: 'FFD9E2F3' },
+      { titulo: 'DATOS DEL LEASING', desde: 9, hasta: 12, color: 'FF2E75B6', claro: 'FFDDEBF7' },
+      { titulo: 'DATOS DEL SERVICIO', desde: 13, hasta: 15, color: 'FF548235', claro: 'FFE2EFDA' },
+      { titulo: 'DATOS DEL SEGURO', desde: 16, hasta: 20, color: 'FFBF8F00', claro: 'FFFFF2CC' },
+    ];
+    const grupoDe = (col: number) => GRUPOS.find(g => col >= g.desde && col <= g.hasta)!;
+    const filaGrupos: any[] = new Array(21).fill('');
+    GRUPOS.forEach(g => { filaGrupos[g.desde] = g.titulo; });
+
+    const sheetData = [filaGrupos, headers, ...rows];
 
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
     worksheet['!cols'] = [
       { wch: 5 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
       { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 20 }, { wch: 20 },
-      { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 14 },
+      { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 14 },
       { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
       { wch: 20 }
     ];
-    // Formato $ a las tres columnas de montos (I, J y U)
-    for (let r = 1; r <= rows.length; r++) {
-      for (const col of ['I', 'J', 'U']) {
-        const cell = worksheet[`${col}${r + 1}`];
+    worksheet['!merges'] = GRUPOS.map(g => ({ s: { r: 0, c: g.desde }, e: { r: 0, c: g.hasta } }));
+    worksheet['!rows'] = [{ hpt: 22 }, { hpt: 30 }];
+
+    const colLetra = (c: number): string => XLSX.utils.encode_col(c);
+    const bordeFino = {
+      top: { style: 'thin', color: { rgb: 'FFBFBFBF' } },
+      bottom: { style: 'thin', color: { rgb: 'FFBFBFBF' } },
+      left: { style: 'thin', color: { rgb: 'FFBFBFBF' } },
+      right: { style: 'thin', color: { rgb: 'FFBFBFBF' } },
+    };
+    // Fila 1: títulos de grupo
+    GRUPOS.forEach(g => {
+      for (let c = g.desde; c <= g.hasta; c++) {
+        const cell = worksheet[`${colLetra(c)}1`];
+        if (!cell) continue;
+        cell.s = {
+          fill: { patternType: 'solid', fgColor: { rgb: g.color } },
+          font: { bold: true, sz: 12, color: { rgb: 'FFFFFFFF' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: bordeFino,
+        };
+      }
+    });
+    // Fila 2: nombres de columna
+    for (let c = 0; c < 21; c++) {
+      const g = grupoDe(c);
+      const cell = worksheet[`${colLetra(c)}2`];
+      if (!cell) continue;
+      cell.s = {
+        fill: { patternType: 'solid', fgColor: { rgb: g.claro } },
+        font: { bold: true, sz: 11, color: { rgb: 'FF1F1F1F' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border: bordeFino,
+      };
+    }
+    // Formato $ a las tres columnas de montos (J, K y U); los datos empiezan en la fila 3
+    for (let r = 0; r < rows.length; r++) {
+      for (const col of ['J', 'K', 'U']) {
+        const cell = worksheet[`${col}${r + 3}`];
         if (cell && typeof cell.v === 'number') { cell.t = 'n'; cell.z = '"$"#,##0.00'; }
+      }
+    }
+    // Datos: bordes finos y renglón sí / renglón no en gris muy claro
+    for (let r = 0; r < rows.length; r++) {
+      const fila = r + 3;
+      for (let c = 0; c < 21; c++) {
+        const cell = worksheet[`${colLetra(c)}${fila}`];
+        if (!cell) continue;
+        cell.s = {
+          ...(cell.s || {}),
+          fill: { patternType: 'solid', fgColor: { rgb: r % 2 === 1 ? 'FFF2F2F2' : 'FFFFFFFF' } },
+          font: { sz: 11, color: { rgb: 'FF1F1F1F' } },
+          alignment: { vertical: 'center' },
+          border: bordeFino,
+        };
       }
     }
     const workbook = XLSX.utils.book_new();
