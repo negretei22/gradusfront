@@ -69,6 +69,8 @@
   cursor: pointer;
   font-size: 16px;
   margin-right: 0;
+  padding: 2px;
+  line-height: 1;
 }
 
 .btn-edit {
@@ -680,12 +682,17 @@ select {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 2px;
+}
+
+/* Celda de acciones más angosta para que los iconos queden juntos */
+.gradus-table td.actions {
+  padding: 10px 4px;
 }
 
 /* Lugar reservado para el círculo de archivos, para que no se corran los iconos */
 .slot-archivos {
-  width: 40px;
+  width: 28px;
   display: flex;
   justify-content: center;
   flex-shrink: 0;
