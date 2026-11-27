@@ -40,7 +40,16 @@ export class MaquinariaComponent {
   maquinaria: any[] = [];
   mostrarBuscador: boolean = true // controla visibilidad
   filtroMaquinaria: string = ''
+  filtroSeguro: string = 'todos';
+  filtroAdquisicion: string = 'todos';
   maquinariaFiltrada: any[] = []
+
+  // Modal Exportar Excel: qué grupos incluir. Datos del Activo siempre van;
+  // Leasing, Servicio y Seguro se eligen con checkbox (1, 2 o los 3).
+  mostrarExportar = false;
+  exportLeasing = true;
+  exportServicio = true;
+  exportSeguro = true;
 
   mostrarPagos = false;
   cargandoPagos = false;
@@ -417,13 +426,18 @@ onClickFueraMenuPago() {
     this.maquinariaService.getMaquinaria().subscribe(res => {
       console.log('DATA LISTADO:', res);
       this.maquinaria = res as any[];
-      this.maquinariaFiltrada = [...this.maquinaria];
+      this.filtrarMaquinaria();
     });
 
   }
 
   filtrarMaquinaria() {
-
+    this.maquinariaFiltrada = this.maquinaria.filter((c: any) => {
+      if (this.filtroSeguro === 'con' && !this.tienePoliza(c)) return false;
+      if (this.filtroSeguro === 'sin' && this.tienePoliza(c)) return false;
+      if (this.filtroAdquisicion !== 'todos' && String(c.id_tipo_de_adquisicion) !== this.filtroAdquisicion) return false;
+      return true;
+    });
   }
 
 
@@ -627,7 +641,7 @@ onClickFueraMenuPago() {
 
     this.maquinariaService.getMaquinaria().subscribe(res => {
       this.maquinaria = res as any[];
-      this.maquinariaFiltrada = [...this.maquinaria];
+      this.filtrarMaquinaria();
     });
 
     this.cerrarPoliza();
@@ -684,7 +698,19 @@ onClickFueraMenuPago() {
   }
 
   // ===== EXPORTAR EXCEL (reporte de maquinaria, 21 columnas en 4 grupos: activo, leasing, servicio y seguro) =====
+  abrirExportar() {
+    this.exportLeasing = true;
+    this.exportServicio = true;
+    this.exportSeguro = true;
+    this.mostrarExportar = true;
+  }
+
+  cerrarExportar() {
+    this.mostrarExportar = false;
+  }
+
   exportarExcel() {
+    this.mostrarExportar = false;
     const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     // Dato que falta -> guion, como pidió Ivo
     const GUION = '-';
@@ -748,9 +774,9 @@ onClickFueraMenuPago() {
     // Columnas en el orden de los grupos: activo (1-9), leasing (10-13),
     // servicio (14-16) y seguro (17-21). UBICACIÓN ACTUAL se mueve junto
     // a los datos del activo para que los grupos queden corridos.
-    const headers = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'UBICACIÓN ACTUAL', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
+    const headersCompletos = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'UBICACIÓN ACTUAL', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
 
-    const rows = this.maquinariaFiltrada.map((c: any, i: number) => {
+    const filasCompletas = this.maquinariaFiltrada.map((c: any, i: number) => {
       const pagoMensual = (c.monto_renta_mensual != null && c.monto_renta_mensual !== '')
         ? c.monto_renta_mensual
         : c.pago_mensual;
@@ -779,29 +805,50 @@ onClickFueraMenuPago() {
       ];
     });
 
+    // ===== QUÉ GRUPOS SALEN (según el modal): Activo siempre; Leasing,
+    // Servicio y Seguro solo si se marcaron. Sin marcar ninguno salen solo
+    // los 9 datos del activo. Los índices se recorren al quitar un grupo.
+    const incluidos: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    if (this.exportLeasing) incluidos.push(9, 10, 11, 12);
+    if (this.exportServicio) incluidos.push(13, 14, 15);
+    if (this.exportSeguro) incluidos.push(16, 17, 18, 19, 20);
+    const headers = incluidos.map(i => headersCompletos[i]);
+    const rows = filasCompletas.map((f: any[]) => incluidos.map(i => f[i]));
+    // Columnas de montos con formato $ (índices originales 9, 10 y 20),
+    // ya recorridas a su posición nueva; solo las que sí se exportan.
+    const colsMonto = [9, 10, 20].filter(i => incluidos.includes(i)).map(i => incluidos.indexOf(i));
+
     // ===== AGRUPACIÓN Y COLORES: encabezado en 2 niveles =====
     // Fila 1: título de cada grupo (combinado, color fuerte, texto blanco).
     // Fila 2: nombres de columna (tinte claro del color de su grupo).
-    const GRUPOS = [
+    const GRUPOS_BASE = [
       { titulo: 'DATOS DEL ACTIVO', desde: 0, hasta: 8, color: 'FF1F4E79', claro: 'FFD9E2F3' },
       { titulo: 'DATOS DEL LEASING', desde: 9, hasta: 12, color: 'FF2E75B6', claro: 'FFDDEBF7' },
       { titulo: 'DATOS DEL SERVICIO', desde: 13, hasta: 15, color: 'FF548235', claro: 'FFE2EFDA' },
       { titulo: 'DATOS DEL SEGURO', desde: 16, hasta: 20, color: 'FFBF8F00', claro: 'FFFFF2CC' },
     ];
+    const GRUPOS = GRUPOS_BASE
+      .map(g => {
+        const cols = incluidos.filter(i => i >= g.desde && i <= g.hasta);
+        if (!cols.length) return null;
+        return { titulo: g.titulo, desde: incluidos.indexOf(cols[0]), hasta: incluidos.indexOf(cols[cols.length - 1]), color: g.color, claro: g.claro };
+      })
+      .filter(g => g !== null) as { titulo: string; desde: number; hasta: number; color: string; claro: string }[];
     const grupoDe = (col: number) => GRUPOS.find(g => col >= g.desde && col <= g.hasta)!;
-    const filaGrupos: any[] = new Array(21).fill('');
+    const filaGrupos: any[] = new Array(headers.length).fill('');
     GRUPOS.forEach(g => { filaGrupos[g.desde] = g.titulo; });
 
     const sheetData = [filaGrupos, headers, ...rows];
 
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-    worksheet['!cols'] = [
+    const anchosCompletos = [
       { wch: 5 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
       { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 20 }, { wch: 20 },
       { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 14 },
       { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
       { wch: 20 }
     ];
+    worksheet['!cols'] = incluidos.map(i => anchosCompletos[i]);
     worksheet['!merges'] = GRUPOS.map(g => ({ s: { r: 0, c: g.desde }, e: { r: 0, c: g.hasta } }));
     worksheet['!rows'] = [{ hpt: 22 }, { hpt: 30 }];
 
@@ -826,7 +873,7 @@ onClickFueraMenuPago() {
       }
     });
     // Fila 2: nombres de columna
-    for (let c = 0; c < 21; c++) {
+    for (let c = 0; c < headers.length; c++) {
       const g = grupoDe(c);
       const cell = worksheet[`${colLetra(c)}2`];
       if (!cell) continue;
@@ -837,17 +884,18 @@ onClickFueraMenuPago() {
         border: bordeFino,
       };
     }
-    // Formato $ a las tres columnas de montos (J, K y U); los datos empiezan en la fila 3
+    // Formato $ a las columnas de montos que sí se exportan (Valor de compra,
+    // Pago mensual y Costo de la póliza); los datos empiezan en la fila 3
     for (let r = 0; r < rows.length; r++) {
-      for (const col of ['J', 'K', 'U']) {
-        const cell = worksheet[`${col}${r + 3}`];
+      for (const col of colsMonto) {
+        const cell = worksheet[`${colLetra(col)}${r + 3}`];
         if (cell && typeof cell.v === 'number') { cell.t = 'n'; cell.z = '"$"#,##0.00'; }
       }
     }
     // Datos: bordes finos y renglón sí / renglón no en gris muy claro
     for (let r = 0; r < rows.length; r++) {
       const fila = r + 3;
-      for (let c = 0; c < 21; c++) {
+      for (let c = 0; c < headers.length; c++) {
         const cell = worksheet[`${colLetra(c)}${fila}`];
         if (!cell) continue;
         cell.s = {
@@ -940,7 +988,7 @@ onClickFueraMenuPago() {
 
     this.maquinariaService.getMaquinaria().subscribe(res => {
       this.maquinaria = res as any[];
-      this.maquinariaFiltrada = [...this.maquinaria];
+      this.filtrarMaquinaria();
     });
 
     this.closeModal();

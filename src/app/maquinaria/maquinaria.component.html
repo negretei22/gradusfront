@@ -4,7 +4,7 @@
         <h2>Maquinaria</h2>
         <div class="contratos-header">
 
-            <button class="btn-primary" (click)="exportarExcel()">
+            <button class="btn-primary" (click)="abrirExportar()">
                 📥 Exportar Excel
             </button>
             <button class="btn-primary" (click)="openModal()">
@@ -13,6 +13,20 @@
         </div>
     </div>
 
+
+    <div class="filtros-maquinaria">
+        <select [(ngModel)]="filtroSeguro" (change)="filtrarMaquinaria()">
+            <option value="todos">Seguro: Todos</option>
+            <option value="con">Con seguro</option>
+            <option value="sin">Sin seguro</option>
+        </select>
+        <select [(ngModel)]="filtroAdquisicion" (change)="filtrarMaquinaria()">
+            <option value="todos">Adquisición: Todas</option>
+            <option value="1">Propio</option>
+            <option value="2">Leasing</option>
+            <option value="3">Arrendada</option>
+        </select>
+    </div>
 
     <table class="gradus-table">
         <thead>
@@ -594,6 +608,29 @@
         </div>
         <div class="modal-actions">
             <button class="btn-cancel" (click)="cerrarPagos()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EXPORTAR EXCEL: elegir qué grupos incluir -->
+<div class="modal-backdrop" *ngIf="mostrarExportar" (click)="cerrarExportar()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <h3>📥 Exportar Excel</h3>
+        <p>Los datos del activo siempre van. Elige qué más quieres exportar:</p>
+
+        <div class="form-group">
+            <label><input type="checkbox" [(ngModel)]="exportLeasing"> Datos del Leasing (valor de compra, pago mensual, fecha y tipo de adquisición)</label>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" [(ngModel)]="exportServicio"> Datos del Servicio (tipo, fecha y hrs/km del último servicio)</label>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" [(ngModel)]="exportSeguro"> Datos del Seguro (aseguradora, póliza, fechas y costo)</label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="cerrarExportar()">Cancelar</button>
+            <button class="btn-primary" (click)="exportarExcel()">Exportar</button>
         </div>
     </div>
 </div>
