@@ -653,8 +653,11 @@
             </div>
         </label>
 
+        <p class="exportar-sub">En Drive se escribe el reporte completo con todos los activos.</p>
+
         <div class="modal-actions">
             <button class="btn-cancel" (click)="cerrarExportar()">Cancelar</button>
+            <button class="btn-primary" (click)="guardarEnDrive()" [disabled]="guardandoDrive">{{ guardandoDrive ? 'Guardando…' : '💾 Guardar en Drive' }}</button>
             <button class="btn-primary" (click)="exportarExcel()">Exportar</button>
         </div>
     </div>

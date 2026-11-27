@@ -45,4 +45,8 @@ export class MaquinariaService {
   updatePoliza(data: FormData) {
     return firstValueFrom(this.http.put(`${this.api}/maquinaria/poliza`, data));
   }
+
+  guardarEnDrive(payload: any) {
+    return firstValueFrom(this.http.post(`${this.api}/maquinaria/exportar-drive`, payload));
+  }
 }
