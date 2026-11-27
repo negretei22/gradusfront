@@ -717,148 +717,29 @@ onClickFueraMenuPago() {
     this.mostrarExportar = false;
   }
 
-  // ===== DATOS DEL REPORTE PARA DRIVE =====
-  // Arma los mismos datos del exportarExcel (mismas reglas: guion si falta
-  // el dato, "No Asegurado" sin póliza, 0 como no capturado, texto no
-  // numérico tal cual) para mandarlos al back, que los escribe en la hoja
-  // de Google. Se mantiene aparte de exportarExcel para no tocar la
-  // descarga, que ya está verificada; si cambian las reglas de uno hay que
-  // cambiarlas en los dos.
-  prepararDatosExportar(filas: any[], conLeasing: boolean, conServicio: boolean, conSeguro: boolean) {
-    const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    const GUION = '-';
-    const fmtFecha = (f: any): string => {
-      if (!f) return GUION;
-      const soloFecha = f.toString().split('T')[0].split(' ')[0];
-      const partes = soloFecha.split('-');
-      if (partes.length !== 3) return soloFecha;
-      const [y, m, d] = partes;
-      return `${d}-${MESES_ABR[Number(m) - 1] || m}-${y.slice(2)}`;
-    };
-    const montoCelda = (v: any): number | string => {
-      if (v === null || v === undefined || v === '') return GUION;
-      const n = Number(v);
-      if (isFinite(n)) return n === 0 ? GUION : n;
-      const t = String(v).trim();
-      return t || GUION;
-    };
-    const fmtHrsKm = (c: any): string => {
-      const num = (v: any): string => {
-        const n = Number(v);
-        return isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '';
-      };
-      const h = Number(c.ultimo_horometro_servicio);
-      if (isFinite(h) && h !== 0) return `${num(c.ultimo_horometro_servicio)} HR`;
-      const k = Number(c.ultimo_kilometraje);
-      if (isFinite(k) && k !== 0) return `${num(c.ultimo_kilometraje)} kms`;
-      return GUION;
-    };
-    const fmtTipoServicio = (c: any): string => {
-      const prog = c.ultimo_servicio_programado;
-      const n = Number(prog);
-      if (prog !== null && prog !== undefined && prog !== '' && isFinite(n) && n !== 0) {
-        const valor = String(n);
-        const unidad = (c.ultimo_unidad_servicio || '').trim();
-        return unidad ? `${valor} ${unidad}` : `${valor}`;
-      }
-      return (c.ultimo_comentarios || '').trim() || GUION;
-    };
-    const fmtAseguradora = (c: any): string => {
-      if ((c.aseguradora || '').trim()) return c.aseguradora;
-      if ((c.numero_poliza || '').trim()) return GUION;
-      return 'No Asegurado';
-    };
-
-    const headersCompletos = ['No.', 'MAQUINARIA / VEHÍCULO', 'NOMBRE', 'MARCA', 'MODELO', 'NO. DE SERIE', 'AÑO', 'NÚMERO DE PLACAS', 'UBICACIÓN ACTUAL', 'VALOR DE COMPRA (MX) (PRECIOS INCLUYEN IVA)', 'PAGO MENSUAL (PRECIOS INCLUYEN IVA)', 'FECHA DE ADQUISICIÓN', 'TIPO DE ADQUISICIÓN', 'TIPO DE SERVICIO', 'FECHA ÚLTIMO SERVICIO', 'HRS O KM AL ÚLTIMO SERVICIO', 'ASEGURADORA', 'NO. PÓLIZA DE SEGURO', 'FECHA DE INICIO', 'FECHA DE TÉRMINO', 'COSTO DE LA PÓLIZA (PRECIOS INCLUYEN IVA)'];
-
-    const filasCompletas = filas.map((c: any, i: number) => {
-      const pagoMensual = (c.monto_renta_mensual != null && c.monto_renta_mensual !== '')
-        ? c.monto_renta_mensual
-        : c.pago_mensual;
-      return [
-        i + 1,
-        c.tipo_maquinaria || GUION,
-        c.nombre || GUION,
-        c.b_marca || GUION,
-        c.m_modelo || GUION,
-        c.numero_serie || GUION,
-        c.anio || GUION,
-        c.placas || GUION,
-        c.ubicacion || GUION,
-        montoCelda(c.valor_compra),
-        montoCelda(pagoMensual),
-        fmtFecha(c.fecha_de_adquisicion),
-        c.tipo_adquisicion || GUION,
-        fmtTipoServicio(c),
-        fmtFecha(c.ultimo_fecha_servicio),
-        fmtHrsKm(c),
-        fmtAseguradora(c),
-        c.numero_poliza || GUION,
-        fmtFecha(c.fecha_inicio_poliza),
-        fmtFecha(c.fecha_fin_poliza),
-        montoCelda(c.costo_poliza)
-      ];
-    });
-
-    const incluidos: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    if (conLeasing) incluidos.push(9, 10, 11, 12);
-    if (conServicio) incluidos.push(13, 14, 15);
-    if (conSeguro) incluidos.push(16, 17, 18, 19, 20);
-    const headers = incluidos.map(i => headersCompletos[i]);
-    const rows = filasCompletas.map((f: any[]) => incluidos.map(i => f[i]));
-    const colsMonto = [9, 10, 20].filter(i => incluidos.includes(i)).map(i => incluidos.indexOf(i));
-
-    const GRUPOS_BASE = [
-      { titulo: 'DATOS DEL ACTIVO', desde: 0, hasta: 8, color: 'FF1F4E79', claro: 'FFD9E2F3' },
-      { titulo: 'DATOS DEL LEASING', desde: 9, hasta: 12, color: 'FF2E75B6', claro: 'FFDDEBF7' },
-      { titulo: 'DATOS DEL SERVICIO', desde: 13, hasta: 15, color: 'FF548235', claro: 'FFE2EFDA' },
-      { titulo: 'DATOS DEL SEGURO', desde: 16, hasta: 20, color: 'FFBF8F00', claro: 'FFFFF2CC' },
-    ];
-    const grupos = GRUPOS_BASE
-      .map(g => {
-        const cols = incluidos.filter(i => i >= g.desde && i <= g.hasta);
-        if (!cols.length) return null;
-        return { titulo: g.titulo, desde: incluidos.indexOf(cols[0]), hasta: incluidos.indexOf(cols[cols.length - 1]), color: g.color, claro: g.claro };
-      })
-      .filter(g => g !== null) as { titulo: string; desde: number; hasta: number; color: string; claro: string }[];
-    const anchosCompletos = [
-      5, 22, 14, 14, 16, 20, 8, 14, 20, 20,
-      20, 14, 14, 18, 14, 16, 18, 18, 14, 14, 20
-    ];
-    const anchos = incluidos.map(i => anchosCompletos[i]);
-
-    return { headers, rows, grupos, colsMonto, anchos };
-  }
-
   // ===== GUARDAR EN DRIVE =====
-  // Escribe el reporte en la hoja de Google. En Drive siempre va el
-  // reporte COMPLETO (todos los activos, no solo los filtrados en pantalla),
-  // porque la hoja se sobreescribe: si se mandaran solo los filtrados se
-  // perderían los demás renglones. silencioso = auto-sync al guardar un
-  // leasing (no estorba; solo avisa si falla). todosLosGrupos = el
-  // auto-sync escribe los 4 grupos aunque en el modal haya otros marcados.
-  async guardarEnDrive(silencioso = false, todosLosGrupos = false) {
+  // Escribe las 3 hojas de Drive (Leasing, Seguros y Servicios) con los
+  // datos actuales de la base. El contenido se arma en el back; el front
+  // solo dice que escriba las 3. En Drive siempre van TODOS los activos,
+  // no solo los filtrados en pantalla, porque cada hoja se sobreescribe.
+  async guardarEnDrive() {
     if (this.guardandoDrive) return;
     this.guardandoDrive = true;
     try {
-      const datos = this.prepararDatosExportar(
-        this.maquinaria,
-        todosLosGrupos ? true : this.exportLeasing,
-        todosLosGrupos ? true : this.exportServicio,
-        todosLosGrupos ? true : this.exportSeguro
-      );
-      const res: any = await this.maquinariaService.guardarEnDrive(datos);
-      if (!silencioso) {
-        this.alerts.AlertaVerde('Guardado en Drive', `El reporte se escribió en la hoja (${res?.filas ?? datos.rows.length} activos).`);
-        this.mostrarExportar = false;
-      }
-    } catch (e: any) {
-      const msg = e?.error?.message || e?.message || 'No se pudo escribir en la hoja de Drive.';
-      if (silencioso) {
-        this.alerts.AlertaWarning('No se subió a Drive', `El activo se guardó en Gradus, pero no se pudo escribir en la hoja: ${msg}`);
+      const res: any = await this.maquinariaService.guardarEnDriveArchivo('todos');
+      const errores = res?.errores || [];
+      if (errores.length) {
+        this.alerts.AlertaWarning(
+          'Guardado parcial en Drive',
+          `No se pudieron escribir: ${errores.map((e: any) => e.archivo).join(', ')}. Las demás hojas sí se escribieron.`,
+        );
       } else {
-        this.alerts.AlertaRoja('No se pudo guardar en Drive', msg);
+        this.alerts.AlertaVerde('Guardado en Drive', 'Se escribieron las 3 hojas: Leasing, Seguros y Servicios.');
       }
+      this.mostrarExportar = false;
+    } catch (e: any) {
+      const msg = e?.error?.message || e?.message || 'No se pudo escribir en Drive.';
+      this.alerts.AlertaRoja('No se pudo guardar en Drive', msg);
     } finally {
       this.guardandoDrive = false;
     }
@@ -1134,11 +1015,6 @@ onClickFueraMenuPago() {
         break;
     }
 
-    // Auto-sync a Drive: si lo que se guardó es un leasing, el reporte se
-    // escribe solo en la hoja (con los 4 grupos). Se captura antes de
-    // guardar porque el modal se cierra y los campos se limpian.
-    const eraLeasing = Number(this.id_tipo_de_adquisicion) === 2;
-
     if (this.editando) {
       formData.append('id_maquinaria', this.id_maquinaria.toString());
       await this.maquinariaService.updateMaquinaria(formData);
@@ -1146,12 +1022,13 @@ onClickFueraMenuPago() {
       await this.maquinariaService.saveMaquinaria(formData);
     }
 
+    // En Activos ya no se escribe nada solo en Drive al guardar: las hojas
+    // se refrescan solas desde su módulo (póliza -> Seguros, servicio ->
+    // Servicios, factura -> Leasing) y el botón Guardar en Drive escribe
+    // las 3. El guardado del activo lo hace el back al mismo tiempo.
     this.maquinariaService.getMaquinaria().subscribe(res => {
       this.maquinaria = res as any[];
       this.filtrarMaquinaria();
-      if (eraLeasing) {
-        void this.guardarEnDrive(true, true);
-      }
     });
 
     this.closeModal();

@@ -46,7 +46,7 @@ export class MaquinariaService {
     return firstValueFrom(this.http.put(`${this.api}/maquinaria/poliza`, data));
   }
 
-  guardarEnDrive(payload: any) {
-    return firstValueFrom(this.http.post(`${this.api}/maquinaria/exportar-drive`, payload));
+  guardarEnDriveArchivo(archivo: string) {
+    return firstValueFrom(this.http.post(`${this.api}/maquinaria/exportar-drive`, { archivo }));
   }
 }
