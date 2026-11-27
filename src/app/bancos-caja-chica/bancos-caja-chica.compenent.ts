@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 import { CajaChicaService } from '../services/caja-chica.service';
 import { FinanzasService } from '../services/finanzas.service';
+import { AlertsService } from '../core/alerts.service';
 
 @Component({
     selector: 'app-bancos-caja-chica',
@@ -19,7 +20,8 @@ export class BancosCajaChicaComponent implements OnInit {
 
     constructor(private service: BancosCajaChicaService
         , private cajaChicaService: CajaChicaService,
-        private finanzasService: FinanzasService
+        private finanzasService: FinanzasService,
+        private alerts: AlertsService
     ) { }
 
     filtroAnio = new Date().getFullYear();
@@ -85,11 +87,11 @@ export class BancosCajaChicaComponent implements OnInit {
             next: () => {
                 this.guardandoDrive = false;
                 this.showExportar = false;
-                alert(`Guardado en Drive: ${this.nombreMes} ${this.filtroAnio}.`);
+                this.alerts.AlertaVerde('Guardado en Drive', `${this.nombreMes} ${this.filtroAnio}.`);
             },
             error: (e) => {
                 this.guardandoDrive = false;
-                alert('No se pudo guardar en Drive: ' + (e?.error?.message || e?.message || ''));
+                this.alerts.AlertaRoja('No se pudo guardar en Drive', e?.error?.message || e?.message || '');
             }
         });
     }
@@ -185,7 +187,7 @@ export class BancosCajaChicaComponent implements OnInit {
     cerrarMes() {
         if (!confirm(`¿Guardar el saldo final de ${this.nombreMes} como saldo anterior del mes siguiente?`)) return;
         this.service.cerrarMes(this.filtroAnio, this.filtroMes).subscribe(() => {
-            alert('Saldo del mes siguiente guardado.');
+            this.alerts.AlertaVerde('Mes cerrado', 'Saldo del mes siguiente guardado.');
         });
     }
 
