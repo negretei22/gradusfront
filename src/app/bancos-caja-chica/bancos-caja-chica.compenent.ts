@@ -27,6 +27,7 @@ export class BancosCajaChicaComponent implements OnInit {
     mesesVisibles: any[] = [];
     showExportar = false;
     exportarConCaja = true;
+    guardandoDrive = false;
     showDetalle = false;
     cargandoDetalle = false;
     detalle: any = null;
@@ -73,6 +74,24 @@ export class BancosCajaChicaComponent implements OnInit {
     confirmarExportar() {
         this.showExportar = false;
         this.exportarExcel(this.exportarConCaja);
+    }
+
+    // Escribe el mes que se está viendo en la hoja de Saldos de Drive.
+    // En Drive siempre va el mes completo (Banorte + Caja Chica).
+    guardarEnDrive() {
+        if (this.guardandoDrive) return;
+        this.guardandoDrive = true;
+        this.service.guardarEnDrive(this.filtroAnio, this.filtroMes).subscribe({
+            next: () => {
+                this.guardandoDrive = false;
+                this.showExportar = false;
+                alert(`Guardado en Drive: ${this.nombreMes} ${this.filtroAnio}.`);
+            },
+            error: (e) => {
+                this.guardandoDrive = false;
+                alert('No se pudo guardar en Drive: ' + (e?.error?.message || e?.message || ''));
+            }
+        });
     }
 
     seleccionarMes(mes: number) {

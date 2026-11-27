@@ -19,4 +19,9 @@ export class BancosCajaChicaService {
     cerrarMes(anio: number, mes: number): Observable<any> {
         return this.http.post(`${API_URL}/cerrar/${anio}/${mes}`, {});
     }
+
+    // Escribe el mes en la hoja de Saldos de Drive (mismo formato del Excel).
+    guardarEnDrive(anio: number, mes: number): Observable<any> {
+        return this.http.post(`${API_URL}/exportar-drive`, { anio, mes });
+    }
 }
