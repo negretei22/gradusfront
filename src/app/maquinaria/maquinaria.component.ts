@@ -440,6 +440,12 @@ onClickFueraMenuPago() {
     });
   }
 
+  limpiarFiltros() {
+    this.filtroSeguro = 'todos';
+    this.filtroAdquisicion = 'todos';
+    this.filtrarMaquinaria();
+  }
+
 
 
   loadMarcas() {

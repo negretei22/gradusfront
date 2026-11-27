@@ -15,17 +15,22 @@
 
 
     <div class="filtros-maquinaria">
-        <select [(ngModel)]="filtroSeguro" (change)="filtrarMaquinaria()">
-            <option value="todos">Seguro: Todos</option>
+        <span class="filtros-titulo">🔍 Filtrar:</span>
+        <label class="filtro-label" for="filtro-seguro">Seguro</label>
+        <select id="filtro-seguro" [(ngModel)]="filtroSeguro" (change)="filtrarMaquinaria()">
+            <option value="todos">Todos</option>
             <option value="con">Con seguro</option>
             <option value="sin">Sin seguro</option>
         </select>
-        <select [(ngModel)]="filtroAdquisicion" (change)="filtrarMaquinaria()">
-            <option value="todos">Adquisición: Todas</option>
+        <label class="filtro-label" for="filtro-adq">Adquisición</label>
+        <select id="filtro-adq" [(ngModel)]="filtroAdquisicion" (change)="filtrarMaquinaria()">
+            <option value="todos">Todas</option>
             <option value="1">Propio</option>
             <option value="2">Leasing</option>
             <option value="3">Arrendada</option>
         </select>
+        <button class="btn-limpiar-filtros" *ngIf="filtroSeguro !== 'todos' || filtroAdquisicion !== 'todos'" (click)="limpiarFiltros()">✕ Limpiar</button>
+        <span class="filtros-cuenta">{{ maquinariaFiltrada.length }} de {{ maquinaria.length }} activos</span>
     </div>
 
     <table class="gradus-table">
@@ -614,19 +619,39 @@
 
 <!-- MODAL EXPORTAR EXCEL: elegir qué grupos incluir -->
 <div class="modal-backdrop" *ngIf="mostrarExportar" (click)="cerrarExportar()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-card modal-exportar" (click)="$event.stopPropagation()">
         <h3>📥 Exportar Excel</h3>
-        <p>Los datos del activo siempre van. Elige qué más quieres exportar:</p>
+        <p class="exportar-sub">Elige qué grupos quieres incluir en el archivo.</p>
 
-        <div class="form-group">
-            <label><input type="checkbox" [(ngModel)]="exportLeasing"> Datos del Leasing (valor de compra, pago mensual, fecha y tipo de adquisición)</label>
+        <div class="exportar-opcion fija">
+            <span class="exportar-check">✓</span>
+            <div>
+                <strong>📋 Datos del Activo</strong>
+                <span>Maquinaria, nombre, marca, modelo, serie, año, placas y ubicación. Siempre se incluyen.</span>
+            </div>
         </div>
-        <div class="form-group">
-            <label><input type="checkbox" [(ngModel)]="exportServicio"> Datos del Servicio (tipo, fecha y hrs/km del último servicio)</label>
-        </div>
-        <div class="form-group">
-            <label><input type="checkbox" [(ngModel)]="exportSeguro"> Datos del Seguro (aseguradora, póliza, fechas y costo)</label>
-        </div>
+
+        <label class="exportar-opcion leasing" [class.seleccionada]="exportLeasing">
+            <input type="checkbox" [(ngModel)]="exportLeasing">
+            <div>
+                <strong>💰 Datos del Leasing</strong>
+                <span>Valor de compra, pago mensual, fecha y tipo de adquisición.</span>
+            </div>
+        </label>
+        <label class="exportar-opcion servicio" [class.seleccionada]="exportServicio">
+            <input type="checkbox" [(ngModel)]="exportServicio">
+            <div>
+                <strong>🔧 Datos del Servicio</strong>
+                <span>Tipo, fecha y hrs/km del último servicio.</span>
+            </div>
+        </label>
+        <label class="exportar-opcion seguro" [class.seleccionada]="exportSeguro">
+            <input type="checkbox" [(ngModel)]="exportSeguro">
+            <div>
+                <strong>🛡️ Datos del Seguro</strong>
+                <span>Aseguradora, póliza, fechas y costo.</span>
+            </div>
+        </label>
 
         <div class="modal-actions">
             <button class="btn-cancel" (click)="cerrarExportar()">Cancelar</button>
