@@ -173,17 +173,130 @@
 
 .filtros-maquinaria {
   display: flex;
+  align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #F7F8F7;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+}
+
+.filtros-titulo {
+  font-weight: 600;
+  color: var(--gradus-green);
+  font-family: 'Poppins', sans-serif;
+}
+
+.filtro-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  font-family: 'Poppins', sans-serif;
 }
 
 .filtros-maquinaria select {
-  padding: 10px 12px;
+  padding: 8px 32px 8px 12px;
   border: 1px solid #dcdcdc;
   border-radius: 6px;
   font-family: 'Poppins', sans-serif;
-  background: white;
+  background: white url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 10px center;
+  appearance: none;
+  -webkit-appearance: none;
   cursor: pointer;
+}
+
+.btn-limpiar-filtros {
+  background: none;
+  border: none;
+  color: var(--gradus-green);
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+
+.filtros-cuenta {
+  margin-left: auto;
+  font-size: 13px;
+  color: #777;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Modal Exportar Excel: cada grupo es una tarjeta que se marca al tocarla */
+.modal-card.modal-exportar {
+  width: 480px;
+}
+
+.exportar-sub {
+  color: #666;
+  margin-bottom: 14px;
+}
+
+.exportar-opcion {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.exportar-opcion:not(.fija):hover {
+  border-color: #999;
+}
+
+.exportar-opcion input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.exportar-opcion > div strong {
+  display: block;
+  font-size: 14px;
+}
+
+.exportar-opcion > div span {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.exportar-opcion.leasing input[type="checkbox"] { accent-color: #2E75B6; }
+.exportar-opcion.servicio input[type="checkbox"] { accent-color: #548235; }
+.exportar-opcion.seguro input[type="checkbox"] { accent-color: #BF8F00; }
+
+.exportar-opcion.leasing.seleccionada { border-color: #2E75B6; background: #DDEBF7; }
+.exportar-opcion.servicio.seleccionada { border-color: #548235; background: #E2EFDA; }
+.exportar-opcion.seguro.seleccionada { border-color: #BF8F00; background: #FFF2CC; }
+
+.exportar-opcion.fija {
+  cursor: default;
+  border-color: #1F4E79;
+  background: #D9E2F3;
+}
+
+.exportar-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gradus-green);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .btn-primary {
